@@ -1,0 +1,58 @@
+name: bienify_app
+description: "A new Flutter project."
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.0-290.4.beta
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  get: ^4.6.6
+  dio: ^5.7.0
+  cached_network_image: ^3.4.1
+  shimmer: ^3.0.0
+  flutter_screenutil: ^5.9.3
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  connectivity_plus: ^6.0.5
+  path_provider: ^2.1.4
+  google_fonts: ^6.2.1
+  shared_preferences: ^2.3.2
+  flutter_svg: ^2.0.10+1
+  image_picker: ^1.1.2
+  intl_phone_field: ^3.2.0
+
+  flutter_lints: ^6.0.0
+
+
+flutter:
+
+
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+
+
+  fonts:
+    - family: Instrument Sans
+      fonts:
+       - asset: assets/fonts/InstrumentSans-Medium.ttf
+         weight: 500
+       - asset: assets/fonts/InstrumentSans-SemiBold.ttf
+         weight: 600
+       - asset: assets/fonts/InstrumentSans-Bold.ttf
+         weight: 700
