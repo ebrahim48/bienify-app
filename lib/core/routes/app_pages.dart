@@ -1,52 +1,120 @@
 import 'package:get/get.dart';
-import '../../features/auth/presentation/splash_page.dart';
-import '../../features/auth/presentation/onboarding_page.dart';
-import '../../features/auth/presentation/login_page.dart';
-import '../../features/auth/presentation/register_page.dart';
-import '../../features/auth/presentation/forgot_password_page.dart';
-import '../../features/auth/presentation/verify_email_page.dart';
-import '../../features/auth/presentation/reset_password_page.dart';
-import '../../features/auth/presentation/password_changed_page.dart';
-import '../../features/auth/presentation/get_started_page.dart';
-import '../../features/auth/presentation/setup_plan_page.dart';
-import '../../features/auth/presentation/generating_page.dart';
-import '../../features/home/presentation/home_page.dart';
-import '../../features/home/presentation/screens/plan_next_meals_screen.dart';
-import '../../features/home/presentation/controllers/home_controller.dart';
-import '../../features/account/presentation/screens/paywall_screen.dart';
-import '../../features/account/presentation/screens/privacy_policy_screen.dart';
-import '../../features/account/presentation/screens/about_us_screen.dart';
-import '../../features/account/presentation/screens/contact_us_screen.dart';
-import '../../features/account/presentation/screens/edit_profile_screen.dart';
+
+import '../../features/auth/presentation/bindings/auth_bindings.dart';
+import '../../features/auth/presentation/controllers/auth_flow.dart';
+import '../../features/auth/presentation/screens/auth_status_screen.dart';
+import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/auth/presentation/screens/new_password_screen.dart';
+import '../../features/auth/presentation/screens/otp_screen.dart';
+import '../../features/auth/presentation/screens/phone_number_screen.dart';
+import '../../features/auth/presentation/screens/profile_credentials_screen.dart';
+import '../../features/auth/presentation/screens/profile_setup_screen.dart';
+import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/onboarding/presentation/screens/location_permission_screen.dart';
+import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
+import '../../features/splash/presentation/screens/splash_screen.dart';
 import 'app_routes.dart';
 
+/// The route table handed to `GetMaterialApp`.
+///
+/// Each entry pairs a screen with the binding that provides its controller,
+/// so a route is the only place that knows how a screen is assembled.
 abstract class AppPages {
   AppPages._();
 
+  static const Transition _transition = Transition.cupertino;
+  static const Duration _transitionDuration = Duration(milliseconds: 280);
+
   static final List<GetPage> routes = [
-    GetPage(name: AppRoutes.splash,      page: () => const SplashPage()),
-    GetPage(name: AppRoutes.onboarding,  page: () => const OnboardingPage()),
-    GetPage(name: AppRoutes.login,       page: () => const LoginPage()),
-    GetPage(name: AppRoutes.register,    page: () => const RegisterPage()),
-    GetPage(name: AppRoutes.forgotPassword, page: () => const ForgotPasswordPage()),
-    GetPage(name: AppRoutes.verifyEmail,    page: () => const VerifyEmailPage()),
-    GetPage(name: AppRoutes.resetPassword,  page: () => const ResetPasswordPage()),
-    GetPage(name: AppRoutes.passwordChanged, page: () => const PasswordChangedPage()),
-    GetPage(name: AppRoutes.getStarted,  page: () => const GetStartedPage()),
-    GetPage(name: AppRoutes.setupPlan,   page: () => const SetupPlanPage()),
-    GetPage(name: AppRoutes.generating,  page: () => const GeneratingPage()),
-    GetPage(name: AppRoutes.planNextMeals, page: () => const PlanNextMealsScreen()),
-    GetPage(name: AppRoutes.paywall,       page: () => const PaywallScreen()),
-    GetPage(name: AppRoutes.privacyPolicy, page: () => const PrivacyPolicyScreen()),
-    GetPage(name: AppRoutes.aboutUs,       page: () => const AboutUsScreen()),
-    GetPage(name: AppRoutes.contactUs,     page: () => const ContactUsScreen()),
-    GetPage(name: AppRoutes.editProfile,   page: () => const EditProfileScreen()),
+    GetPage(
+      name: AppRoutes.splash,
+      page: () => const SplashScreen(),
+      binding: SplashBinding(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: AppRoutes.locationPermission,
+      page: () => const LocationPermissionScreen(),
+      binding: LocationPermissionBinding(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: AppRoutes.onboarding,
+      page: () => const OnboardingScreen(),
+      binding: OnboardingBinding(),
+      transition: Transition.fadeIn,
+    ),
+
+    // ─── Sign up ───────────────────────────────────────────────────────────
+    GetPage(
+      name: AppRoutes.phoneNumber,
+      page: () => const PhoneNumberScreen(),
+      binding: PhoneNumberBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.otp,
+      page: () => const OtpScreen(),
+      binding: OtpBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.profileSetup,
+      page: () => const ProfileSetupScreen(),
+      binding: ProfileSetupBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.profileCredentials,
+      page: () => const ProfileCredentialsScreen(),
+      binding: ProfileSetupBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.signupSuccess,
+      page: () => AuthStatusScreen.signUpComplete(),
+      transition: Transition.fadeIn,
+    ),
+
+    // ─── Sign in ───────────────────────────────────────────────────────────
+    GetPage(
+      name: AppRoutes.login,
+      page: () => const LoginScreen(),
+      binding: LoginBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+
+    // ─── Password recovery ─────────────────────────────────────────────────
+    GetPage(
+      name: AppRoutes.forgotPassword,
+      page: () => const PhoneNumberScreen(flow: AuthFlow.passwordReset),
+      binding: PhoneNumberBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.newPassword,
+      page: () => const NewPasswordScreen(),
+      binding: NewPasswordBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.passwordUpdated,
+      page: () => AuthStatusScreen.passwordUpdated(),
+      transition: Transition.fadeIn,
+    ),
+
+    // ─── App ───────────────────────────────────────────────────────────────
     GetPage(
       name: AppRoutes.home,
-      page: () => const HomePage(),
-      binding: BindingsBuilder(() {
-        Get.lazyPut<HomeController>(() => HomeController());
-      }),
+      page: () => const HomeScreen(),
+      transition: Transition.fadeIn,
     ),
   ];
 }
