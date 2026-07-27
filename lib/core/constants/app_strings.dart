@@ -1,63 +1,111 @@
-/// Application string constants for internationalization and maintainability.
+/// Translation **keys** for every user-facing string in the app.
 ///
-/// This class centralizes all user-facing strings in the application, making it
-/// easier to:
-/// - Update text across the app from a single location
-/// - Prepare for internationalization (i18n)
-/// - Maintain consistent messaging
-/// - Search and replace text efficiently
+/// Screens never hold literal copy. They reference a key and append GetX's
+/// `.tr` extension, which resolves against [AppTranslations] for the locale
+/// currently selected by the language toggle:
 ///
-/// **Best Practices:**
-/// - Use descriptive constant names that indicate context
-/// - Group related strings together with comments
-/// - Keep strings in alphabetical order within groups
-/// - Use const for compile-time constants
-///
-/// **Usage:**
 /// ```dart
-/// Text(AppStrings.searchHint)  // Instead of: Text('Search food or restaurant here...')
+/// Text(AppStrings.login.tr)
 /// ```
 ///
-/// **Future i18n Support:**
-/// When adding internationalization, this class can be replaced with:
-/// ```dart
-/// AppLocalizations.of(context).searchHint
-/// ```
+/// Adding a string is a three-step change: add the key here, then add the
+/// English and Spanish values in `core/localization/app_translations.dart`.
 class AppStrings {
-  // Private constructor to prevent instantiation
   AppStrings._();
 
-  // Search
-  static const String searchHint = 'Search food or restaurant here...';
+  // ─── App ─────────────────────────────────────────────────────────────────
+  static const String appName = 'app_name';
 
-  // Section headers
-  static const String categories = 'Categories';
-  static const String popularFoodNearby = 'Popular Food Nearby';
-  static const String foodCampaign = 'Food Campaign';
-  static const String restaurants = 'Restaurants';
-  static const String viewAll = 'View All';
+  // ─── Location permission ─────────────────────────────────────────────────
+  static const String allowYourLocation = 'allow_your_location';
+  static const String deny = 'deny';
+  static const String allow = 'allow';
 
-  // Error messages
-  static const String noInternetConnection = 'No Internet Connection';
-  static const String noInternetMessage =
-      'No internet connection. Please try again.';
-  static const String oops = 'Oops!';
-  static const String retry = 'Retry';
-  static const String loadMoreFailed = 'Load More Failed';
-  static const String requestTimeout = 'Request timeout. Please try again';
-  static const String serverError = 'Server error';
-  static const String unexpectedError = 'An unexpected error occurred';
-  static const String failedToLoadData = 'Failed to load data';
+  // ─── Onboarding ──────────────────────────────────────────────────────────
+  static const String onboardingTitle1 = 'onboarding_title_1';
+  static const String onboardingBody1 = 'onboarding_body_1';
+  static const String onboardingTitle2 = 'onboarding_title_2';
+  static const String onboardingBody2 = 'onboarding_body_2';
+  static const String onboardingTitle3 = 'onboarding_title_3';
+  static const String onboardingBody3 = 'onboarding_body_3';
 
-  // Placeholders
-  static const String unknownProduct = 'Unknown Product';
-  static const String unknownRestaurant = 'Unknown Restaurant';
-  static const String unknownCategory = 'Unknown Category';
+  static const String signInWithGoogle = 'sign_in_with_google';
+  static const String signInWithApple = 'sign_in_with_apple';
+  static const String or = 'or';
+  static const String enterPhoneNumber = 'enter_phone_number';
+  static const String continueWithPhoneNumber = 'continue_with_phone_number';
+  static const String alreadyHaveAnAccount = 'already_have_an_account';
+  static const String joinAsADoctor = 'join_as_a_doctor';
 
-  // Address
-  static const String defaultAddress = '76A eight avenue, New York, US';
+  // ─── Phone / OTP ─────────────────────────────────────────────────────────
+  static const String enterPhoneNumberTitle = 'enter_phone_number_title';
+  static const String getOtp = 'get_otp';
+  static const String enterOtp = 'enter_otp';
+  static const String codeSentHeading = 'code_sent_heading';
+  static const String codeSentSubtitle = 'code_sent_subtitle';
+  static const String enterSixDigitCode = 'enter_six_digit_code';
+  static const String codeNotReceived = 'code_not_received';
+  static const String requestNewOtp = 'request_new_otp';
+  static const String resendIn = 'resend_in';
+  static const String next = 'next';
+  static const String verifyNow = 'verify_now';
 
-  // Cache messages
-  static const String cacheNotInitialized =
-      'Cache service not initialized. Call init() first.';
+  // ─── Profile setup ───────────────────────────────────────────────────────
+  static const String setUpYourProfile = 'set_up_your_profile';
+  static const String name = 'name';
+  static const String nameHint = 'name_hint';
+  static const String gender = 'gender';
+  static const String male = 'male';
+  static const String female = 'female';
+  static const String age = 'age';
+  static const String email = 'email';
+  static const String emailHint = 'email_hint';
+  static const String password = 'password';
+  static const String passwordHint = 'password_hint';
+  static const String retypePasswordHint = 'retype_password_hint';
+  static const String saveAndContinue = 'save_and_continue';
+
+  // ─── Success ─────────────────────────────────────────────────────────────
+  static const String allSetUp = 'all_set_up';
+  static const String careStartsHere = 'care_starts_here';
+  static const String getStarted = 'get_started';
+  static const String passwordUpdated = 'password_updated';
+  static const String loginNow = 'login_now';
+
+  // ─── Login ───────────────────────────────────────────────────────────────
+  static const String login = 'login';
+  static const String forgotYourPassword = 'forgot_your_password';
+  static const String resetNow = 'reset_now';
+  static const String areYouNewMember = 'are_you_new_member';
+  static const String signUpNow = 'sign_up_now';
+
+  // ─── Reset password ──────────────────────────────────────────────────────
+  static const String enterNewPassword = 'enter_new_password';
+  static const String newPasswordHint = 'new_password_hint';
+  static const String retypeNewPasswordHint = 'retype_new_password_hint';
+  static const String resetPassword = 'reset_password';
+
+  // ─── Country picker ──────────────────────────────────────────────────────
+  static const String selectCountry = 'select_country';
+  static const String searchCountry = 'search_country';
+
+  // ─── Validation ──────────────────────────────────────────────────────────
+  static const String errorNameRequired = 'error_name_required';
+  static const String errorGenderRequired = 'error_gender_required';
+  static const String errorAgeRequired = 'error_age_required';
+  static const String errorEmailRequired = 'error_email_required';
+  static const String errorEmailInvalid = 'error_email_invalid';
+  static const String errorPasswordRequired = 'error_password_required';
+  static const String errorPasswordTooShort = 'error_password_too_short';
+  static const String errorPasswordMismatch = 'error_password_mismatch';
+  static const String errorPhoneRequired = 'error_phone_required';
+  static const String errorPhoneInvalid = 'error_phone_invalid';
+  static const String errorOtpRequired = 'error_otp_required';
+  static const String errorOtpInvalid = 'error_otp_invalid';
+
+  // ─── Feedback ────────────────────────────────────────────────────────────
+  static const String otpResent = 'otp_resent';
+  static const String somethingWentWrong = 'something_went_wrong';
+  static const String noInternetConnection = 'no_internet_connection';
+  static const String comingSoon = 'coming_soon';
 }

@@ -1,70 +1,172 @@
 import 'package:flutter/material.dart';
-import '../utils/app_colors.dart';
-import '../utils/app_text_styles.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-enum AppButtonVariant { primary, secondary }
+import '../theme/app_colors.dart';
+import '../theme/app_radius.dart';
+import '../theme/app_sizes.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_text_styles.dart';
+import '../utils/responsive.dart';
 
-/// Reusable button following the design spec:
-///   Primary  — w:362 h:56 bg:#1C1C1E radius:16 padding:12/24
-///   Secondary — w:362 h:54 bg:#FFFFFF radius:12 border:1px #E6E6E6 padding:14/24
+/// The visual weights a button can take in the Bienify design.
+enum AppButtonVariant {
+  /// Primary call to action — `primary800` fill (Login, Next, Allow …).
+  primary,
+
+  /// Dark secondary action — `primary950` fill (Sign in with Google / Apple).
+  dark,
+
+  /// Low-emphasis neutral action — `#E8E8E8` fill (Deny).
+  neutral,
+
+  /// Transparent with a 1px outline, for tertiary actions.
+  outlined,
+}
+
+/// The one button used across the app.
+///
+/// Geometry comes straight from the spec — 358×50, 24px radius, 18px
+/// horizontal / 10px vertical padding, 10px gap between icon and label — and
+/// scales with the device through ScreenUtil.
+///
+/// ```dart
+/// AppButton(label: AppStrings.login.tr, onPressed: controller.submit)
+///
+/// AppButton(
+///   label: AppStrings.signInWithGoogle.tr,
+///   variant: AppButtonVariant.dark,
+///   iconAsset: AppAssets.googleLogo,
+///   onPressed: controller.signInWithGoogle,
+/// )
+/// ```
 class AppButton extends StatelessWidget {
   const AppButton({
     super.key,
     required this.label,
     required this.onPressed,
     this.variant = AppButtonVariant.primary,
+    this.iconAsset,
+    this.icon,
     this.isLoading = false,
-    this.width = double.infinity,
+    this.isEnabled = true,
+    this.expanded = true,
+    this.height = AppSizes.controlHeight,
+    this.radius = AppRadius.xl3,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final AppButtonVariant variant;
-  final bool isLoading;
-  final double width;
 
-  bool get _isPrimary => variant == AppButtonVariant.primary;
+  /// Optional leading image asset (used for the Google / Apple marks).
+  final String? iconAsset;
+
+  /// Optional leading widget, takes precedence over [iconAsset].
+  final Widget? icon;
+
+  final bool isLoading;
+  final bool isEnabled;
+
+  /// When true the button fills the available width (the default in every
+  /// design); set to false inside a `Row` that already sizes it.
+  final bool expanded;
+
+  final double height;
+  final double radius;
+
+  bool get _isInteractive => isEnabled && !isLoading && onPressed != null;
+
+  Color get _fill => switch (variant) {
+    AppButtonVariant.primary => AppColors.actionFill,
+    AppButtonVariant.dark => AppColors.socialFill,
+    AppButtonVariant.neutral => AppColors.denyFill,
+    AppButtonVariant.outlined => AppColors.transparent,
+  };
+
+  Color get _ink => switch (variant) {
+    AppButtonVariant.primary => AppColors.actionLabel,
+    AppButtonVariant.dark => AppColors.actionLabel,
+    AppButtonVariant.neutral => AppColors.denyLabel,
+    AppButtonVariant.outlined => AppColors.authInk,
+  };
 
   @override
   Widget build(BuildContext context) {
-    final double height     = _isPrimary ? 56.0 : 54.0;
-    final double radius     = _isPrimary ? 16.0 : 12.0;
-    final Color  bgColor    = _isPrimary ? AppColors.primary : AppColors.white;
-    final Color  textColor  = _isPrimary ? AppColors.white   : AppColors.textSecondary;
-    final Border? border    = _isPrimary
-        ? null
-        : Border.all(color: AppColors.border, width: 1);
-
-    return SizedBox(
-      width: width,
-      height: height,
-      child: GestureDetector(
-        onTap: isLoading ? null : onPressed,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(radius),
-            border: border,
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-          alignment: Alignment.center,
-          child: isLoading
-              ? SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      _isPrimary ? AppColors.white : AppColors.primary,
+    final button = Opacity(
+      opacity: isEnabled ? 1 : 0.5,
+      child: Material(
+        color: _fill,
+        borderRadius: BorderRadius.circular(radius.r),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: _isInteractive ? onPressed : null,
+          child: Container(
+            height: height.h,
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.base.w + 2.w,
+              vertical: AppSpacing.xs.h + 2.h,
+            ),
+            decoration: variant == AppButtonVariant.outlined
+                ? BoxDecoration(
+                    borderRadius: BorderRadius.circular(radius.r),
+                    border: Border.all(
+                      color: AppColors.fieldBorder,
+                      width: AppSizes.borderWidth,
                     ),
-                  ),
-                )
-              : Text(
-                  label,
-                  style: AppTextStyles.buttonLabel.copyWith(color: textColor),
-                ),
+                  )
+                : null,
+            alignment: Alignment.center,
+            child: isLoading ? _Spinner(color: _ink) : _content(),
+          ),
         ),
+      ),
+    );
+
+    return expanded ? SizedBox(width: double.infinity, child: button) : button;
+  }
+
+  Widget _content() {
+    final text = Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: AppTextStyles.buttonLarge.rc(_ink),
+    );
+
+    final leading =
+        icon ??
+        (iconAsset != null
+            ? Image.asset(
+                iconAsset!,
+                width: AppSizes.buttonIcon.w,
+                height: AppSizes.buttonIcon.w,
+                fit: BoxFit.contain,
+              )
+            : null);
+
+    if (leading == null) return text;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [leading, AppSpacing.gapH(AppSpacing.xs + 2), Flexible(child: text)],
+    );
+  }
+}
+
+class _Spinner extends StatelessWidget {
+  const _Spinner({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: AppSizes.xl.w,
+      height: AppSizes.xl.w,
+      child: CircularProgressIndicator(
+        strokeWidth: 2.2,
+        valueColor: AlwaysStoppedAnimation<Color>(color),
       ),
     );
   }

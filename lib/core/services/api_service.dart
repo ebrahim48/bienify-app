@@ -397,7 +397,8 @@ class ApiService {
       case DioExceptionType.badCertificate:
         return ServerException('Bad certificate', null, error.message);
 
-      case DioExceptionType.unknown:
+      // `unknown` plus any exception type added by a future Dio release.
+      default:
         if (error.message?.contains('SocketException') ?? false) {
           return NoInternetException(error.message);
         }

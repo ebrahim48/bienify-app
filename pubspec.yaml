@@ -1,5 +1,5 @@
 name: bienify_app
-description: "A new Flutter project."
+description: "Bienify — find doctors, consult from anywhere, get medicines delivered."
 
 publish_to: 'none'
 
@@ -12,47 +12,52 @@ dependencies:
   flutter:
     sdk: flutter
 
-
   cupertino_icons: ^1.0.8
+
+  # State management, DI and routing
+  get: ^4.6.6
+
+  # Responsive sizing against the 390x876 design canvas
+  flutter_screenutil: ^5.9.3
+
+  # Networking
+  dio: ^5.7.0
+  connectivity_plus: ^6.0.5
+
+  # Storage
+  shared_preferences: ^2.3.2
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.1.4
+
+  # Media
+  cached_network_image: ^3.4.1
+  flutter_svg: ^2.0.10+1
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  get: ^4.6.6
-  dio: ^5.7.0
-  cached_network_image: ^3.4.1
-  shimmer: ^3.0.0
-  flutter_screenutil: ^5.9.3
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
-  connectivity_plus: ^6.0.5
-  path_provider: ^2.1.4
-  google_fonts: ^6.2.1
-  shared_preferences: ^2.3.2
-  flutter_svg: ^2.0.10+1
-  image_picker: ^1.1.2
-  intl_phone_field: ^3.2.0
-
   flutter_lints: ^6.0.0
 
-
 flutter:
-
-
   uses-material-design: true
 
   assets:
     - assets/images/
     - assets/icons/
 
-
   fonts:
-    - family: Instrument Sans
+    - family: Satoshi
       fonts:
-       - asset: assets/fonts/InstrumentSans-Medium.ttf
-         weight: 500
-       - asset: assets/fonts/InstrumentSans-SemiBold.ttf
-         weight: 600
-       - asset: assets/fonts/InstrumentSans-Bold.ttf
-         weight: 700
+        - asset: assets/fonts/Satoshi-Light.otf
+          weight: 300
+        - asset: assets/fonts/Satoshi-Regular.otf
+          weight: 400
+        - asset: assets/fonts/Satoshi-Medium.otf
+          weight: 500
+        - asset: assets/fonts/Satoshi-Bold.otf
+          weight: 700
+        - asset: assets/fonts/Satoshi-Black.otf
+          weight: 900
