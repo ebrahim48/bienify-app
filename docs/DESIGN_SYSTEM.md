@@ -37,7 +37,24 @@ should actually use, because they say *why* rather than *which shade*:
 | `bodyInk` | `gray800` | Body copy under a heading |
 | `indicatorInactive` | `gray100` | Inactive onboarding dot |
 
+Home adds a second group:
+
+| Alias | Value | Used for |
+|---|---|---|
+| `surface` / `surfaceBorder` | `white` / `gray100` | Feed card fill and hairline |
+| `accentSurface` | `primary50` | Tinted disc behind the appointment icon |
+| `mutedFill` | `gray100` | Low-emphasis pill ("Join") |
+| `link` | `primary600` | Inline links ("Review request", "See all") |
+| `navActive` / `navInactive` | `primary800` / `gray600` | Bottom-navigation items |
+| `badge` | `error600` | Unread-count bubble |
+| `star` | `#FBBF24` | Rating star |
+| `tagInfo*` | `#EEF0FF` / `#3B46E0` | "Laboratory" tag |
+| `tagNeutral*` | `#F1F5F9` / `#334155` | "Routine" tag |
+| `tagPending*` | `#FFFBEB` / `#B45309` | "Request sent" tag |
+
 > Every one of these was sampled from the exported designs, not eyeballed.
+> The three tag pairs are a cooler slate-and-amber set that belongs to no
+> brand ramp, which is why they carry literal values.
 
 ### 1.2 Type — `core/theme/app_text_styles.dart`
 
@@ -303,9 +320,49 @@ AppSnackbar.error('…');
 AppSnackbar.info('…');
 ```
 
----
+### `AppSvgIcon` — the icon set
 
-## 3. Composed screen patterns
+The exported SVGs in `assets/icons` carry their own fills, so a raw
+`SvgPicture.asset` ignores the theme. `AppSvgIcon` sizes and tints them.
+
+```dart
+AppSvgIcon(AppIcons.notification)                       // as exported
+AppSvgIcon(AppIcons.home, color: AppColors.navActive)   // tinted
+AppSvgIcon(AppIcons.heart, size: 32, color: AppColors.primary500)
+```
+
+Paths live in `AppIcons` — never inline an asset string.
+
+> `profile.svg` is a *finished* 40pt avatar (navy disc plus white figure), so
+> draw it untinted and unwrapped. Tinting it turns the whole thing one colour.
+
+### `AppCard` — content surface
+
+Shared radius, hairline and soft shadow for every Home card.
+
+```dart
+AppCard(child: ...)
+AppCard(onTap: c.open, padding: EdgeInsets.all(AppSpacing.base.w), child: ...)
+```
+
+### `AppTag` — status pill
+
+```dart
+AppTag('Laboratory',   tone: AppTagTone.info)
+AppTag('Routine')                                  // neutral is the default
+AppTag('Request sent', tone: AppTagTone.pending)
+AppTag('Results ready', tone: AppTagTone.success)
+```
+
+### `AppAvatar` — circular profile image
+
+Falls back photo → initials → glyph, so a missing URL reads as a deliberate
+monogram rather than a broken image. The mock feed ships no photos, which is
+why the doctor rows render `AP`, `BT`, `SM`…
+
+```dart
+AppAvatar(imageUrl: doctor.photoUrl, name: doctor.name, size: 44)
+```
 
 ### Auth status screen
 
@@ -315,6 +372,31 @@ Both success designs are one widget with named constructors:
 AuthStatusScreen.signUpComplete()    // green badge  · "Get Started"
 AuthStatusScreen.passwordUpdated()   // primary badge · "Login Now"
 ```
+
+### Bottom navigation
+
+`MainShellScreen` holds the four tabs in an `IndexedStack` (so each keeps its
+scroll position) with a persistent `AppBottomNavBar` underneath.
+
+Geometry from the design: 72pt tall over a 1px `gray100` rule, white fill,
+24pt icons, 6pt gap, 12pt label, equal-width tabs. Active items tint
+`primary800`; the rest `gray600`. Badges come from the feed:
+
+```dart
+Get.find<MainNavController>().setBadge(1, feed.unreadAppointments);
+```
+
+> Reactivity gotcha: pass `controller.destinations.toList()` from inside the
+> `Obx`. Handing over the `RxList` itself does not subscribe — the child reads
+> it during its own build, outside the tracking scope, and badge changes never
+> repaint.
+
+### Home feed rows
+
+`LabRequestCard`, `UpcomingAppointmentCard` and `DoctorListCard` compose the
+primitives above. `DoctorListCard` is shared by the Home feed and (later) the
+search results, and fixes its action button at 100pt so long names such as
+`Dr.Sophia Martinez,MSW` never get truncated.
 
 ### One screen, two flows
 

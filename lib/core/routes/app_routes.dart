@@ -27,4 +27,21 @@ abstract class AppRoutes {
 
   // ─── App ─────────────────────────────────────────────────────────────────
   static const String home = '/home';
+
+  // ─── Discovery ───────────────────────────────────────────────────────────
+  static const String search = '/search';
+  static const String doctorDetails = '/doctor-details';
+
+  // ─── Booking ─────────────────────────────────────────────────────────────
+  static const String paymentSummary = '/payment-summary';
+  static const String appointmentBooked = '/appointment-booked';
+
+  // ─── Cash Payment Process ────────────────────────────────────────────────
+  static const String howToPay = '/how-to-pay';
+  static const String paymentPoints = '/payment-points';
+  static const String paymentPending = '/payment-pending';
+  static const String paymentConfirmed = '/payment-confirmed';
+
+  // ─── Messaging ───────────────────────────────────────────────────────────
+  static const String chat = '/chat';
 }

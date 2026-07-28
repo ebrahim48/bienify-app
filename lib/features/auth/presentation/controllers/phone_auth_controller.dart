@@ -2,11 +2,9 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/base/base_controller.dart';
-import '../../../../core/constants/app_strings.dart';
 import '../../../../core/models/country.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/utils/validators.dart';
-import '../../../../core/widgets/app_snackbar.dart';
 import '../../domain/entities/auth_session.dart';
 import '../../domain/usecases/email_auth_usecases.dart';
 import '../../domain/usecases/password_recovery_usecases.dart';
@@ -98,6 +96,9 @@ class PhoneAuthController extends GetxController
     }
   }
 
-  /// Placeholder for the doctor-facing sign-up, which is a separate app flow.
-  void joinAsDoctor() => AppSnackbar.info(AppStrings.comingSoon.tr);
+  /// "Join as a Doctor".
+  ///
+  /// Practitioner onboarding shares the phone-first registration entry point;
+  /// the extra credentialing steps hang off the profile flow once designed.
+  void joinAsDoctor() => Get.toNamed<void>(AppRoutes.phoneNumber);
 }

@@ -17,6 +17,13 @@ class AppAssets {
   static const String onboardingConsult = '$_images/consult.png';
   static const String onboardingMedicine = '$_images/medicinedelivered.png';
 
+  // ─── People ──────────────────────────────────────────────────────────────
+  /// Fallback headshot for doctors, used wherever a profile photo is missing.
+  static const String doctorPlaceholder = '$_images/profile.png';
+
+  /// Portrait on the Doctor Details hero.
+  static const String doctorPortrait = doctorPlaceholder;
+
   // ─── Social providers ────────────────────────────────────────────────────
   static const String googleLogo = '$_images/Google logo.png';
   static const String appleLogo = '$_images/Apple logo.png';

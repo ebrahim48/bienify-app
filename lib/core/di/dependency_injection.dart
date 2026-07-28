@@ -9,6 +9,13 @@ import '../../features/auth/domain/usecases/email_auth_usecases.dart';
 import '../../features/auth/domain/usecases/password_recovery_usecases.dart';
 import '../../features/auth/domain/usecases/phone_auth_usecases.dart';
 import '../../features/auth/domain/usecases/registration_usecases.dart';
+import '../../features/doctors/data/repositories/doctor_repository_impl.dart';
+import '../../features/doctors/domain/repositories/doctor_repository.dart';
+import '../../features/doctors/domain/usecases/doctor_usecases.dart';
+import '../../features/home/data/datasources/home_remote_data_source.dart';
+import '../../features/home/data/repositories/home_repository_impl.dart';
+import '../../features/home/domain/repositories/home_repository.dart';
+import '../../features/home/domain/usecases/home_usecases.dart';
 import '../localization/localization_controller.dart';
 import '../services/api_service.dart';
 import '../services/connectivity_service.dart';
@@ -62,6 +69,37 @@ class DependencyInjection {
     );
 
     _registerAuthUseCases(Get.find<AuthRepository>());
+    _registerHome();
+    _registerDoctors();
+  }
+
+  static void _registerHome() {
+    Get.put<HomeRemoteDataSource>(
+      MockHomeRemoteDataSource(),
+      permanent: true,
+    );
+    Get.put<HomeRepository>(
+      HomeRepositoryImpl(remote: Get.find<HomeRemoteDataSource>()),
+      permanent: true,
+    );
+    Get.put<GetHomeFeed>(
+      GetHomeFeed(Get.find<HomeRepository>()),
+      permanent: true,
+    );
+  }
+
+  static void _registerDoctors() {
+    Get.put<DoctorRepository>(const DoctorRepositoryImpl(), permanent: true);
+
+    final repository = Get.find<DoctorRepository>();
+    Get
+      ..put<SearchDoctors>(SearchDoctors(repository), permanent: true)
+      ..put<GetSpecialties>(GetSpecialties(repository), permanent: true)
+      ..put<GetDoctorDetails>(GetDoctorDetails(repository), permanent: true)
+      ..put<GetDoctorAvailability>(
+        GetDoctorAvailability(repository),
+        permanent: true,
+      );
   }
 
   static void _registerAuthUseCases(AuthRepository repository) {

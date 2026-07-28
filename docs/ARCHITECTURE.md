@@ -28,8 +28,28 @@ lib/
     │   ├── data/                  models · datasources · repository impl
     │   ├── domain/                entities · repository interface · use cases
     │   └── presentation/          bindings · controllers · screens · widgets
-    └── home/                      placeholder — next milestone
+    ├── main/                      signed-in shell + bottom navigation
+    ├── home/                      Home feed
+    ├── doctors/                   directory, search, profile + availability
+    ├── appointments/              bookings list, shared AppointmentCard
+    ├── booking/                   payment summary + confirmation
+    ├── chat/                      message threads
+    └── pharmacy/                  medicine catalogue
 ```
+
+**Entities live with the feature that owns them**, and other features import
+them: `Doctor` in `doctors`, `Appointment` in `appointments`. That is why
+`home` imports from both — its `HomeFeed` is an aggregate over other
+features' concepts rather than an owner of them.
+
+`main` owns only navigation: `MainNavController` (which tab is showing) and
+`MainShellScreen` (an `IndexedStack` of the four tabs under a persistent
+`AppBottomNavBar`). Keeping it separate means switching tabs never rebuilds
+or disposes a tab's controller.
+
+The Home feed is fetched as one aggregate (`HomeFeed`) rather than four
+calls, so the screen has one loading state and one error state instead of
+four.
 
 ## The dependency rule
 
@@ -174,12 +194,93 @@ flutter test
 - `test/auth_screens_smoke_test.dart` — renders every auth and onboarding
   screen at 390 × 876 through the real bindings, theme and translations, and
   fails on any overflow or build error.
+- `test/home_screen_test.dart` — the Home feed's loading→content transition,
+  every section from the design, tab switching and badge wiring.
+- `test/golden/home_golden_test.dart` — renders the shell to
+  `test/golden/home.png` for visual comparison against the design export.
+  Regenerate with `flutter test test/golden --update-goldens`; a mismatch on
+  a different OS is font rendering, not a regression.
+
+**Always call `loadAppFonts()` (from `test/support/test_fonts.dart`) in
+`setUpAll` for any test that lays out text.** Without it `flutter_test`
+substitutes a placeholder face whose glyphs are far wider than Satoshi's, and
+layouts that fit on a real device overflow in tests.
+
+## GetX reactivity: the one trap worth knowing
+
+`Obx` only subscribes to observables **read inside its builder closure**.
+Passing an `RxList` (or a predicate that reads one) to a child does not
+subscribe, because the child reads it during its own build, outside the
+tracking scope. Symptoms are either a stale UI or the runtime's *"improper
+use of a GetX"* error.
+
+```dart
+// Wrong — never repaints, and throws "improper use of a GetX".
+Obx(() => SpecialtyFilterChips(
+  specialties: controller.specialties,        // RxList handed over as-is
+  isSelected: controller.isSelected,          // predicate read later
+))
+
+// Right — both observables are read here.
+Obx(() => SpecialtyFilterChips(
+  specialties: controller.specialties.toList(),
+  selected: controller.selectedSpecialty.value,
+))
+```
+
+Prefer passing **values** to child widgets rather than predicates or raw
+observables, and materialise lists with `.toList()` inside the builder.
+
+The same trap hides inside a lazy `itemBuilder`: it runs *after* the `Obx`
+closure has finished, so anything it reads is untracked. Read the observable
+above the list and close over a plain value:
+
+```dart
+Obx(() {
+  final medicines = controller.medicines.toList();
+  final cart = controller.cart.toSet();          // read here, not below
+  return ListView.builder(
+    itemCount: medicines.length,
+    itemBuilder: (_, i) => Row(isInCart: cart.contains(medicines[i].id)),
+  );
+})
+```
+
+This bug is silent — state updates, assertions on the controller pass, and
+the pixels never change. It has bitten this codebase four times (nav badge,
+specialty chips, availability slots, pharmacy cart). When a tap "does
+nothing", check this first.
+
+## Layout traps this codebase has already hit
+
+* `CrossAxisAlignment.stretch` on a **Row** inside a scroll view forces an
+  infinite height. `DoctorInfoGrid` pairs its cards with a fixed
+  `cardHeight` instead.
+* `Container(alignment: ...)` expands to the incoming constraints. Inside a
+  `Wrap` that makes every chip full width — `SpecialtyFilterChips` uses
+  padding only.
+* `IntrinsicHeight` cannot measure a `Row` of `Expanded` children; give the
+  row a fixed height instead.
 
 ## Known seams
 
 - **Location permission** is UI-only. `LocationPermissionController`
   `_requestSystemPermission()` is the single place to call
   `permission_handler` / `geolocator`.
+- **Document capture** on Payment Summary records the intent but has no
+  platform picker yet — `PaymentController.addAttachment` /
+  `captureFromCamera` are where `image_picker` / `file_picker` plug in.
+- **Payment** resolves after a simulated delay in `PaymentController.pay`;
+  the gateway call replaces that one `Future.delayed`.
+- **Chat** is local: `ChatController.send` appends the outgoing bubble and
+  schedules a canned reply. Swap for a socket or polling data source.
+- **Pharmacy** ships without a design, so its catalogue and card layout are a
+  reasonable default built from the existing card language.
+- The **Doctor Details hero** uses the bundled circular headshot; drop a
+  cut-out portrait in and point `DoctorHero.portraitAsset` at it.
+- `attach.svg` and `upload.svg` are **named for the opposite of their
+  artwork**. `AppIcons.cloudUpload` and `AppIcons.paperclip` alias them
+  correctly — use those, not the file names.
 - **Social sign-in** posts an empty `idToken`;
   `AuthRepositoryImpl.signInWithProvider` is where `google_sign_in` /
   `sign_in_with_apple` plugs in.

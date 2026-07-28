@@ -1,0 +1,164 @@
+import 'package:bienify_app/app.dart';
+import 'package:bienify_app/core/di/dependency_injection.dart';
+import 'package:bienify_app/core/localization/app_translations.dart';
+import 'package:bienify_app/core/theme/app_theme.dart';
+import 'package:bienify_app/features/appointments/domain/entities/appointment.dart';
+import 'package:bienify_app/features/auth/presentation/screens/auth_status_screen.dart';
+import 'package:bienify_app/features/booking/presentation/screens/payment_summary_screen.dart';
+import 'package:bienify_app/features/chat/presentation/screens/chat_screen.dart';
+import 'package:bienify_app/features/doctors/data/static/doctor_mock_data.dart';
+import 'package:bienify_app/features/doctors/presentation/bindings/doctors_bindings.dart';
+import 'package:bienify_app/features/doctors/presentation/screens/doctor_details_screen.dart';
+import 'package:bienify_app/features/doctors/presentation/screens/doctor_search_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../support/test_fonts.dart';
+
+/// Renders Search, Doctor Details, Payment Summary, the booking confirmation
+/// and Chat so each can be compared against its design export.
+///
+/// Regenerate with `flutter test test/golden --update-goldens`.
+void main() {
+  setUpAll(loadAppFonts);
+
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    Get.testMode = true;
+    await DependencyInjection.init();
+  });
+
+  tearDown(() {
+    DependencyInjection.clear();
+    Get.reset();
+  });
+
+  Future<void> pump(
+    WidgetTester tester,
+    Widget screen, {
+    Bindings? binding,
+    Object? arguments,
+    Size size = const Size(390, 876),
+  }) async {
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      ScreenUtilInit(
+        designSize: BienifyApp.designSize,
+        builder: (context, child) => GetMaterialApp(
+          theme: AppTheme.light,
+          translations: AppTranslations(),
+          locale: const Locale('en', 'US'),
+          initialRoute: '/',
+          getPages: [
+            GetPage(name: '/', page: () => const Scaffold()),
+            GetPage(
+              name: '/target',
+              page: () => screen,
+              binding: binding,
+              transition: Transition.noTransition,
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pump();
+
+    Get.toNamed<void>('/target', arguments: arguments);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+  }
+
+  testWidgets('Search', (tester) async {
+    await pump(
+      tester,
+      const DoctorSearchScreen(),
+      binding: DoctorSearchBinding(),
+    );
+    await settleImages(tester);
+    await expectLater(
+      find.byType(DoctorSearchScreen),
+      matchesGoldenFile('search.png'),
+    );
+  });
+
+  testWidgets('Doctor details', (tester) async {
+    await pump(
+      tester,
+      const DoctorDetailsScreen(),
+      binding: DoctorDetailsBinding(),
+      arguments: DoctorMockData.doctors.first,
+      size: const Size(390, 1700),
+    );
+    await settleImages(tester);
+    await expectLater(
+      find.byType(DoctorDetailsScreen),
+      matchesGoldenFile('doctor_details.png'),
+    );
+  });
+
+  testWidgets('Doctor details lays out on a narrow, tall-text device', (
+    tester,
+  ) async {
+    // The info grid once carried a fixed card height, which overflowed by a
+    // fraction of a pixel when `.sp` and `.h` scaled apart. This renders it
+    // at a narrower width with enlarged text so any regression trips the
+    // overflow assertion rather than shipping.
+    tester.platformDispatcher.textScaleFactorTestValue = 1.2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    await pump(
+      tester,
+      const DoctorDetailsScreen(),
+      binding: DoctorDetailsBinding(),
+      arguments: DoctorMockData.doctors.first,
+      size: const Size(320, 1400),
+    );
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Payment summary', (tester) async {
+    await pump(
+      tester,
+      const PaymentSummaryScreen(),
+      binding: PaymentBinding(),
+      arguments: Appointment(
+        id: 'draft',
+        doctorName: 'Dr. Kwame Mensah',
+        specialty: 'Pediatrician',
+        scheduledAt: DateTime(2026, 4, 1, 10),
+      ),
+      size: const Size(390, 1220),
+    );
+    await settleImages(tester);
+    await expectLater(
+      find.byType(PaymentSummaryScreen),
+      matchesGoldenFile('payment_summary.png'),
+    );
+  });
+
+  testWidgets('Appointment booked', (tester) async {
+    await pump(tester, const AuthStatusScreen.appointmentBooked());
+    await settleImages(tester);
+    await expectLater(
+      find.byType(AuthStatusScreen),
+      matchesGoldenFile('appointment_booked.png'),
+    );
+  });
+
+  testWidgets('Chat', (tester) async {
+    await pump(tester, const ChatScreen(), binding: ChatBinding());
+    await settleImages(tester);
+    await expectLater(
+      find.byType(ChatScreen),
+      matchesGoldenFile('chat.png'),
+    );
+  });
+}

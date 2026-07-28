@@ -103,9 +103,148 @@ class AppStrings {
   static const String errorOtpRequired = 'error_otp_required';
   static const String errorOtpInvalid = 'error_otp_invalid';
 
+  // ─── Bottom navigation ───────────────────────────────────────────────────
+  static const String navHome = 'nav_home';
+  static const String navAppointments = 'nav_appointments';
+  static const String navDoctors = 'nav_doctors';
+  static const String navPharmacy = 'nav_pharmacy';
+
+  // ─── Home ────────────────────────────────────────────────────────────────
+  static const String searchSpecialty = 'search_specialty';
+  static const String upcomingAppointments = 'upcoming_appointments';
+  static const String nearbyDoctors = 'nearby_doctors';
+  static const String seeAll = 'see_all';
+  static const String seeAvailability = 'see_availability';
+  static const String join = 'join';
+  static const String reviewRequest = 'review_request';
+  static const String requestedBy = 'requested_by';
+  static const String statusRequestSent = 'status_request_sent';
+  static const String statusInProgress = 'status_in_progress';
+  static const String statusReady = 'status_ready';
+  static const String noUpcomingAppointments = 'no_upcoming_appointments';
+  static const String noDoctorsFound = 'no_doctors_found';
+  static const String retry = 'retry';
+
+  // ─── Search & directory ──────────────────────────────────────────────────
+  static const String search = 'search';
+  static const String filterAll = 'filter_all';
+
+  // ─── Doctor details ──────────────────────────────────────────────────────
+  static const String doctorDetails = 'doctor_details';
+  static const String reviewsCount = 'reviews_count';
+  static const String perConsultation = 'per_consultation';
+  static const String yearsCount = 'years_count';
+  static const String experience = 'experience';
+  static const String patients = 'patients';
+  static const String workingTime = 'working_time';
+  static const String biography = 'biography';
+  static const String selectYearAndDate = 'select_year_and_date';
+  static const String availableTime = 'available_time';
+  static const String bookAppointment = 'book_appointment';
+  static const String selectTimeSlot = 'select_time_slot';
+
+  // ─── Payment ─────────────────────────────────────────────────────────────
+  static const String paymentSummary = 'payment_summary';
+  static const String medicalDocument = 'medical_document';
+  static const String attachment = 'attachment';
+  static const String camera = 'camera';
+  static const String attachmentAdded = 'attachment_added';
+  static const String consultationFee = 'consultation_fee';
+  static const String vat = 'vat';
+  static const String totalPayable = 'total_payable';
+  static const String rxWallet = 'rx_wallet';
+  static const String walletBalance = 'wallet_balance';
+  static const String walletDeduction = 'wallet_deduction';
+  static const String choosePaymentMethod = 'choose_payment_method';
+  static const String paymentDebitCredit = 'payment_debit_credit';
+  static const String paymentApplePay = 'payment_apple_pay';
+  static const String paymentBankTransfer = 'payment_bank_transfer';
+  static const String paymentTpago = 'payment_tpago';
+  static const String paymentPaypal = 'payment_paypal';
+  static const String paymentCash = 'payment_cash';
+  static const String payAmount = 'pay_amount';
+  static const String appointmentScheduled = 'appointment_scheduled';
+  static const String backToAppointment = 'back_to_appointment';
+
+  // ─── Cash payment process ────────────────────────────────────────────────
+  static const String howToPaymentWorks = 'how_to_payment_works';
+  static const String payStep1Title = 'pay_step_1_title';
+  static const String payStep1Body = 'pay_step_1_body';
+  static const String payStep2Title = 'pay_step_2_title';
+  static const String payStep2Body = 'pay_step_2_body';
+  static const String payStep3Title = 'pay_step_3_title';
+  static const String payStep3Body = 'pay_step_3_body';
+  static const String payStep4Title = 'pay_step_4_title';
+  static const String payStep4Body = 'pay_step_4_body';
+
+  static const String yourPaymentCode = 'your_payment_code';
+  static const String paymentCode = 'payment_code';
+  static const String useCodeAtAgent = 'use_code_at_agent';
+  static const String copyCode = 'copy_code';
+  static const String codeCopied = 'code_copied';
+  static const String codeCopiedDetail = 'code_copied_detail';
+  static const String validForHours = 'valid_for_hours';
+  static const String codeExpiresAfter = 'code_expires_after';
+  static const String remaining = 'remaining';
+  static const String amountToPay = 'amount_to_pay';
+  static const String findPaymentLocation = 'find_payment_location';
+
+  static const String nearbyPaymentPoints = 'nearby_payment_points';
+  static const String mapView = 'map_view';
+  static const String listView = 'list_view';
+  static const String yourLocation = 'your_location';
+  static const String allNearby = 'all_nearby';
+  static const String directions = 'directions';
+  static const String go = 'go';
+  static const String openNow = 'open_now';
+  static const String openLabel = 'open_label';
+  static const String closedLabel = 'closed_label';
+  static const String foundALocation = 'found_a_location';
+
+  static const String paymentPending = 'payment_pending';
+  static const String waitingForPayment = 'waiting_for_payment';
+  static const String waitingForPaymentBody = 'waiting_for_payment_body';
+  static const String timeRemaining = 'time_remaining';
+  static const String codeValidFrom = 'code_valid_from';
+  static const String autoChecking = 'auto_checking';
+  static const String checkPaymentStatus = 'check_payment_status';
+  static const String viewNearbyLocations = 'view_nearby_locations';
+
+  static const String paymentConfirmed = 'payment_confirmed';
+  static const String paymentConfirmedBody = 'payment_confirmed_body';
+  static const String bookingDetails = 'booking_details';
+  static const String orderId = 'order_id';
+  static const String date = 'date';
+  static const String estimatedDelivery = 'estimated_delivery';
+  static const String pharmacyLabel = 'pharmacy_label';
+  static const String prescription = 'prescription';
+  static const String medicinesCount = 'medicines_count';
+  static const String totalPaid = 'total_paid';
+  static const String paidViaCash = 'paid_via_cash';
+  static const String goHome = 'go_home';
+
+  // ─── Chat ────────────────────────────────────────────────────────────────
+  static const String online = 'online';
+  static const String typeYourMessage = 'type_your_message';
+
+  // ─── Appointments tab ────────────────────────────────────────────────────
+  static const String myAppointments = 'my_appointments';
+  static const String upcoming = 'upcoming';
+  static const String past = 'past';
+  static const String noAppointmentsYet = 'no_appointments_yet';
+  static const String findADoctor = 'find_a_doctor';
+  static const String joinOpensSoon = 'join_opens_soon';
+
+  // ─── Pharmacy tab ────────────────────────────────────────────────────────
+  static const String pharmacyTitle = 'pharmacy_title';
+  static const String pharmacySubtitle = 'pharmacy_subtitle';
+  static const String addToCart = 'add_to_cart';
+  static const String addedToCart = 'added_to_cart';
+  static const String inStock = 'in_stock';
+  static const String outOfStock = 'out_of_stock';
+
   // ─── Feedback ────────────────────────────────────────────────────────────
   static const String otpResent = 'otp_resent';
   static const String somethingWentWrong = 'something_went_wrong';
   static const String noInternetConnection = 'no_internet_connection';
-  static const String comingSoon = 'coming_soon';
 }

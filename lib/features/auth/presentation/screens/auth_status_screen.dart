@@ -10,6 +10,7 @@ import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/status_badge.dart';
+import '../../../main/presentation/controllers/main_nav_controller.dart';
 
 /// Confirmation screen shared by the two success designs.
 ///
@@ -41,11 +42,31 @@ class AuthStatusScreen extends StatelessWidget {
       actionKey = AppStrings.loginNow,
       onAction = (() => Get.offAllNamed<void>(AppRoutes.login));
 
+  /// Shown after paying for a consultation — green badge, no subtitle, and a
+  /// return to the Appointments tab.
+  const AuthStatusScreen.appointmentBooked({super.key})
+    : badgeColor = AppColors.success,
+      titleKey = AppStrings.appointmentScheduled,
+      subtitleKey = null,
+      actionKey = AppStrings.backToAppointment,
+      onAction = _returnToAppointments;
+
   final Color badgeColor;
   final String titleKey;
-  final String subtitleKey;
+
+  /// Optional supporting line; omitted by the booking confirmation.
+  final String? subtitleKey;
+
   final String actionKey;
   final VoidCallback onAction;
+
+  /// Pops back to the shell and selects the Appointments tab.
+  static void _returnToAppointments() {
+    Get.until((route) => Get.currentRoute == AppRoutes.home);
+    if (Get.isRegistered<MainNavController>()) {
+      Get.find<MainNavController>().select(1);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,12 +84,14 @@ class AuthStatusScreen extends StatelessWidget {
               textAlign: TextAlign.center,
               style: AppTextStyles.headlineSmall.rc(AppColors.black),
             ),
-            AppSpacing.gapV(AppSpacing.sm),
-            Text(
-              subtitleKey.tr,
-              textAlign: TextAlign.center,
-              style: AppTextStyles.bodyMedium.rc(AppColors.fieldHint),
-            ),
+            if (subtitleKey != null) ...[
+              AppSpacing.gapV(AppSpacing.sm),
+              Text(
+                subtitleKey!.tr,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodyMedium.rc(AppColors.fieldHint),
+              ),
+            ],
           ],
         ),
       ),

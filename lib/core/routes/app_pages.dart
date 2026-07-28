@@ -9,7 +9,18 @@ import '../../features/auth/presentation/screens/otp_screen.dart';
 import '../../features/auth/presentation/screens/phone_number_screen.dart';
 import '../../features/auth/presentation/screens/profile_credentials_screen.dart';
 import '../../features/auth/presentation/screens/profile_setup_screen.dart';
-import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/booking/presentation/screens/payment_summary_screen.dart';
+import '../../features/cash_payment_process/presentation/bindings/cash_payment_bindings.dart';
+import '../../features/cash_payment_process/presentation/screens/how_to_pay_screen.dart';
+import '../../features/cash_payment_process/presentation/screens/nearby_payment_points_screen.dart';
+import '../../features/cash_payment_process/presentation/screens/payment_confirmed_screen.dart';
+import '../../features/cash_payment_process/presentation/screens/payment_pending_screen.dart';
+import '../../features/chat/presentation/screens/chat_screen.dart';
+import '../../features/doctors/presentation/bindings/doctors_bindings.dart';
+import '../../features/doctors/presentation/screens/doctor_details_screen.dart';
+import '../../features/doctors/presentation/screens/doctor_search_screen.dart';
+import '../../features/main/presentation/bindings/main_binding.dart';
+import '../../features/main/presentation/screens/main_shell_screen.dart';
 import '../../features/onboarding/presentation/screens/location_permission_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/splash/presentation/screens/splash_screen.dart';
@@ -113,8 +124,77 @@ abstract class AppPages {
     // ─── App ───────────────────────────────────────────────────────────────
     GetPage(
       name: AppRoutes.home,
-      page: () => const HomeScreen(),
+      page: () => const MainShellScreen(),
+      binding: MainBinding(),
       transition: Transition.fadeIn,
+    ),
+
+    // ─── Discovery ─────────────────────────────────────────────────────────
+    GetPage(
+      name: AppRoutes.search,
+      page: () => const DoctorSearchScreen(),
+      binding: DoctorSearchBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.doctorDetails,
+      page: () => const DoctorDetailsScreen(),
+      binding: DoctorDetailsBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+
+    // ─── Booking ───────────────────────────────────────────────────────────
+    GetPage(
+      name: AppRoutes.paymentSummary,
+      page: () => const PaymentSummaryScreen(),
+      binding: PaymentBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.appointmentBooked,
+      page: () => AuthStatusScreen.appointmentBooked(),
+      transition: Transition.fadeIn,
+    ),
+
+    // ─── Cash Payment Process ──────────────────────────────────────────────
+    GetPage(
+      name: AppRoutes.howToPay,
+      page: () => const HowToPayScreen(),
+      binding: HowToPayBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.paymentPoints,
+      page: () => const NearbyPaymentPointsScreen(),
+      binding: PaymentPointsBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.paymentPending,
+      page: () => const PaymentPendingScreen(),
+      binding: PaymentPendingBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.paymentConfirmed,
+      page: () => const PaymentConfirmedScreen(),
+      binding: PaymentConfirmedBinding(),
+      transition: Transition.fadeIn,
+    ),
+
+    // ─── Messaging ─────────────────────────────────────────────────────────
+    GetPage(
+      name: AppRoutes.chat,
+      page: () => const ChatScreen(),
+      binding: ChatBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
     ),
   ];
 }

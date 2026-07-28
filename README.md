@@ -13,7 +13,16 @@ built on feature-first Clean Architecture with GetX.
 | Location permission | ✅ Done (UI; system prompt is a marked seam) |
 | Onboarding (3 slides + sign-in panel) | ✅ Done |
 | Auth — phone / OTP / profile setup / login / password reset | ✅ Done |
-| Home | 🚧 Placeholder — next milestone |
+| Shell + bottom navigation (Home / Appointments / Doctors / Pharmacy) | ✅ Done |
+| Home feed — lab requests, upcoming appointments, nearby doctors | ✅ Done |
+| Doctor search + specialty filters | ✅ Done |
+| Doctor details — profile, availability, booking | ✅ Done |
+| Payment summary + booking confirmation | ✅ Done |
+| Chat thread | ✅ Done |
+| Appointments / Doctors / Pharmacy tabs | ✅ Done |
+
+Every screen is reachable and every control does something — there are no
+placeholder or "coming soon" states left in the app.
 
 The app runs end to end today against `MockAuthRemoteDataSource`; see
 [Architecture → swapping the mock backend](docs/ARCHITECTURE.md#swapping-the-mock-backend-for-the-real-api).

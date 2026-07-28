@@ -164,4 +164,93 @@ class AppColors {
 
   /// Inactive page-indicator dot.
   static const Color indicatorInactive = gray100;
+
+  // =========================
+  // Home surfaces
+  // =========================
+
+  /// Card fill on the Home feed.
+  static const Color surface = white;
+
+  /// Hairline around Home cards and the bottom navigation.
+  static const Color surfaceBorder = gray100;
+
+  /// Tinted circle behind the appointment icon.
+  static const Color accentSurface = primary50;
+
+  /// Low-emphasis pill fill ("Join").
+  static const Color mutedFill = gray100;
+
+  /// Inline text link ("Review request", "See all").
+  static const Color link = primary600;
+
+  /// Active / inactive bottom-navigation items.
+  static const Color navActive = primary800;
+  static const Color navInactive = gray600;
+
+  /// Unread-count badge.
+  static const Color badge = error600;
+
+  // =========================
+  // Status tags
+  // =========================
+  // The lab-request card uses a cooler, slate-and-amber set that does not
+  // belong to any brand ramp, so the exact design values live here.
+
+  /// Informational tag ("Laboratory").
+  static const Color tagInfoSurface = Color(0xFFEEF0FF);
+  static const Color tagInfoInk = Color(0xFF3B46E0);
+
+  /// Neutral tag ("Routine").
+  static const Color tagNeutralSurface = Color(0xFFF1F5F9);
+  static const Color tagNeutralInk = Color(0xFF334155);
+
+  /// Pending tag ("Request sent").
+  static const Color tagPendingSurface = Color(0xFFFFFBEB);
+  static const Color tagPendingInk = Color(0xFFB45309);
+
+  /// Rating star.
+  static const Color star = Color(0xFFFBBF24);
+
+  // =========================
+  // Chat
+  // =========================
+
+  /// Presence pill in the thread header.
+  static const Color online = Color(0xFF10B981);
+
+  /// Fill behind the composer input and its attach button.
+  static const Color chatFieldFill = Color(0xFFF5F5F5);
+
+  // =========================
+  // Cash payment process
+  // =========================
+
+  /// Near-black surface of the payment-code card.
+  static const Color codeSurface = Color(0xFF0A0A0A);
+
+  /// The lighter disc decorating that card's top-right corner.
+  static const Color codeSurfaceAccent = Color(0xFF1E1F22);
+
+  /// The code itself, and the pill behind "Copy Code".
+  static const Color codeInk = primary200;
+
+  /// Track behind the Map / List segmented toggle; the active segment is
+  /// [codeSurface].
+  static const Color segmentTrack = Color(0xFFF3F4F6);
+
+  /// "Open" / "Open Now" availability badge.
+  static const Color openSurface = Color(0xFFECFDF3);
+  static const Color openInk = Color(0xFF12B76A);
+
+  /// "Closed" badge.
+  static const Color closedSurface = gray100;
+  static const Color closedInk = gray600;
+
+  /// Waiting-for-payment hero panel and its icon disc.
+  static const Color pendingSurface = primary200;
+  static const Color pendingIconSurface = Color(0xFFB4BED9);
+
+  /// Countdown accent on the pending screen.
+  static const Color timerAccent = Color(0xFFA3C900);
 }

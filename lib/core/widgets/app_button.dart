@@ -47,6 +47,7 @@ class AppButton extends StatelessWidget {
     this.variant = AppButtonVariant.primary,
     this.iconAsset,
     this.icon,
+    this.trailingIcon,
     this.isLoading = false,
     this.isEnabled = true,
     this.expanded = true,
@@ -63,6 +64,10 @@ class AppButton extends StatelessWidget {
 
   /// Optional leading widget, takes precedence over [iconAsset].
   final Widget? icon;
+
+  /// Optional widget after the label, e.g. the chevron on
+  /// "I've Found a Location ›".
+  final Widget? trailingIcon;
 
   final bool isLoading;
   final bool isEnabled;
@@ -144,12 +149,18 @@ class AppButton extends StatelessWidget {
               )
             : null);
 
-    if (leading == null) return text;
+    if (leading == null && trailingIcon == null) return text;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
-      children: [leading, AppSpacing.gapH(AppSpacing.xs + 2), Flexible(child: text)],
+      children: [
+        ?leading,
+        if (leading != null) AppSpacing.gapH(AppSpacing.xs + 2),
+        Flexible(child: text),
+        if (trailingIcon != null) AppSpacing.gapH(AppSpacing.xs),
+        ?trailingIcon,
+      ],
     );
   }
 }
