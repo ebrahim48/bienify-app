@@ -30,6 +30,9 @@ dependencies:
   hive_flutter: ^1.1.0
   path_provider: ^2.1.4
 
+  # Maps — nearby cash-payment points
+  google_maps_flutter: ^2.9.0
+
   # Media
   cached_network_image: ^3.4.1
   flutter_svg: ^2.0.10+1
