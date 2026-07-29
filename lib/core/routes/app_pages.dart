@@ -1,5 +1,8 @@
 import 'package:get/get.dart';
 
+import '../../features/appointments/presentation/bindings/appointments_bindings.dart';
+import '../../features/appointments/presentation/screens/consultation_history_screen.dart';
+import '../../features/appointments/presentation/screens/video_call_screen.dart';
 import '../../features/auth/presentation/bindings/auth_bindings.dart';
 import '../../features/auth/presentation/controllers/auth_flow.dart';
 import '../../features/auth/presentation/screens/auth_status_screen.dart';
@@ -193,6 +196,19 @@ abstract class AppPages {
       name: AppRoutes.paymentConfirmed,
       page: () => const PaymentConfirmedScreen(),
       binding: PaymentConfirmedBinding(),
+      transition: Transition.fadeIn,
+    ),
+
+    // ─── Consultation ──────────────────────────────────────────────────────
+    GetPage(
+      name: AppRoutes.videoCall,
+      page: () => const VideoCallScreen(),
+      binding: VideoCallBinding(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: AppRoutes.consultationHistory,
+      page: () => const ConsultationHistoryScreen(),
       transition: Transition.fadeIn,
     ),
 

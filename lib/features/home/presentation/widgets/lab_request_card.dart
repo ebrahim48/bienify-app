@@ -46,12 +46,24 @@ class LabRequestCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // The two category tags yield before the status does: on a narrow
+          // screen, or with enlarged text, their labels ellipsize instead of
+          // the row overflowing.
           Row(
             children: [
-              AppTag(request.category, tone: AppTagTone.info),
+              Flexible(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: AppTag(request.category, tone: AppTagTone.info),
+                    ),
+                    AppSpacing.gapH(AppSpacing.xs),
+                    Flexible(child: AppTag(request.priority)),
+                  ],
+                ),
+              ),
               AppSpacing.gapH(AppSpacing.xs),
-              AppTag(request.priority),
-              const Spacer(),
               AppTag(statusKey.tr, tone: statusTone),
             ],
           ),

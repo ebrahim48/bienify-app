@@ -240,6 +240,40 @@ class AppStrings {
   static const String online = 'online';
   static const String typeYourMessage = 'type_your_message';
 
+  // ─── Appointments ────────────────────────────────────────────────────────
+  static const String needCare = 'need_care';
+  static const String needCareBody = 'need_care_body';
+  static const String bookAppointmentCta = 'book_appointment_cta';
+  static const String appointmentHistory = 'appointment_history';
+  static const String upcomingAppointmentsTab = 'upcoming_appointments_tab';
+  static const String pastAppointmentsTab = 'past_appointments_tab';
+  static const String cancelledAppointmentTab = 'cancelled_appointment_tab';
+  static const String today = 'today';
+  static const String joinVisit = 'join_visit';
+  static const String bookAgain = 'book_again';
+  static const String review = 'review';
+  static const String reschedule = 'reschedule';
+  static const String cancelAppointment = 'cancel_appointment';
+  static const String cancelReason = 'cancel_reason';
+  static const String cancelReasonHint = 'cancel_reason_hint';
+  static const String cancelNow = 'cancel_now';
+  static const String appointmentCancelled = 'appointment_cancelled';
+  static const String howWasYourExperience = 'how_was_your_experience';
+  static const String submitReview = 'submit_review';
+  static const String reviewSubmitted = 'review_submitted';
+  static const String noAppointmentsInTab = 'no_appointments_in_tab';
+
+  // ─── Video consultation ──────────────────────────────────────────────────
+  static const String goodConnection = 'good_connection';
+  static const String doctorVideoFeed = 'doctor_video_feed';
+  static const String you = 'you';
+  static const String callDuration = 'call_duration';
+  static const String consultationHistory = 'consultation_history';
+  static const String consultationComplete = 'consultation_complete';
+  static const String waitingForPrescriptions = 'waiting_for_prescriptions';
+  static const String checkMedicalVault = 'check_medical_vault';
+  static const String backToHome = 'back_to_home';
+
   // ─── Appointments tab ────────────────────────────────────────────────────
   static const String myAppointments = 'my_appointments';
   static const String upcoming = 'upcoming';

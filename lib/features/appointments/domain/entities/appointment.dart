@@ -1,6 +1,18 @@
 /// Lifecycle of a booking.
 enum AppointmentStatus { upcoming, completed, cancelled }
 
+/// The three tabs on the Appointments screen.
+enum AppointmentTab { upcoming, past, cancelled }
+
+/// A date heading plus the appointments filed under it, e.g. `Today` or
+/// `23 February`.
+class AppointmentGroup {
+  const AppointmentGroup({required this.label, required this.items});
+
+  final String label;
+  final List<Appointment> items;
+}
+
 /// A scheduled consultation.
 class Appointment {
   const Appointment({
