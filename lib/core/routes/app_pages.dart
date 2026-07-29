@@ -18,6 +18,7 @@ import '../../features/cash_payment_process/presentation/screens/payment_pending
 import '../../features/chat/presentation/screens/chat_screen.dart';
 import '../../features/doctors/presentation/bindings/doctors_bindings.dart';
 import '../../features/doctors/presentation/screens/doctor_details_screen.dart';
+import '../../features/doctors/presentation/screens/doctor_list_screen.dart';
 import '../../features/doctors/presentation/screens/doctor_search_screen.dart';
 import '../../features/main/presentation/bindings/main_binding.dart';
 import '../../features/main/presentation/screens/main_shell_screen.dart';
@@ -134,6 +135,13 @@ abstract class AppPages {
       name: AppRoutes.search,
       page: () => const DoctorSearchScreen(),
       binding: DoctorSearchBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.doctorList,
+      page: () => const DoctorListScreen(),
+      binding: DoctorListBinding(),
       transition: _transition,
       transitionDuration: _transitionDuration,
     ),

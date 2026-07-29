@@ -33,6 +33,9 @@ class AppIcons {
   static const String cloudUpload = '$_path/attach.svg';
   static const String paperclip = '$_path/upload.svg';
 
+  /// Sliders glyph on the doctor-list app bar.
+  static const String filter = '$_path/pricerange.svg';
+
   static const String camera = '$_path/camera.svg';
   static const String wallet = '$_path/wallet.svg';
   static const String send = '$_path/send.svg';

@@ -1,8 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../../appointments/presentation/controllers/appointments_controller.dart';
-import '../../../doctors/domain/usecases/doctor_usecases.dart';
-import '../../../doctors/presentation/controllers/doctor_search_controller.dart';
+import '../../../doctors/presentation/controllers/find_doctor_controller.dart';
 import '../../../home/domain/usecases/home_usecases.dart';
 import '../../../home/presentation/controllers/home_controller.dart';
 import '../../../pharmacy/presentation/controllers/pharmacy_controller.dart';
@@ -20,12 +19,7 @@ class MainBinding extends Bindings {
       ..put(MainNavController())
       ..put(HomeController(getHomeFeed: Get.find<GetHomeFeed>()))
       ..put(AppointmentsController())
-      ..put(
-        DoctorSearchController(
-          searchDoctors: Get.find<SearchDoctors>(),
-          getSpecialties: Get.find<GetSpecialties>(),
-        ),
-      )
+      ..put(FindDoctorController())
       ..put(PharmacyController());
   }
 }

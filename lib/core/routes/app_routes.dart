@@ -30,6 +30,7 @@ abstract class AppRoutes {
 
   // ─── Discovery ───────────────────────────────────────────────────────────
   static const String search = '/search';
+  static const String doctorList = '/doctor-list';
   static const String doctorDetails = '/doctor-details';
 
   // ─── Booking ─────────────────────────────────────────────────────────────

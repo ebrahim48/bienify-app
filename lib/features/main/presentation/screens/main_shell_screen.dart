@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../appointments/presentation/screens/appointments_screen.dart';
-import '../../../doctors/presentation/screens/doctors_tab_screen.dart';
+import '../../../doctors/presentation/screens/find_doctor_screen.dart';
 import '../../../home/presentation/screens/home_screen.dart';
 import '../../../pharmacy/presentation/screens/pharmacy_screen.dart';
 import '../controllers/main_nav_controller.dart';
@@ -22,7 +22,7 @@ class MainShellScreen extends GetView<MainNavController> {
   static const List<Widget> _tabs = [
     HomeScreen(),
     AppointmentsScreen(),
-    DoctorsTabScreen(),
+    FindDoctorScreen(),
     PharmacyScreen(),
   ];
 
