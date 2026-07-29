@@ -43,6 +43,10 @@ abstract class AppRoutes {
   static const String paymentPending = '/payment-pending';
   static const String paymentConfirmed = '/payment-confirmed';
 
+  // ─── Consultation ────────────────────────────────────────────────────────
+  static const String videoCall = '/video-call';
+  static const String consultationHistory = '/consultation-history';
+
   // ─── Messaging ───────────────────────────────────────────────────────────
   static const String chat = '/chat';
 }

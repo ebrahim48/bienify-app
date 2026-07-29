@@ -17,6 +17,16 @@ class AppAssets {
   static const String onboardingConsult = '$_images/consult.png';
   static const String onboardingMedicine = '$_images/medicinedelivered.png';
 
+  // ─── Appointments & consultation ─────────────────────────────────────────
+  /// Illustration on the "Need Care?" banner.
+  static const String appointmentCouple = '$_images/appointmentcouple.png';
+
+  /// Remote party's video feed during a consultation.
+  static const String doctorVideo = '$_images/doctorimage.png';
+
+  /// The patient's own picture-in-picture feed.
+  static const String clientVideo = '$_images/client.png';
+
   // ─── People ──────────────────────────────────────────────────────────────
   /// Fallback headshot for doctors, used wherever a profile photo is missing.
   static const String doctorPlaceholder = '$_images/profile.png';

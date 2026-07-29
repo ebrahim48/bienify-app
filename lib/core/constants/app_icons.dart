@@ -36,6 +36,10 @@ class AppIcons {
   /// Sliders glyph on the doctor-list app bar.
   static const String filter = '$_path/pricerange.svg';
 
+  /// Finished 80pt badge — a green disc with a check — for the consultation
+  /// summary. Draw it untinted; recolouring flattens the whole mark.
+  static const String consultationComplete = '$_path/consultationhistory.svg';
+
   static const String camera = '$_path/camera.svg';
   static const String wallet = '$_path/wallet.svg';
   static const String send = '$_path/send.svg';

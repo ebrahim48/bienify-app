@@ -247,6 +247,41 @@ class AppTranslations extends Translations {
     AppStrings.typeYourMessage: 'Type your message...',
 
     // Appointments
+    AppStrings.needCare: 'Need Care?',
+    AppStrings.needCareBody: 'You Don’t have an upcoming appointments',
+    AppStrings.bookAppointmentCta: 'Book Appointment',
+    AppStrings.appointmentHistory: 'Appointment History',
+    AppStrings.upcomingAppointmentsTab: 'Upcoming Appointments',
+    AppStrings.pastAppointmentsTab: 'Past Appointments',
+    AppStrings.cancelledAppointmentTab: 'Cancelled Appointment',
+    AppStrings.today: 'Today',
+    AppStrings.joinVisit: 'Join Visit',
+    AppStrings.bookAgain: 'Book Again',
+    AppStrings.review: 'Review',
+    AppStrings.reschedule: 'Reschedule',
+    AppStrings.cancelAppointment: 'Cancel Booking',
+    AppStrings.cancelReason: 'Cancel Reason',
+    AppStrings.cancelReasonHint:
+        'I am not available in this time because I am busy my personal '
+        'problem. if you want reschedule again please click reschedule now',
+    AppStrings.cancelNow: 'Cancel Now',
+    AppStrings.appointmentCancelled: 'Appointment cancelled',
+    AppStrings.howWasYourExperience: 'How was Your Experience?',
+    AppStrings.submitReview: 'Submit Review',
+    AppStrings.reviewSubmitted: 'Thanks for your review',
+    AppStrings.noAppointmentsInTab: 'Nothing here yet',
+
+    // Video consultation
+    AppStrings.goodConnection: 'Good Connection',
+    AppStrings.doctorVideoFeed: 'Doctor’s video feed',
+    AppStrings.you: 'You',
+    AppStrings.callDuration: 'Call Duration',
+    AppStrings.consultationHistory: 'Consultation History',
+    AppStrings.consultationComplete: 'Consultation Complete',
+    AppStrings.waitingForPrescriptions: 'Waiting for doctor prescriptions',
+    AppStrings.checkMedicalVault: 'Check your Medical Vault',
+    AppStrings.backToHome: 'Back to Home',
+
     AppStrings.myAppointments: 'My Appointments',
     AppStrings.upcoming: 'Upcoming',
     AppStrings.past: 'Past',
@@ -502,6 +537,41 @@ class AppTranslations extends Translations {
     AppStrings.typeYourMessage: 'Escribe tu mensaje...',
 
     // Citas
+    AppStrings.needCare: '¿Necesitas atención?',
+    AppStrings.needCareBody: 'No tienes citas próximas',
+    AppStrings.bookAppointmentCta: 'Reservar cita',
+    AppStrings.appointmentHistory: 'Historial de citas',
+    AppStrings.upcomingAppointmentsTab: 'Próximas citas',
+    AppStrings.pastAppointmentsTab: 'Citas pasadas',
+    AppStrings.cancelledAppointmentTab: 'Citas canceladas',
+    AppStrings.today: 'Hoy',
+    AppStrings.joinVisit: 'Unirse',
+    AppStrings.bookAgain: 'Reservar otra vez',
+    AppStrings.review: 'Reseñar',
+    AppStrings.reschedule: 'Reprogramar',
+    AppStrings.cancelAppointment: 'Cancelar reserva',
+    AppStrings.cancelReason: 'Motivo de cancelación',
+    AppStrings.cancelReasonHint:
+        'No estoy disponible a esta hora por un asunto personal. Si quieres '
+        'reprogramar, pulsa reprogramar ahora',
+    AppStrings.cancelNow: 'Cancelar ahora',
+    AppStrings.appointmentCancelled: 'Cita cancelada',
+    AppStrings.howWasYourExperience: '¿Qué te pareció la consulta?',
+    AppStrings.submitReview: 'Enviar reseña',
+    AppStrings.reviewSubmitted: 'Gracias por tu reseña',
+    AppStrings.noAppointmentsInTab: 'Nada por aquí todavía',
+
+    // Videoconsulta
+    AppStrings.goodConnection: 'Buena conexión',
+    AppStrings.doctorVideoFeed: 'Vídeo del médico',
+    AppStrings.you: 'Tú',
+    AppStrings.callDuration: 'Duración de la llamada',
+    AppStrings.consultationHistory: 'Historial de consulta',
+    AppStrings.consultationComplete: 'Consulta completada',
+    AppStrings.waitingForPrescriptions: 'Esperando las recetas del médico',
+    AppStrings.checkMedicalVault: 'Ver tu historial médico',
+    AppStrings.backToHome: 'Volver al inicio',
+
     AppStrings.myAppointments: 'Mis citas',
     AppStrings.upcoming: 'Próximas',
     AppStrings.past: 'Pasadas',
