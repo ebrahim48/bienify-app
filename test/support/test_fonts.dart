@@ -42,5 +42,8 @@ Future<void> settleImages(WidgetTester tester) async {
     await Future<void>.delayed(const Duration(milliseconds: 120));
   });
   await tester.pump();
-  await tester.pump();
+  // Also lets short implicit animations finish — a `Switch` toggled just
+  // before capture would otherwise be frozen at its starting position and
+  // look like it never moved.
+  await tester.pump(const Duration(milliseconds: 300));
 }

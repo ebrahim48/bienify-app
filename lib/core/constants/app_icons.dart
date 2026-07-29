@@ -18,6 +18,9 @@ class AppIcons {
   static const String profile = '$_path/profile.svg';
   static const String person = '$_path/person.svg';
   static const String shoppingBag = '$_path/shoppingbag.svg';
+
+  /// Cart glyph in the Pharmacy header.
+  static const String cart = '$_path/shopping-bag.svg';
   static const String message = '$_path/message.svg';
   static const String notification = '$_path/notification.svg';
 

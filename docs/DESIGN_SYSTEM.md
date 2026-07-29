@@ -398,6 +398,35 @@ primitives above. `DoctorListCard` is shared by the Home feed and (later) the
 search results, and fixes its action button at 100pt so long names such as
 `Dr.Sophia Martinez,MSW` never get truncated.
 
+### Pharmacy — `features/pharmacy/presentation/widgets/`
+
+| Widget | Use it for |
+| --- | --- |
+| `MedicineCard` | catalogue tile: discount ribbon, shot, name, dosage, price, Add |
+| `PharmacySectionHeader` | section title with a trailing **See all** |
+| `StoreAvatar` | circular pharmacy logo + name |
+| `QuantityStepper` | `− n +` control, shared by the cart and the picker |
+| `LocationDialog` | address sheet; `isEditing` switches Add ↔ Change |
+
+`MedicineCard` puts its price pair inside a `FittedBox(scaleDown)` because
+three items in a ~95pt grid cell will otherwise ellipsize the price itself
+into `"$…"`. Header rows that pair a store name with an ETA do the same.
+
+### Reuse by condition, not by copy
+
+Three screens serve two flows each, selected by what they are handed rather
+than by a second implementation:
+
+| Screen | Also used for | Switch |
+| --- | --- | --- |
+| `ChatScreen` | the delivery rider | `ConversationPeer` |
+| `ReviewDialog` | rating a delivery | caller |
+| `PaymentSummaryScreen` | booking from the Doctors tab | the doctor passed in |
+| `PaymentMethodTile` | pharmacy checkout | the method list passed in |
+
+When a new flow needs one of these, pass it different data — do not fork
+the screen.
+
 ### One screen, two flows
 
 `PhoneNumberScreen` and `OtpScreen` each appear twice in the designs. Rather

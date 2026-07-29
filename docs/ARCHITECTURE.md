@@ -34,8 +34,19 @@ lib/
     ├── appointments/              bookings list, shared AppointmentCard
     ├── booking/                   payment summary + confirmation
     ├── chat/                      message threads
-    └── pharmacy/                  medicine catalogue
+    └── pharmacy/                  catalogue, prescription, cart, tracking
 ```
+
+### UI-first features
+
+`booking`'s cash flow, `appointments` and `pharmacy` were built
+presentation-first by request: screens, controllers and widgets are
+complete, `domain` holds **entity names only**, and `data` holds a static
+mock file. There is no repository, use case or data source under them, and
+nothing calls an API — those arrive when the screens are wired to a
+backend. Everything else in this document still applies, including the
+dependency rule: the controllers already talk to `domain` types, so adding
+a repository later is an addition rather than a rewrite.
 
 **Entities live with the feature that owns them**, and other features import
 them: `Doctor` in `doctors`, `Appointment` in `appointments`. That is why
@@ -163,6 +174,25 @@ onboarding ─┬─ Google / Apple ─▶ profileSetup | home
                                └─ Sign Up Now ─▶ phoneNumber ─▶ otp(signUp)
 ```
 
+The pharmacy tab has two entry points into the same basket:
+
+```
+pharmacy ─┬─ Add (catalogue) ──────────────────────▶ pharmacyCart
+          └─ Upload Prescription ─▶ bestMatches ─▶ selectMedicines
+                                                        └─▶ pharmacyCart
+
+pharmacyCart ─▶ pharmacyPayment ─▶ pharmacyOrder ─┬─ Back to Home ─▶ home
+                                                  └─ Track Now ─▶ liveTracking
+                                                        ├─ chat(rider) ─┐
+                                                        └─▶ deliveryFeedback
+                                                              └─ review ─▶ home
+```
+
+`liveTracking`'s chat button opens the existing `ChatScreen` with the rider
+as its `ConversationPeer` — the courier thread is the doctor thread with a
+different peer, not a second screen. `deliveryFeedback` likewise opens the
+appointments `ReviewDialog`, so both flows rate through one blurred popup.
+
 ## Localization
 
 The `En | Spa` toggle is real, not decorative.
@@ -247,9 +277,16 @@ Obx(() {
 ```
 
 This bug is silent — state updates, assertions on the controller pass, and
-the pixels never change. It has bitten this codebase four times (nav badge,
-specialty chips, availability slots, pharmacy cart). When a tap "does
-nothing", check this first.
+the pixels never change. It has bitten this codebase eight times: the nav
+badge, specialty chips, availability slots, the pharmacy cart, the
+appointments tab chips and history, the select-medicines checkout bar, the
+payment address card, and the order-status panel and timeline. When a tap
+"does nothing", check this first.
+
+Two of those were caught only by rendering goldens — the availability-slot
+one surfaced because two goldens that should have differed came out
+pixel-identical. Assertions on the controller pass either way, so the
+golden is the test that actually detects this class of bug.
 
 ## Layout traps this codebase has already hit
 
@@ -261,6 +298,17 @@ nothing", check this first.
   padding only.
 * `IntrinsicHeight` cannot measure a `Row` of `Expanded` children; give the
   row a fixed height instead.
+* **A fixed `.h` height around `.sp` text overflows.** `.h` scales with
+  screen height and `.sp` with the text scale factor — they do not move
+  together, so a box tuned on one device clips on another. This produced
+  two reported overflows (`DoctorInfoGrid`, `NeedCareBanner`). Use
+  `ConstrainedBox(minHeight:)` or no height at all, and regression-test at
+  320pt with 1.2× text scaling.
+* **Three items in a narrow row collapse to `"$…"`.** `MedicineCard`'s
+  price pair is wrapped in a `FittedBox(scaleDown)` so it shrinks rather
+  than ellipsizing; the same applies to store names in header rows.
+* `Spacer()` inside a **scrolling** `Column` has no free space to take —
+  the delivery-feedback screen uses a fixed gap.
 
 ## Known seams
 
@@ -274,8 +322,10 @@ nothing", check this first.
   the gateway call replaces that one `Future.delayed`.
 - **Chat** is local: `ChatController.send` appends the outgoing bubble and
   schedules a canned reply. Swap for a socket or polling data source.
-- **Pharmacy** ships without a design, so its catalogue and card layout are a
-  reasonable default built from the existing card language.
+- **Pharmacy** is UI-only end to end: the catalogue, the prescription match,
+  the basket and the order timeline all read `PharmacyMockData`. Live
+  tracking draws a real `GoogleMap` but animates a canned polyline —
+  `OrderTrackingController` is where a courier feed plugs in.
 - The **Doctor Details hero** uses the bundled circular headshot; drop a
   cut-out portrait in and point `DoctorHero.portraitAsset` at it.
 - `attach.svg` and `upload.svg` are **named for the opposite of their
@@ -284,7 +334,7 @@ nothing", check this first.
 - **Social sign-in** posts an empty `idToken`;
   `AuthRepositoryImpl.signInWithProvider` is where `google_sign_in` /
   `sign_in_with_apple` plugs in.
-- **"Join as a Doctor"** shows a "coming soon" notice — it is a separate
-  provider-facing journey.
+- **"Join as a Doctor"** enters the same phone-first registration; the extra
+  credentialing steps hang off the profile flow once designed.
 - The Apple button reads **"Sign in with Apple"**; the mock-up's "Sing in with
   Apple" is a typo and was not reproduced.

@@ -21,12 +21,16 @@ class DoctorSearchField extends StatelessWidget {
     required this.onChanged,
     this.autofocus = false,
     this.onSubmitted,
+    this.hintKey = AppStrings.searchSpecialty,
   });
 
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final bool autofocus;
   final ValueChanged<String>? onSubmitted;
+
+  /// Translation key for the placeholder; Pharmacy passes its own.
+  final String hintKey;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +49,7 @@ class DoctorSearchField extends StatelessWidget {
           isDense: true,
           filled: true,
           fillColor: AppColors.transparent,
-          hintText: AppStrings.searchSpecialty.tr,
+          hintText: hintKey.tr,
           hintStyle: AppTextStyles.bodyLarge.rc(AppColors.fieldHint),
           contentPadding: EdgeInsets.symmetric(vertical: AppSpacing.sm.h),
           prefixIcon: Padding(

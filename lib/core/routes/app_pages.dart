@@ -25,6 +25,15 @@ import '../../features/doctors/presentation/screens/doctor_list_screen.dart';
 import '../../features/doctors/presentation/screens/doctor_search_screen.dart';
 import '../../features/main/presentation/bindings/main_binding.dart';
 import '../../features/main/presentation/screens/main_shell_screen.dart';
+import '../../features/pharmacy/presentation/bindings/pharmacy_bindings.dart';
+import '../../features/pharmacy/presentation/screens/best_matches_screen.dart';
+import '../../features/pharmacy/presentation/screens/delivery_feedback_screen.dart';
+import '../../features/pharmacy/presentation/screens/live_tracking_screen.dart';
+import '../../features/pharmacy/presentation/screens/order_status_screen.dart';
+import '../../features/pharmacy/presentation/screens/pharmacy_cart_screen.dart';
+import '../../features/pharmacy/presentation/screens/pharmacy_payment_screen.dart';
+import '../../features/pharmacy/presentation/screens/select_medicines_screen.dart';
+import '../../features/pharmacy/presentation/screens/upload_prescription_screen.dart';
 import '../../features/onboarding/presentation/screens/location_permission_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/splash/presentation/screens/splash_screen.dart';
@@ -196,6 +205,61 @@ abstract class AppPages {
       name: AppRoutes.paymentConfirmed,
       page: () => const PaymentConfirmedScreen(),
       binding: PaymentConfirmedBinding(),
+      transition: Transition.fadeIn,
+    ),
+
+    // ─── Pharmacy ──────────────────────────────────────────────────────────
+    GetPage(
+      name: AppRoutes.uploadPrescription,
+      page: () => const UploadPrescriptionScreen(),
+      binding: PrescriptionBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.pharmacyMatches,
+      page: () => const BestMatchesScreen(),
+      binding: PrescriptionBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.selectMedicines,
+      page: () => const SelectMedicinesScreen(),
+      binding: SelectMedicinesBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.pharmacyCart,
+      page: () => const PharmacyCartScreen(),
+      binding: PharmacyCartBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.pharmacyPayment,
+      page: () => const PharmacyPaymentScreen(),
+      binding: PharmacyCartBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.pharmacyOrder,
+      page: () => const OrderStatusScreen(),
+      binding: OrderTrackingBinding(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: AppRoutes.liveTracking,
+      page: () => const LiveTrackingScreen(),
+      binding: OrderTrackingBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.deliveryFeedback,
+      page: () => const DeliveryFeedbackScreen(),
       transition: Transition.fadeIn,
     ),
 

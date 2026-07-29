@@ -27,6 +27,13 @@ class AppAssets {
   /// The patient's own picture-in-picture feed.
   static const String clientVideo = '$_images/client.png';
 
+  // ─── Pharmacy ────────────────────────────────────────────────────────────
+  /// Product shot on catalogue tiles.
+  static const String medicine = '$_images/medicine.png';
+
+  /// Courier photo on the delivery feedback screen.
+  static const String deliveryFeedback = '$_images/feedback.png';
+
   // ─── People ──────────────────────────────────────────────────────────────
   /// Fallback headshot for doctors, used wherever a profile photo is missing.
   static const String doctorPlaceholder = '$_images/profile.png';
