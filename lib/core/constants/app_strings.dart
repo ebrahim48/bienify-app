@@ -282,13 +282,77 @@ class AppStrings {
   static const String findADoctor = 'find_a_doctor';
   static const String joinOpensSoon = 'join_opens_soon';
 
-  // ─── Pharmacy tab ────────────────────────────────────────────────────────
+  // ─── Pharmacy ────────────────────────────────────────────────────────────
   static const String pharmacyTitle = 'pharmacy_title';
-  static const String pharmacySubtitle = 'pharmacy_subtitle';
-  static const String addToCart = 'add_to_cart';
+  static const String uploadPrescription = 'upload_prescription';
+  static const String searchMedicines = 'search_medicines';
+  static const String commonMedicines = 'common_medicines';
+  static const String dermatologistCategories = 'dermatologist_categories';
+  static const String storesNearYou = 'stores_near_you';
+  static const String add = 'add';
   static const String addedToCart = 'added_to_cart';
-  static const String inStock = 'in_stock';
-  static const String outOfStock = 'out_of_stock';
+  static const String percentOff = 'percent_off';
+
+  static const String dropPrescriptionHere = 'drop_prescription_here';
+  static const String prescriptionFileTypes = 'prescription_file_types';
+  static const String browseFile = 'browse_file';
+
+  static const String bestMatches = 'best_matches';
+  static const String prescriptionOf = 'prescription_of';
+  static const String medicinesIdentified = 'medicines_identified';
+  static const String searchingNear = 'searching_near';
+  static const String pharmaciesFound = 'pharmacies_found';
+  static const String availableCount = 'available_count';
+  static const String customizeMyOrder = 'customize_my_order';
+
+  static const String selectMedicines = 'select_medicines';
+  static const String change = 'change';
+  static const String medicinesAvailable = 'medicines_available';
+  static const String deselectAll = 'deselect_all';
+  static const String selectAll = 'select_all';
+  static const String notAvailable = 'not_available';
+  static const String selectedCount = 'selected_count';
+  static const String addToCart = 'add_to_cart';
+
+  static const String yourCard = 'your_card';
+  static const String deliveryFrom = 'delivery_from';
+  static const String addOrRemoveMedicines = 'add_or_remove_medicines';
+  static const String pickupYourself = 'pickup_yourself';
+  static const String orderSummary = 'order_summary';
+  static const String subtotalItems = 'subtotal_items';
+  static const String deliveryFee = 'delivery_fee';
+  static const String walletCredit = 'wallet_credit';
+  static const String total = 'total';
+  static const String proceedToPayment = 'proceed_to_payment';
+
+  static const String payment = 'payment';
+  static const String orderHeadline = 'order_headline';
+  static const String deliveryAddress = 'delivery_address';
+  static const String addLocation = 'add_location';
+  static const String changeLocation = 'change_location';
+  static const String uploadDoorImage = 'upload_door_image';
+  static const String enterNote = 'enter_note';
+  static const String updateLocation = 'update_location';
+  static const String placeOrder = 'place_order';
+  static const String securedNote = 'secured_note';
+
+  static const String beingPrepared = 'being_prepared';
+  static const String beingPreparedBody = 'being_prepared_body';
+  static const String stepOf = 'step_of';
+  static const String estimatedDelivery2 = 'estimated_delivery_2';
+  static const String orderProgress = 'order_progress';
+  static const String trackNow = 'track_now';
+
+  static const String help = 'help';
+  static const String stepsLeft = 'steps_left';
+  static const String pickUpFrom = 'pick_up_from';
+  static const String deliverTo = 'deliver_to';
+
+  static const String feedback = 'feedback';
+  static const String contactlessDelivered = 'contactless_delivered';
+  static const String couriersResponsible = 'couriers_responsible';
+  static const String writeOrderFeedback = 'write_order_feedback';
+  static const String skipToOrderFeedback = 'skip_to_order_feedback';
 
   // ─── Feedback ────────────────────────────────────────────────────────────
   static const String otpResent = 'otp_resent';

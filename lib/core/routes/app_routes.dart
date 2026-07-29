@@ -43,6 +43,16 @@ abstract class AppRoutes {
   static const String paymentPending = '/payment-pending';
   static const String paymentConfirmed = '/payment-confirmed';
 
+  // ─── Pharmacy ────────────────────────────────────────────────────────────
+  static const String uploadPrescription = '/upload-prescription';
+  static const String pharmacyMatches = '/pharmacy-matches';
+  static const String selectMedicines = '/select-medicines';
+  static const String pharmacyCart = '/pharmacy-cart';
+  static const String pharmacyPayment = '/pharmacy-payment';
+  static const String pharmacyOrder = '/pharmacy-order';
+  static const String liveTracking = '/live-tracking';
+  static const String deliveryFeedback = '/delivery-feedback';
+
   // ─── Consultation ────────────────────────────────────────────────────────
   static const String videoCall = '/video-call';
   static const String consultationHistory = '/consultation-history';

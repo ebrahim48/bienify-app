@@ -10,197 +10,290 @@ import '../../../../core/theme/app_sizes.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/responsive.dart';
-import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/app_svg_icon.dart';
-import '../../../../core/widgets/app_tag.dart';
-import '../../domain/entities/medicine.dart';
+import '../../../doctors/presentation/widgets/doctor_search_field.dart';
+import '../../domain/entities/pharmacy.dart';
 import '../controllers/pharmacy_controller.dart';
+import '../widgets/medicine_card.dart';
 
-/// Pharmacy tab: browse and add medicines to the cart.
+/// Pharmacy tab: prescription upload, medicine search, two catalogue
+/// sections and the nearby stores strip.
 class PharmacyScreen extends GetView<PharmacyController> {
   const PharmacyScreen({super.key});
+
+  /// Three tiles per row, with 8pt gutters.
+  static const int _columns = 3;
+  static const double _gutter = AppSpacing.xs;
 
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      scrollable: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppSpacing.gapV(AppSpacing.xl),
-          Text(
-            AppStrings.pharmacyTitle.tr,
-            style: AppTextStyles.titleLarge.rc(AppColors.black),
+          AppSpacing.gapV(AppSpacing.md),
+          _Header(controller: controller),
+          AppSpacing.gapV(AppSpacing.base),
+          _UploadButton(onTap: controller.openUpload),
+          AppSpacing.gapV(AppSpacing.base),
+          DoctorSearchField(
+            controller: controller.searchController,
+            onChanged: (_) {},
+            hintKey: AppStrings.searchMedicines,
           ),
-          AppSpacing.gapV(AppSpacing.xs2),
-          Text(
-            AppStrings.pharmacySubtitle.tr,
-            style: AppTextStyles.bodyMedium.rc(AppColors.textSecondary),
+          AppSpacing.gapV(AppSpacing.sm),
+          Obx(
+            () => _Chips(
+              chips: controller.chips.toList(),
+              selected: controller.selectedChip.value,
+              onSelected: controller.selectChip,
+            ),
           ),
           AppSpacing.gapV(AppSpacing.base),
-          Expanded(
-            child: Obx(() {
-              if (controller.isLoading.value) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              // Both observables are read here rather than inside
-              // `itemBuilder`, which runs lazily outside the `Obx` scope —
-              // otherwise adding to the cart would never repaint the row.
-              final medicines = controller.medicines.toList();
-              final cart = controller.cart.toSet();
-
-              return ListView.separated(
-                physics: const ClampingScrollPhysics(),
-                padding: EdgeInsets.only(bottom: AppSpacing.lg.h),
-                itemCount: medicines.length,
-                separatorBuilder: (_, _) => AppSpacing.gapV(AppSpacing.sm),
-                itemBuilder: (context, index) {
-                  final medicine = medicines[index];
-                  return _MedicineCard(
-                    medicine: medicine,
-                    isInCart: cart.contains(medicine.id),
-                    onAdd: () => controller.addToCart(medicine),
-                  );
-                },
-              );
-            }),
+          PharmacySectionHeader(
+            title: AppStrings.commonMedicines.tr,
+            onSeeAll: controller.seeAll,
           ),
+          AppSpacing.gapV(AppSpacing.xs),
+          Obx(() => _Grid(medicines: controller.commonMedicines.toList(),
+              onAdd: controller.addToCart)),
+          AppSpacing.gapV(AppSpacing.md),
+          PharmacySectionHeader(
+            title: AppStrings.dermatologistCategories.tr,
+            onSeeAll: controller.seeAll,
+          ),
+          AppSpacing.gapV(AppSpacing.xs),
+          Obx(() => _Grid(medicines: controller.dermatologyMedicines.toList(),
+              onAdd: controller.addToCart)),
+          AppSpacing.gapV(AppSpacing.md),
+          PharmacySectionHeader(
+            title: AppStrings.storesNearYou.tr,
+            onSeeAll: controller.seeAll,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          Obx(() => _Stores(stores: controller.stores.toList(),
+              onTap: controller.openStore)),
+          AppSpacing.gapV(AppSpacing.md),
         ],
       ),
     );
   }
 }
 
-class _MedicineCard extends StatelessWidget {
-  const _MedicineCard({
-    required this.medicine,
-    required this.isInCart,
-    required this.onAdd,
-  });
+class _Header extends StatelessWidget {
+  const _Header({required this.controller});
 
-  final Medicine medicine;
-  final bool isInCart;
-  final VoidCallback onAdd;
-
-  static const double _badge = 48;
+  final PharmacyController controller;
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      padding: EdgeInsets.all(AppSpacing.sm.w),
-      child: Row(
-        children: [
-          Container(
-            width: _badge.w,
-            height: _badge.w,
-            decoration: const BoxDecoration(
-              color: AppColors.accentSurface,
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: AppSvgIcon(
-              AppIcons.pharmacy,
-              size: AppSizes.xl2,
-              color: AppColors.primary600,
-            ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          AppStrings.pharmacyTitle.tr,
+          style: AppTextStyles.headlineMedium.rc(AppColors.authInk),
+        ),
+        Obx(
+          () => _CartAction(
+            count: controller.cartCount.value,
+            onTap: controller.openCart,
           ),
-          AppSpacing.gapH(AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  medicine.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.labelLarge.rc(AppColors.authInk),
-                ),
-                AppSpacing.gapV(AppSpacing.xxs),
-                Text(
-                  medicine.dosage,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.bodySmall.rc(AppColors.textSecondary),
-                ),
-                AppSpacing.gapV(AppSpacing.xs2),
-                Row(
-                  children: [
-                    Text(
-                      medicine.priceLabel,
-                      style: AppTextStyles.labelLarge.rc(
-                        AppColors.primary600,
-                      ),
-                    ),
-                    AppSpacing.gapH(AppSpacing.xs),
-                    AppTag(
-                      medicine.isInStock
-                          ? AppStrings.inStock.tr
-                          : AppStrings.outOfStock.tr,
-                      tone: medicine.isInStock
-                          ? AppTagTone.success
-                          : AppTagTone.pending,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          AppSpacing.gapH(AppSpacing.xs),
-          _AddButton(
-            isInCart: isInCart,
-            isEnabled: medicine.isInStock,
-            onTap: onAdd,
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
-class _AddButton extends StatelessWidget {
-  const _AddButton({
-    required this.isInCart,
-    required this.isEnabled,
-    required this.onTap,
-  });
+class _CartAction extends StatelessWidget {
+  const _CartAction({required this.count, required this.onTap});
 
-  final bool isInCart;
-  final bool isEnabled;
+  final int count;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final background = !isEnabled
-        ? AppColors.gray100
-        : isInCart
-        ? AppColors.success
-        : AppColors.actionFill;
-
-    return Material(
-      color: background,
-      borderRadius: AppRadius.rLg,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: isEnabled && !isInCart ? onTap : null,
-        child: Container(
-          height: AppSizes.xl3.h,
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm.w),
-          alignment: Alignment.center,
-          child: isInCart
-              ? Icon(
-                  Icons.check_rounded,
-                  size: AppSizes.xl.w,
-                  color: AppColors.white,
-                )
-              : Text(
-                  AppStrings.addToCart.tr,
-                  style: AppTextStyles.bodySmall.rc(
-                    isEnabled ? AppColors.actionLabel : AppColors.gray400,
+    return InkResponse(
+      onTap: onTap,
+      radius: AppSizes.xl2.r,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          AppSvgIcon(AppIcons.cart, color: AppColors.authInk),
+          if (count > 0)
+            Positioned(
+              top: -6.h,
+              right: -6.w,
+              child: Container(
+                constraints: BoxConstraints(minWidth: AppSizes.lg.w),
+                height: AppSizes.lg.w,
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.xs2.w),
+                decoration: BoxDecoration(
+                  color: AppColors.badge,
+                  borderRadius: AppRadius.rFull,
+                ),
+                alignment: Alignment.center,
+                child: FittedBox(
+                  child: Text(
+                    count > 9 ? '9+' : '$count',
+                    style: AppTextStyles.labelSmall.rw(
+                      AppColors.white,
+                      FontWeight.w700,
+                    ),
                   ),
                 ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UploadButton extends StatelessWidget {
+  const _UploadButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Material(
+        color: AppColors.actionFill,
+        borderRadius: AppRadius.rLg,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.base.w,
+              vertical: AppSpacing.sm.h,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppSvgIcon(
+                  AppIcons.cloudUpload,
+                  size: AppSizes.xl,
+                  color: AppColors.actionLabel,
+                ),
+                AppSpacing.gapH(AppSpacing.xs),
+                Text(
+                  AppStrings.uploadPrescription.tr,
+                  style: AppTextStyles.titleSmall.rc(AppColors.actionLabel),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Chips extends StatelessWidget {
+  const _Chips({
+    required this.chips,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final List<String> chips;
+  final String selected;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: AppSpacing.xs.w,
+      runSpacing: AppSpacing.xs.h,
+      children: [
+        for (final chip in chips)
+          Material(
+            color: chip == selected
+                ? AppColors.actionFill
+                : AppColors.surface,
+            borderRadius: AppRadius.rFull,
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () => onSelected(chip),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.base.w,
+                  vertical: AppSpacing.xs.h,
+                ),
+                child: Text(
+                  chip,
+                  style: AppTextStyles.bodyLarge.rc(
+                    chip == selected ? AppColors.white : AppColors.gray900,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Fixed three-column grid so tiles line up regardless of label length.
+class _Grid extends StatelessWidget {
+  const _Grid({required this.medicines, required this.onAdd});
+
+  final List<Medicine> medicines;
+  final ValueChanged<Medicine> onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final gutter = PharmacyScreen._gutter.w;
+        final itemWidth =
+            (constraints.maxWidth - gutter * (PharmacyScreen._columns - 1)) /
+            PharmacyScreen._columns;
+
+        return Wrap(
+          spacing: gutter,
+          runSpacing: gutter,
+          children: [
+            for (final medicine in medicines)
+              SizedBox(
+                width: itemWidth,
+                child: MedicineCard(
+                  medicine: medicine,
+                  onAdd: () => onAdd(medicine),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _Stores extends StatelessWidget {
+  const _Stores({required this.stores, required this.onTap});
+
+  final List<PharmacyStore> stores;
+  final ValueChanged<PharmacyStore> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 96.h,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const ClampingScrollPhysics(),
+        itemCount: stores.length,
+        separatorBuilder: (_, _) => AppSpacing.gapH(AppSpacing.sm),
+        itemBuilder: (context, index) => SizedBox(
+          width: 68.w,
+          child: StoreAvatar(
+            store: stores[index],
+            onTap: () => onTap(stores[index]),
+          ),
         ),
       ),
     );
