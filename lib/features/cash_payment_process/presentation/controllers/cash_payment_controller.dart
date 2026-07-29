@@ -16,9 +16,12 @@ import '../../domain/entities/cash_payment.dart';
 /// **UI-only.** Nothing here calls an API — the code and countdown come from
 /// [CashPaymentData]. Swapping in a repository later touches this file alone.
 class CashPaymentController extends GetxController {
-  CashPaymentController({String amountLabel = '\$74.89'})
-    : code = CashPaymentData.code(amountLabel: amountLabel);
+  CashPaymentController({String amountLabel = '\$74.89', PaymentCode? code})
+    : code = code ?? CashPaymentData.code(amountLabel: amountLabel);
 
+  /// The issued code. Injectable so a caller — a future repository, or a
+  /// test that needs a fixed countdown — can supply one instead of the
+  /// generated default, whose expiry is relative to `DateTime.now()`.
   final PaymentCode code;
 
   /// How often the pending screen says it re-checks.

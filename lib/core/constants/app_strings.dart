@@ -129,6 +129,19 @@ class AppStrings {
   static const String search = 'search';
   static const String filterAll = 'filter_all';
 
+  // ─── Find a doctor ───────────────────────────────────────────────────────
+  static const String findADoctorTitle = 'find_a_doctor_title';
+  static const String exploreCategories = 'explore_categories';
+  static const String findCategoryDoctors = 'find_category_doctors';
+  static const String categoryDoctorLists = 'category_doctor_lists';
+
+  // ─── Doctor filter ───────────────────────────────────────────────────────
+  static const String priceRange = 'price_range';
+  static const String rating = 'rating';
+  static const String starCount = 'star_count';
+  static const String reset = 'reset';
+  static const String apply = 'apply';
+
   // ─── Doctor details ──────────────────────────────────────────────────────
   static const String doctorDetails = 'doctor_details';
   static const String reviewsCount = 'reviews_count';

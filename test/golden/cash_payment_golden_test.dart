@@ -3,6 +3,7 @@ import 'package:bienify_app/core/di/dependency_injection.dart';
 import 'package:bienify_app/core/localization/app_translations.dart';
 import 'package:bienify_app/core/theme/app_theme.dart';
 import 'package:bienify_app/features/cash_payment_process/presentation/bindings/cash_payment_bindings.dart';
+import 'package:bienify_app/features/cash_payment_process/domain/entities/cash_payment.dart';
 import 'package:bienify_app/features/cash_payment_process/presentation/controllers/cash_payment_controller.dart';
 import 'package:bienify_app/features/cash_payment_process/presentation/controllers/payment_points_controller.dart';
 import 'package:bienify_app/features/cash_payment_process/presentation/screens/how_to_pay_screen.dart';
@@ -81,13 +82,32 @@ void main() {
     }
   }
 
-  testWidgets('How to Payment Works', (tester) async {
-    await pump(
-      tester,
-      const HowToPayScreen(),
-      binding: HowToPayBinding(),
-      arguments: '\$74.89',
+  /// Registers the shared controller with a countdown pinned to 23:55:48.
+  ///
+  /// The production code expires 24h from `DateTime.now()`, so the rendered
+  /// timer differs run to run and the golden can never match. Seeding
+  /// `secondsRemaining` after `onInit` makes it byte-identical; the periodic
+  /// tick never fires because the tests only pump 200ms.
+  CashPaymentController putFrozenController() {
+    final controller = Get.put(
+      CashPaymentController(
+        code: PaymentCode(
+          code: '#BIE12345',
+          amountLabel: '\$74.89',
+          itemsLabel: '\$74.89 · 6 medicines',
+          validFor: 24,
+          expiresAt: DateTime.now().add(const Duration(hours: 24)),
+        ),
+      ),
     );
+    controller.secondsRemaining.value = 23 * 3600 + 55 * 60 + 48;
+    return controller;
+  }
+
+  testWidgets('How to Payment Works', (tester) async {
+    putFrozenController();
+
+    await pump(tester, const HowToPayScreen());
     await settleImages(tester);
     await expectLater(
       find.byType(HowToPayScreen),
@@ -101,7 +121,7 @@ void main() {
     // Registered up front and switched to List before the first build: the
     // Map pane hosts a `GoogleMap` platform view, which cannot be created
     // under `flutter_test`.
-    Get.put(CashPaymentController());
+    putFrozenController();
     Get.put(PaymentPointsController()).showList();
 
     await pump(
@@ -134,10 +154,11 @@ void main() {
   });
 
   testWidgets('Payment Pending', (tester) async {
+    putFrozenController();
+
     await pump(
       tester,
       const PaymentPendingScreen(),
-      binding: PaymentPendingBinding(),
       size: const Size(390, 900),
     );
     await settleImages(tester);

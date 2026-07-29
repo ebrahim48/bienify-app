@@ -132,6 +132,19 @@ class AppTranslations extends Translations {
     AppStrings.search: 'Search',
     AppStrings.filterAll: 'All',
 
+    // Find a doctor
+    AppStrings.findADoctorTitle: 'Find a doctor',
+    AppStrings.exploreCategories: 'Explore Categories',
+    AppStrings.findCategoryDoctors: 'Find @category Doctors',
+    AppStrings.categoryDoctorLists: '@category Doctor lists',
+
+    // Doctor filter
+    AppStrings.priceRange: 'Price range',
+    AppStrings.rating: 'Rating',
+    AppStrings.starCount: '@count Star',
+    AppStrings.reset: 'Reset',
+    AppStrings.apply: 'Apply',
+
     // Doctor details
     AppStrings.doctorDetails: 'Doctor Details',
     AppStrings.reviewsCount: '(@count reviews)',
@@ -374,6 +387,19 @@ class AppTranslations extends Translations {
     // Búsqueda
     AppStrings.search: 'Buscar',
     AppStrings.filterAll: 'Todos',
+
+    // Buscar un médico
+    AppStrings.findADoctorTitle: 'Busca un médico',
+    AppStrings.exploreCategories: 'Explorar categorías',
+    AppStrings.findCategoryDoctors: 'Buscar médicos de @category',
+    AppStrings.categoryDoctorLists: 'Médicos de @category',
+
+    // Filtro
+    AppStrings.priceRange: 'Rango de precio',
+    AppStrings.rating: 'Valoración',
+    AppStrings.starCount: '@count estrellas',
+    AppStrings.reset: 'Restablecer',
+    AppStrings.apply: 'Aplicar',
 
     // Detalles del médico
     AppStrings.doctorDetails: 'Detalles del médico',

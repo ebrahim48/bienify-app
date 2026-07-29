@@ -5,9 +5,12 @@ import '../../../appointments/domain/entities/appointment.dart';
 import '../../../chat/data/static/chat_mock_data.dart';
 import '../../../chat/domain/entities/conversation.dart';
 import '../../../chat/presentation/controllers/chat_controller.dart';
+import '../../data/static/doctor_mock_data.dart';
 import '../../domain/entities/doctor.dart';
+import '../../domain/entities/doctor_category.dart';
 import '../../domain/usecases/doctor_usecases.dart';
 import '../controllers/doctor_details_controller.dart';
+import '../controllers/doctor_list_controller.dart';
 import '../controllers/doctor_search_controller.dart';
 
 /// Route bindings for discovery, booking and messaging.
@@ -22,6 +25,19 @@ class DoctorSearchBinding extends Bindings {
       DoctorSearchController(
         searchDoctors: Get.find<SearchDoctors>(),
         getSpecialties: Get.find<GetSpecialties>(),
+      ),
+    );
+  }
+}
+
+class DoctorListBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.put(
+      DoctorListController(
+        category: Get.arguments is DoctorCategory
+            ? Get.arguments as DoctorCategory
+            : DoctorMockData.generalCategory,
       ),
     );
   }

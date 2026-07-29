@@ -1,3 +1,4 @@
+import '../../domain/entities/doctor_category.dart';
 import '../../domain/entities/doctor_details.dart';
 import '../models/doctor_model.dart';
 
@@ -46,6 +47,30 @@ class DoctorMockData {
       reviewCount: 95,
       consultationFee: 280,
     ),
+  ];
+
+  /// The catch-all shown full-width at the top of "Find a doctor", and the
+  /// default selection.
+  static const DoctorCategory generalCategory = DoctorCategory(
+    id: 'general',
+    name: 'General',
+  );
+
+  /// The specialty grid beneath it.
+  ///
+  /// The design repeats "Orology"/"Oncology" to fill the grid; real
+  /// specialties are used here instead, and "Urology" is spelled correctly.
+  static const List<DoctorCategory> categories = [
+    DoctorCategory(id: 'internal-medicine', name: 'Internal Medicine'),
+    DoctorCategory(id: 'neuromedicine', name: 'Neuromedicine'),
+    DoctorCategory(id: 'general-physician', name: 'General Physician'),
+    DoctorCategory(id: 'gastroenterology', name: 'Gastroenterology'),
+    DoctorCategory(id: 'urology', name: 'Urology'),
+    DoctorCategory(id: 'oncology', name: 'Oncology'),
+    DoctorCategory(id: 'cardiology', name: 'Cardiology'),
+    DoctorCategory(id: 'dermatology', name: 'Dermatology'),
+    DoctorCategory(id: 'pediatrics', name: 'Pediatrics'),
+    DoctorCategory(id: 'orthopedics', name: 'Orthopedics'),
   ];
 
   /// Filter chips on the search screen; the UI prepends "All".
