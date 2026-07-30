@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/base/base_controller.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/utils/app_navigator.dart';
 import '../../../../core/utils/validators.dart';
 import '../../domain/usecases/email_auth_usecases.dart';
 
@@ -39,7 +40,7 @@ class LoginController extends GetxController
         email: emailController.text.trim(),
         password: passwordController.text,
       );
-      Get.offAllNamed<void>(
+      AppNavigator.resetTo(
         session.requiresProfileSetup ? AppRoutes.profileSetup : AppRoutes.home,
       );
     });

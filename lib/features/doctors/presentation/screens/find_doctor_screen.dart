@@ -35,8 +35,8 @@ class FindDoctorScreen extends GetView<FindDoctorController> {
           ),
           AppSpacing.gapV(AppSpacing.base),
           DoctorSearchField(
-            controller: controller.queryController,
-            onChanged: (_) {},
+            initialText: controller.query.value,
+            onChanged: (value) => controller.query.value = value,
             onSubmitted: controller.onQuerySubmitted,
           ),
           AppSpacing.gapV(AppSpacing.lg),

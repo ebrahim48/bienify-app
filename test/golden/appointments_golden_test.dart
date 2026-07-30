@@ -77,9 +77,19 @@ void main() {
     await tester.pump();
   }
 
+  /// "Today" for every render in this file.
+  ///
+  /// Without pinning it, the first card's date line comes from the wall clock
+  /// and the golden stops matching at the next midnight.
+  DateTime fixedNow() => DateTime(2026, 2, 20, 9);
+
   /// Opens the shell on the Appointments tab with its roster loaded.
   Future<AppointmentsController> openTab(WidgetTester tester) async {
-    await pump(tester, const MainShellScreen(), binding: MainBinding());
+    await pump(
+      tester,
+      const MainShellScreen(),
+      binding: MainBinding(clock: fixedNow),
+    );
     Get.find<MainNavController>().select(1);
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
@@ -119,7 +129,7 @@ void main() {
     await pump(
       tester,
       const MainShellScreen(),
-      binding: MainBinding(),
+      binding: MainBinding(clock: fixedNow),
       size: const Size(320, 900),
     );
     Get.find<MainNavController>().select(1);

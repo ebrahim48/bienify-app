@@ -5,6 +5,7 @@ class ConversationPeer {
     required this.name,
     required this.specialty,
     this.photoUrl,
+    this.photoAsset,
     this.isOnline = false,
   });
 
@@ -12,6 +13,11 @@ class ConversationPeer {
   final String name;
   final String specialty;
   final String? photoUrl;
+
+  /// Bundled headshot to fall back to when [photoUrl] is absent or fails.
+  /// The rider thread sets it so the courier is not shown a doctor's photo.
+  final String? photoAsset;
+
   final bool isOnline;
 }
 

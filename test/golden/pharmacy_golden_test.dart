@@ -17,6 +17,7 @@ import 'package:bienify_app/features/pharmacy/presentation/screens/pharmacy_paym
 import 'package:bienify_app/features/pharmacy/presentation/screens/select_medicines_screen.dart';
 import 'package:bienify_app/features/pharmacy/presentation/screens/upload_prescription_screen.dart';
 import 'package:bienify_app/features/pharmacy/presentation/widgets/location_dialog.dart';
+import 'package:bienify_app/features/pharmacy/presentation/widgets/medicine_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -109,6 +110,55 @@ void main() {
     await expectLater(
       find.byType(MainShellScreen),
       matchesGoldenFile('pharmacy_tab.png'),
+    );
+  });
+
+  testWidgets('Stores Near You survives a narrow device with large text', (
+    tester,
+  ) async {
+    // The store row used to sit in a fixed-height horizontal `ListView`.
+    // A height in `.h` around a `.w` avatar and two lines of `.sp` text
+    // overflowed as soon as those scales diverged — reported as 1.6px on
+    // `StoreAvatar`'s column. Scrolling the row into view is what exercises
+    // it: `IndexedStack` lays the tab out but the row is below the fold.
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    // The height matters as much as the width: `.h` scales against the
+    // viewport, so a tall test surface inflates the box and hides the bug.
+    await pump(
+      tester,
+      const MainShellScreen(),
+      binding: MainBinding(),
+      size: const Size(320, 640),
+    );
+    Get.find<MainNavController>().select(3);
+    await tester.pump();
+
+    await tester.scrollUntilVisible(
+      find.byType(StoreAvatar).first,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Stores Near You strip', (tester) async {
+    await pump(tester, const MainShellScreen(), binding: MainBinding());
+    Get.find<MainNavController>().select(3);
+    await tester.pump();
+
+    await tester.scrollUntilVisible(
+      find.byType(StoreAvatar).first,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await settleImages(tester);
+    await expectLater(
+      find.byType(StoreAvatar).first,
+      matchesGoldenFile('stores_near_you.png'),
     );
   });
 

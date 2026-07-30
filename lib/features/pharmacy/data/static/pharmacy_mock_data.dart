@@ -19,11 +19,18 @@ class PharmacyMockData {
     'fiver 50',
   ];
 
+  /// The three names the designs cycle through across a six-tile grid.
+  static const List<String> _catalogueNames = [
+    'Cecon',
+    'Algecal DX',
+    'Calcium-D',
+  ];
+
   static List<Medicine> catalogue(String prefix) => [
     for (var index = 0; index < 6; index++)
       Medicine(
         id: '$prefix-$index',
-        name: 'Cecon',
+        name: _catalogueNames[index % _catalogueNames.length],
         dosage: '25mg',
         price: 30,
         oldPrice: 50,
@@ -87,7 +94,7 @@ class PharmacyMockData {
     ),
     PharmacyStore(
       id: 'store-5',
-      name: 'Medica',
+      name: 'Medico Plus',
       address: '31 Hill Street',
       distanceLabel: '2.2 km',
       rating: 4.4,

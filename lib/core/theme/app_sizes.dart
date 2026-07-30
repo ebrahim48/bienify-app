@@ -58,4 +58,15 @@ class AppSizes {
 
   /// Border width for outlined surfaces.
   static const double borderWidth = 1;
+
+  /// Minimum width of a dialog's Cancel / confirm pill, so the pair reads as
+  /// two equal buttons rather than sizing to their labels.
+  static const double dialogPillWidth = 100;
+
+  /// Profile card avatar, with its camera badge overlapping the corner.
+  static const double profileAvatar = 72;
+
+  /// Partner option card ("Join as a Rider").
+  static const double partnerCardHeight = 100;
+  static const double partnerIcon = 32;
 }

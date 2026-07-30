@@ -6,6 +6,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/utils/app_navigator.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_scaffold.dart';
@@ -32,7 +33,7 @@ class AuthStatusScreen extends StatelessWidget {
       titleKey = AppStrings.allSetUp,
       subtitleKey = AppStrings.careStartsHere,
       actionKey = AppStrings.getStarted,
-      onAction = (() => Get.offAllNamed<void>(AppRoutes.home));
+      onAction = (() => AppNavigator.resetTo(AppRoutes.home));
 
   /// Shown after a password reset — primary badge, "Login Now".
   AuthStatusScreen.passwordUpdated({super.key})
@@ -40,7 +41,7 @@ class AuthStatusScreen extends StatelessWidget {
       titleKey = AppStrings.passwordUpdated,
       subtitleKey = AppStrings.careStartsHere,
       actionKey = AppStrings.loginNow,
-      onAction = (() => Get.offAllNamed<void>(AppRoutes.login));
+      onAction = (() => AppNavigator.resetTo(AppRoutes.login));
 
   /// Shown after paying for a consultation — green badge, no subtitle, and a
   /// return to the Appointments tab.

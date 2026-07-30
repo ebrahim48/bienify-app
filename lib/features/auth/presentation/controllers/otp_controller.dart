@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../../../core/base/base_controller.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/utils/app_navigator.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../domain/entities/auth_session.dart';
@@ -81,7 +82,7 @@ class OtpController extends GetxController
           challenge: _challenge,
           code: codeController.text.trim(),
         );
-        Get.offAllNamed<void>(
+        AppNavigator.resetTo(
           session.requiresProfileSetup
               ? AppRoutes.profileSetup
               : AppRoutes.home,

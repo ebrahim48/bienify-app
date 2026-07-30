@@ -19,12 +19,39 @@ import '../../features/cash_payment_process/presentation/screens/nearby_payment_
 import '../../features/cash_payment_process/presentation/screens/payment_confirmed_screen.dart';
 import '../../features/cash_payment_process/presentation/screens/payment_pending_screen.dart';
 import '../../features/chat/presentation/screens/chat_screen.dart';
+import '../../features/doctor/presentation/bindings/doctor_bindings.dart';
+import '../../features/doctor/presentation/screens/doctor_shell_screen.dart';
+import '../../features/doctor/presentation/screens/set_schedule_screen.dart';
 import '../../features/doctors/presentation/bindings/doctors_bindings.dart';
 import '../../features/doctors/presentation/screens/doctor_details_screen.dart';
 import '../../features/doctors/presentation/screens/doctor_list_screen.dart';
 import '../../features/doctors/presentation/screens/doctor_search_screen.dart';
 import '../../features/main/presentation/bindings/main_binding.dart';
 import '../../features/main/presentation/screens/main_shell_screen.dart';
+import '../../features/medical_vault/presentation/bindings/medical_vault_bindings.dart';
+import '../../features/medical_vault/presentation/screens/all_prescriptions_screen.dart';
+import '../../features/medical_vault/presentation/screens/all_test_reports_screen.dart';
+import '../../features/medical_vault/presentation/screens/health_profile_screen.dart';
+import '../../features/medical_vault/presentation/screens/past_appointments_screen.dart';
+import '../../features/medical_vault/presentation/screens/prescription_details_screen.dart';
+import '../../features/medical_vault/presentation/screens/report_review_screen.dart';
+import '../../features/medical_vault/presentation/screens/results_submitted_screen.dart';
+import '../../features/medical_vault/presentation/screens/test_order_screen.dart';
+import '../../features/medical_vault/presentation/screens/test_results_screen.dart';
+import '../../features/medical_vault/presentation/screens/testing_centres_screen.dart';
+import '../../features/medical_vault/presentation/screens/upload_report_screen.dart';
+import '../../features/profile/presentation/bindings/profile_bindings.dart';
+import '../../features/profile/presentation/screens/add_card_screen.dart';
+import '../../features/profile/presentation/screens/become_partner_screen.dart';
+import '../../features/profile/presentation/screens/change_password_screen.dart';
+import '../../features/profile/presentation/screens/legal_screen.dart';
+import '../../features/profile/presentation/screens/order_history_screen.dart';
+import '../../features/profile/presentation/screens/payment_options_screen.dart';
+import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../features/profile/presentation/screens/review_shop_screen.dart';
+import '../../features/profile/presentation/screens/settings_screen.dart';
+import '../../features/profile/presentation/screens/wallet_accounts_screen.dart';
+import '../../features/profile/presentation/screens/wallet_screen.dart';
 import '../../features/pharmacy/presentation/bindings/pharmacy_bindings.dart';
 import '../../features/pharmacy/presentation/screens/best_matches_screen.dart';
 import '../../features/pharmacy/presentation/screens/delivery_feedback_screen.dart';
@@ -281,6 +308,181 @@ abstract class AppPages {
       name: AppRoutes.chat,
       page: () => const ChatScreen(),
       binding: ChatBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+
+    // ─── Profile ───────────────────────────────────────────────────────────
+    GetPage(
+      name: AppRoutes.profile,
+      page: () => const ProfileScreen(),
+      binding: ProfileBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.orderHistory,
+      page: () => const OrderHistoryScreen(),
+      binding: AccountBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.wallet,
+      page: () => const WalletScreen(),
+      binding: AccountBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.paymentOptions,
+      page: () => const PaymentOptionsScreen(),
+      binding: AccountBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.addDebitCard,
+      page: () => const AddCardScreen(),
+      binding: AddCardBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.walletAccounts,
+      page: () => const WalletAccountsScreen(),
+      binding: AccountBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.reviewShop,
+      page: () => const ReviewShopScreen(),
+      binding: AccountBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.becomePartner,
+      page: () => const BecomePartnerScreen(),
+      binding: PartnerBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.settings,
+      page: () => const SettingsScreen(),
+      binding: SettingsBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.changePassword,
+      page: () => const ChangePasswordScreen(),
+      binding: ChangePasswordBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    // One screen for About Us, Terms and Privacy; the document arrives as the
+    // route argument.
+    GetPage(
+      name: AppRoutes.legal,
+      page: () => const LegalScreen(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+
+    // ─── Doctor ────────────────────────────────────────────────────────────
+    GetPage(
+      name: AppRoutes.doctorHome,
+      page: () => const DoctorShellScreen(),
+      binding: DoctorShellBinding(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: AppRoutes.doctorSetSchedule,
+      page: () => const SetScheduleScreen(),
+      binding: DoctorScheduleBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+
+    // ─── Medical vault ─────────────────────────────────────────────────────
+    GetPage(
+      name: AppRoutes.healthProfile,
+      page: () => const HealthProfileScreen(),
+      binding: DocumentsBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.allPrescriptions,
+      page: () => const AllPrescriptionsScreen(),
+      binding: DocumentsBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.allTestReports,
+      page: () => const AllTestReportsScreen(),
+      binding: DocumentsBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.prescriptionDetails,
+      page: () => const PrescriptionDetailsScreen(),
+      binding: DocumentsBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    // Reuses the Appointments controller and its card, so it binds the
+    // appointments tab's dependencies rather than owning any of its own.
+    GetPage(
+      name: AppRoutes.pastAppointments,
+      page: () => const PastAppointmentsScreen(),
+      binding: PastAppointmentsBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.testResults,
+      page: () => const TestResultsScreen(),
+      binding: TestResultsBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.testOrder,
+      page: () => const TestOrderScreen(),
+      binding: TestResultsBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.testingCentres,
+      page: () => const TestingCentresScreen(),
+      binding: TestResultsBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.uploadTestReport,
+      page: () => const UploadReportScreen(),
+      binding: TestResultsBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.resultsSubmitted,
+      page: () => const ResultsSubmittedScreen(),
+      binding: TestResultsBinding(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: AppRoutes.reportReview,
+      page: () => const ReportReviewScreen(),
+      binding: TestResultsBinding(),
       transition: _transition,
       transitionDuration: _transitionDuration,
     ),

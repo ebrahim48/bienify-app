@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../../core/base/base_controller.dart';
 import '../../../../core/models/country.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/utils/app_navigator.dart';
 import '../../../../core/utils/validators.dart';
 import '../../domain/entities/auth_session.dart';
 import '../../domain/usecases/email_auth_usecases.dart';
@@ -85,7 +86,7 @@ class PhoneAuthController extends GetxController
     try {
       await submit(() async {
         final session = await _signInWithProvider(provider);
-        Get.offAllNamed<void>(
+        AppNavigator.resetTo(
           session.requiresProfileSetup
               ? AppRoutes.profileSetup
               : AppRoutes.home,
@@ -98,7 +99,7 @@ class PhoneAuthController extends GetxController
 
   /// "Join as a Doctor".
   ///
-  /// Practitioner onboarding shares the phone-first registration entry point;
-  /// the extra credentialing steps hang off the profile flow once designed.
-  void joinAsDoctor() => Get.toNamed<void>(AppRoutes.phoneNumber);
+  /// Enters the practitioner section, which has its own shell and bottom
+  /// navigation. Credentialing steps hang off it once designed.
+  void joinAsDoctor() => Get.toNamed<void>(AppRoutes.doctorHome);
 }

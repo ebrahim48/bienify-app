@@ -231,7 +231,7 @@ class PharmacySectionHeader extends StatelessWidget {
   }
 }
 
-/// Circular store logo with its name underneath.
+/// Circular storefront photo with the pharmacy's name underneath.
 class StoreAvatar extends StatelessWidget {
   const StoreAvatar({super.key, required this.store, required this.onTap});
 
@@ -259,10 +259,16 @@ class StoreAvatar extends StatelessWidget {
                 width: AppSizes.borderWidth,
               ),
             ),
+            clipBehavior: Clip.antiAlias,
             alignment: Alignment.center,
-            child: Text(
-              store.initial,
-              style: AppTextStyles.titleMedium.rc(AppColors.primary600),
+            child: Image.asset(
+              AppAssets.storesNear,
+              fit: BoxFit.cover,
+              // The initial stands in only if the shot fails to decode.
+              errorBuilder: (context, _, _) => Text(
+                store.initial,
+                style: AppTextStyles.titleMedium.rc(AppColors.primary600),
+              ),
             ),
           ),
           AppSpacing.gapV(AppSpacing.xs2),

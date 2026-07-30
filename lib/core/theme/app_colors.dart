@@ -144,6 +144,9 @@ class AppColors {
   /// The tinted panel that holds the sign-in options on onboarding.
   static const Color authPanel = primary200;
 
+  /// The palest blue panel — the Diagnosis block and other inset notes.
+  static const Color authPanelSoft = primary50;
+
   /// Neutral "Deny"/dismiss button fill on the permission screen.
   static const Color denyFill = Color(0xFFE8E8E8);
 
@@ -209,6 +212,14 @@ class AppColors {
   static const Color tagPendingSurface = Color(0xFFFFFBEB);
   static const Color tagPendingInk = Color(0xFFB45309);
 
+  /// Resolved tag ("Reviewed"), which also carries a leading dot.
+  static const Color tagSuccessSurface = Color(0xFFECFDF5);
+  static const Color tagSuccessInk = Color(0xFF047857);
+
+  /// Action-needed tag ("Awaiting review").
+  static const Color tagWarningSurface = Color(0xFFFFF7ED);
+  static const Color tagWarningInk = Color(0xFFC2410C);
+
   /// Rating star.
   static const Color star = Color(0xFFFBBF24);
 
@@ -253,4 +264,108 @@ class AppColors {
 
   /// Countdown accent on the pending screen.
   static const Color timerAccent = Color(0xFFA3C900);
+
+  // =========================
+  // Profile & account
+  // =========================
+
+  /// Destructive red for "Log out" — its own value, not [error600], because
+  /// `log-out.svg` is stroked with it and the two must match exactly.
+  static const Color logoutFill = Color(0xFFD00416);
+
+  /// Muted indigo of the profile menu labels. Lighter than [authInk]: the
+  /// rows are navigation, not content.
+  static const Color menuLabel = Color(0xFF888AAF);
+
+  /// Camera glyph on the profile photo's badge — a slate-indigo, lighter
+  /// than [authInk] but darker than [menuLabel].
+  static const Color photoBadgeInk = Color(0xFF6D719E);
+
+  /// Outline of the pill-shaped "Edit" button on the profile card.
+  static const Color editBorder = Color(0xFFB9C2FE);
+
+  // =========================
+  // Order state pills
+  // =========================
+  // A brighter set than the [tagSuccessSurface] family used on test results —
+  // the order-history design draws these three specifically.
+
+  static const Color orderDeliveredSurface = Color(0xFFF0FDF4);
+  static const Color orderDeliveredInk = Color(0xFF008236);
+
+  static const Color orderPendingSurface = warning50;
+  static const Color orderPendingInk = warning400;
+
+  static const Color orderCancelledSurface = error50;
+  static const Color orderCancelledInk = error600;
+
+  // =========================
+  // Uploaded documents
+  // =========================
+
+  /// Grey tile behind an uploaded file's thumbnail glyph.
+  static const Color fileSurface = Color(0xFFE8E8E8);
+
+  /// Orange used for an uploaded document's glyph and its "Lab Result" tag.
+  static const Color fileAccent = Color(0xFFE67229);
+
+  /// Fill behind that tag.
+  static const Color fileAccentSurface = Color(0xFFFDF6EF);
+
+  /// Grey fill of the inputs inside the card-details panel.
+  static const Color cardFieldFill = Color(0xFFF1F1EC);
+
+  // =========================
+  // Wallet
+  // =========================
+
+  /// Near-black balance card, and the olive discs decorating its corners.
+  static const Color walletSurface = Color(0xFF121509);
+  static const Color walletAccent = Color(0xFF1C2009);
+
+  /// "↑ Active saver" — an olive-lime, distinct from the success ramp.
+  static const Color saverAccent = Color(0xFF9BBB00);
+
+  /// Debit / credit badges in the transaction list, and the credit amount.
+  static const Color debitSurface = Color(0xFFFEECEC);
+  static const Color debitInk = Color(0xFFFF6467);
+  static const Color creditSurface = Color(0xFFDCFCE7);
+  static const Color creditInk = Color(0xFF16A34A);
+
+  // =========================
+  // Doctor dashboard
+  // =========================
+
+  /// The navy masthead, and the lighter panel holding the balance inside it.
+  static const Color doctorHeader = Color(0xFF1722BB);
+  static const Color doctorHeaderPanel = Color(0xFF3D45C6);
+
+  /// Tinted discs behind the four dashboard statistics.
+  static const Color statWarnSurface = Color(0xFFFFF7ED);
+  static const Color statWarnInk = Color(0xFFF59E0B);
+  static const Color statInfoSurface = Color(0xFFEAEBFA);
+  static const Color statInfoInk = primary800;
+  static const Color statUpSurface = Color(0xFFECFDF5);
+  static const Color statUpInk = Color(0xFF16A34A);
+  static const Color statPeopleSurface = Color(0xFFF3E8FF);
+  static const Color statPeopleInk = Color(0xFF9333EA);
+
+  /// Weekday bars on the appointments chart, in the design's order.
+  static const List<Color> chartBars = [
+    Color(0xFFEF4444),
+    Color(0xFF84CC16),
+    Color(0xFF22D3EE),
+    Color(0xFFEAB308),
+    Color(0xFFF97316),
+    Color(0xFFEC4899),
+    Color(0xFF8B5CF6),
+  ];
+
+  /// Time-slot chips on Set Schedule.
+  static const Color slotSurface = Color(0xFFE7F8EF);
+  static const Color slotInk = Color(0xFF15803D);
+
+  /// "Confirmed" / "Pending" outlined pills on the dashboard's list.
+  static const Color confirmedInk = primary600;
+  static const Color pendingOutlineInk = Color(0xFFD97706);
 }

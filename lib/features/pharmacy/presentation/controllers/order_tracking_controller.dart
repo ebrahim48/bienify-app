@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/utils/app_navigator.dart';
 import '../../../chat/domain/entities/conversation.dart';
 import '../../data/static/pharmacy_mock_data.dart';
 import '../../domain/entities/pharmacy.dart';
@@ -34,12 +36,13 @@ class OrderTrackingController extends GetxController {
     id: 'rider-arif',
     name: PharmacyMockData.riderName,
     specialty: PharmacyMockData.riderCountry,
+    photoAsset: AppAssets.rider,
     isOnline: true,
   );
 
   void trackNow() => Get.toNamed<void>(AppRoutes.liveTracking);
 
-  void backToHome() => Get.offAllNamed<void>(AppRoutes.home);
+  void backToHome() => AppNavigator.resetTo(AppRoutes.home);
 
   void openRiderChat() =>
       Get.toNamed<void>(AppRoutes.chat, arguments: rider);

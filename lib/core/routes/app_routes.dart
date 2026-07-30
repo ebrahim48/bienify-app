@@ -59,4 +59,38 @@ abstract class AppRoutes {
 
   // ─── Messaging ───────────────────────────────────────────────────────────
   static const String chat = '/chat';
+
+  // ─── Profile ─────────────────────────────────────────────────────────────
+  static const String profile = '/profile';
+  static const String orderHistory = '/order-history';
+  static const String wallet = '/wallet';
+  static const String paymentOptions = '/payment-options';
+  static const String addDebitCard = '/add-debit-card';
+  static const String walletAccounts = '/wallet-accounts';
+  static const String reviewShop = '/review-shop';
+  static const String becomePartner = '/become-partner';
+  static const String settings = '/settings';
+  static const String changePassword = '/change-password';
+
+  /// About Us, Terms and Privacy are one screen; the document arrives as the
+  /// route argument.
+  static const String legal = '/legal';
+
+  // ─── Doctor ──────────────────────────────────────────────────────────────
+  /// The practitioner-facing shell, with its own bottom navigation.
+  static const String doctorHome = '/doctor';
+  static const String doctorSetSchedule = '/doctor/set-schedule';
+
+  // ─── Medical vault ───────────────────────────────────────────────────────
+  static const String healthProfile = '/health-profile';
+  static const String allPrescriptions = '/all-prescriptions';
+  static const String allTestReports = '/all-test-reports';
+  static const String prescriptionDetails = '/prescription-details';
+  static const String pastAppointments = '/past-appointments';
+  static const String testResults = '/test-results';
+  static const String testOrder = '/test-order';
+  static const String testingCentres = '/testing-centres';
+  static const String uploadTestReport = '/upload-test-report';
+  static const String resultsSubmitted = '/results-submitted';
+  static const String reportReview = '/report-review';
 }

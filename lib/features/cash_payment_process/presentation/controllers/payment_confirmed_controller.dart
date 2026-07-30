@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/utils/app_navigator.dart';
 import '../../data/static/cash_payment_data.dart';
 import '../../domain/entities/cash_payment.dart';
 
@@ -20,5 +21,5 @@ class PaymentConfirmedController extends GetxController {
   final PaymentConfirmation confirmation;
 
   /// Clears the booking flow off the stack — the journey is finished.
-  void goHome() => Get.offAllNamed<void>(AppRoutes.home);
+  void goHome() => AppNavigator.resetTo(AppRoutes.home);
 }

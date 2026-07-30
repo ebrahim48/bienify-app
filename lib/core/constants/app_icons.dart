@@ -46,4 +46,16 @@ class AppIcons {
   static const String camera = '$_path/camera.svg';
   static const String wallet = '$_path/wallet.svg';
   static const String send = '$_path/send.svg';
+
+  // ─── Profile & partner ───────────────────────────────────────────────────
+  //
+  // All three ship pre-coloured — the partner marks in `authInk`, the log-out
+  // arrow in `logoutFill`. Draw them untinted, as with `profile.svg`.
+  static const String pharmacyOwner = '$_path/pharmacyowner.svg';
+  static const String rider = '$_path/rider.svg';
+  static const String logout = '$_path/log-out.svg';
+
+  /// Filled speech bubble for the doctor shell's Message tab. `message.svg` is
+  /// the outlined header glyph and reads too light at nav size.
+  static const String bottomMessage = '$_path/bottommessage.svg';
 }

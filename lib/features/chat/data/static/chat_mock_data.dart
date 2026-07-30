@@ -11,6 +11,15 @@ class ChatMockData {
     isOnline: true,
   );
 
+  /// "Chat With Us" on the health profile opens this same screen with Bienify
+  /// on the other end, rather than a second messaging UI.
+  static const ConversationPeer support = ConversationPeer(
+    id: 'bienify-support',
+    name: 'Bienify Support',
+    specialty: 'Here to help',
+    isOnline: true,
+  );
+
   static const String _reply =
       'I understand your concern. Let me help you with that. Would you like '
       'to schedule a video consultation?';
