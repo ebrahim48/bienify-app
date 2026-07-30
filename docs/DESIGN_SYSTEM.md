@@ -356,13 +356,44 @@ AppTag('Results ready', tone: AppTagTone.success)
 
 ### `AppAvatar` — circular profile image
 
-Falls back photo → initials → glyph, so a missing URL reads as a deliberate
-monogram rather than a broken image. The mock feed ships no photos, which is
-why the doctor rows render `AP`, `BT`, `SM`…
+Falls back network photo → `fallbackAsset` → initials → glyph, so a missing
+URL reads as a deliberate image rather than a broken one. Doctors default to
+`AppAssets.doctorPlaceholder`; pass `fallbackAsset` when the subject is not a
+doctor, and `null` to reach the monogram.
 
 ```dart
 AppAvatar(imageUrl: doctor.photoUrl, name: doctor.name, size: 44)
+AppAvatar(name: rider.name, fallbackAsset: AppAssets.rider, size: 48)
+AppAvatar(name: patient.name, fallbackAsset: null)   // monogram instead
 ```
+
+`ConversationPeer.photoAsset` feeds this, which is how one chat screen shows
+a doctor's headshot in one thread and the courier's in another.
+
+### Bundled photography — `AppAssets`
+
+Never write an asset path inline; every file has a named handle.
+
+| Handle | File | Where |
+| --- | --- | --- |
+| `medicine` | `medicine.png` | catalogue and cart product shots |
+| `storesNear` | `storesnear.png` | "Stores Near You" storefront discs |
+| `rider` | `riderarif.png` | courier avatar, tracking and chat |
+| `deliveryFeedback` | `feedback.png` | delivery feedback photos |
+| `appointmentCouple` | `appointmentcouple.png` | "Need Care?" banner |
+| `doctorVideo` / `clientVideo` | `doctorimage.png` / `client.png` | consultation feeds |
+| `doctorPlaceholder` | `profile.png` | default headshot everywhere |
+| `promoBanner` | `bannar.png` | "Online Pharmacy" strip on order history |
+| `noPaymentMethod` | `no paymentmethod.png` | wallet with no card saved |
+| `reportDocument` | `report.png` | uploaded test report thumbnail |
+
+`report.png` has a close button drawn into the artwork, so `ReportThumbnail`
+places the real one over it at the same inset — otherwise the page shows two,
+one of them dead.
+
+Three icons ship pre-coloured and must be drawn **untinted**, like
+`profile.svg`: `AppIcons.pharmacyOwner` and `AppIcons.rider` in `authInk`,
+`AppIcons.logout` in `logoutFill`.
 
 ### Auth status screen
 
@@ -412,20 +443,58 @@ search results, and fixes its action button at 100pt so long names such as
 three items in a ~95pt grid cell will otherwise ellipsize the price itself
 into `"$…"`. Header rows that pair a store name with an ETA do the same.
 
+`StoreAvatar` is deliberately unconstrained in height and the store strip is
+a scrolling `Row`, not a horizontal `ListView`. A list needs a fixed height,
+and a height in `.h` around a `.w` avatar plus two lines of `.sp` text
+overflows as soon as those scales diverge — that was a reported 1.6px
+overflow. `test/golden/pharmacy_golden_test.dart` guards it at 320×640 with
+1.3× text.
+
 ### Reuse by condition, not by copy
 
-Three screens serve two flows each, selected by what they are handed rather
+Four widgets serve two flows each, selected by what they are handed rather
 than by a second implementation:
 
 | Screen | Also used for | Switch |
 | --- | --- | --- |
-| `ChatScreen` | the delivery rider | `ConversationPeer` |
+| `ChatScreen` | the delivery rider | `ConversationPeer` (name + `photoAsset`) |
 | `ReviewDialog` | rating a delivery | caller |
 | `PaymentSummaryScreen` | booking from the Doctors tab | the doctor passed in |
 | `PaymentMethodTile` | pharmacy checkout | the method list passed in |
+| `LegalScreen` | About Us · Terms · Privacy | `LegalDocument` argument |
+| `AppointmentHistoryCard` | Past Appointments | which slice is passed in |
+| `TestOrderScreen` | before / after booking | whether a centre is chosen |
+| `ReportReviewScreen` | waiting / follow-up offered | `ReviewOutcome` |
+| `ChatScreen` | Bienify support | `ChatMockData.support` |
+| `MedicineCard` | Review shop's catalogue | the medicine passed in |
+| `AppPillSelector` | 4 segmented / filter rows | labels + selected index |
 
 When a new flow needs one of these, pass it different data — do not fork
 the screen.
+
+### Account & records — `core/widgets/` additions
+
+| Widget | Use it for |
+| --- | --- |
+| `AppMenuRow` | `Label ›` navigation row (Profile, Settings, Health profile) |
+| `AppConfirmDialog` | question + deny/confirm pills over the blur |
+| `AppEmptyState` | illustration or glyph, title, body, optional action |
+| `AppPillSelector` | scrolling pill row — segmented control or filter chips |
+
+`AppPillSelector` covers four designs: the Lab / Radiology and Your
+Prescriptions / Your Medical vault segmented controls (`isLarge: true`), and
+the results and order-history filter rows. Both sizes set 16pt type; the large
+one is taller and bolder, not wider-set.
+
+`AppMenuRow` takes a `labelColor` so a screen can pick its tone; every screen
+currently passes `AppColors.authInk`, which is what the designs draw. The
+muted `AppColors.menuLabel` default is kept for a lower-emphasis list.
+`AppConfirmDialog` takes `confirmColor` so a destructive action can use
+`AppColors.logoutFill` — its own red, matching `log-out.svg`'s stroke, rather
+than `error600`.
+
+`AppTag` gained a `warning` tone, a `hasDot` flag and a `pill` flag for the
+results list's status pills; category tags stay rounded rectangles.
 
 ### One screen, two flows
 

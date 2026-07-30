@@ -12,8 +12,11 @@ class AppointmentMockData {
 
   /// One appointment today (joinable) plus two later ones, matching the
   /// "Today" / "23 February" grouping in the design.
-  static List<Appointment> upcoming() {
-    final now = DateTime.now();
+  ///
+  /// [now] is injectable so goldens can pin the date — otherwise the first
+  /// card's heading changes every midnight and the image never matches twice.
+  static List<Appointment> upcoming({DateTime? now}) {
+    now ??= DateTime.now();
     return [
       Appointment(
         id: 'appt-today',
@@ -58,5 +61,9 @@ class AppointmentMockData {
       ),
   ];
 
-  static List<Appointment> all() => [...upcoming(), ...past(), ...cancelled()];
+  static List<Appointment> all({DateTime? now}) => [
+    ...upcoming(now: now),
+    ...past(),
+    ...cancelled(),
+  ];
 }

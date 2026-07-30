@@ -1,4 +1,3 @@
-import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/constants/app_strings.dart';
@@ -12,7 +11,8 @@ import '../../domain/entities/pharmacy.dart';
 ///
 /// UI-only — the catalogue is static and the cart is an in-memory count.
 class PharmacyController extends GetxController {
-  final TextEditingController searchController = TextEditingController();
+  /// The medicine query. `DoctorSearchField` owns the text controller.
+  final RxString query = ''.obs;
 
   final RxList<String> chips = <String>[].obs;
   final RxString selectedChip = ''.obs;
@@ -32,12 +32,6 @@ class PharmacyController extends GetxController {
     commonMedicines.value = PharmacyMockData.commonMedicines;
     dermatologyMedicines.value = PharmacyMockData.dermatologyMedicines;
     stores.value = PharmacyMockData.nearbyStores;
-  }
-
-  @override
-  void onClose() {
-    searchController.dispose();
-    super.onClose();
   }
 
   void selectChip(String chip) => selectedChip.value = chip;

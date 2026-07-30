@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/utils/app_navigator.dart';
 import '../../../auth/data/datasources/auth_local_data_source.dart';
 import '../../../auth/domain/repositories/auth_repository.dart';
 
@@ -34,11 +35,11 @@ class SplashController extends GetxController {
     await Future<void>.delayed(_minimumDisplay);
 
     if (_repository.isSignedIn) {
-      Get.offAllNamed<void>(AppRoutes.home);
+      AppNavigator.resetTo(AppRoutes.home);
       return;
     }
 
-    Get.offAllNamed<void>(
+    AppNavigator.resetTo(
       _local.hasSeenLocationPrompt
           ? AppRoutes.onboarding
           : AppRoutes.locationPermission,

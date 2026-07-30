@@ -23,9 +23,17 @@ built on feature-first Clean Architecture with GetX.
 | Appointments — list, details, reschedule, cancel, review, video call | ✅ Done (UI only) |
 | Pharmacy — catalogue, prescription upload, cart, checkout | ✅ Done (UI only) |
 | Pharmacy — order status, live tracking, delivery feedback | ✅ Done (UI only) |
+| Profile — account hub, partner, settings | ✅ Done (UI only) |
+| Wallet — balance, transactions, payment options, add card, accounts | ✅ Done (UI only) |
+| Settings — change password, about, terms, privacy | ✅ Done (UI only) |
+| Health Profile — all prescriptions, all test reports, order history, review shop | ✅ Done (UI only) |
+| Medical Vault — tests & results, lab order, book a centre, upload, review | ✅ Done (UI only) |
+| Doctor role — shell + navbar, dashboard, set schedule, set fees | ✅ Home done (UI only) |
+| Doctor role — Appointments / Messsage / Profile tabs | ⏳ Placeholder, awaiting designs |
 
-Every screen is reachable and every control does something — there are no
-placeholder or "coming soon" states left in the app.
+Every screen is reachable and every control does something. The one
+deliberately unfinished state is the doctor role's Appointments / Messsage /
+Profile tabs, which say "Not available yet" until their designs arrive.
 
 **UI only** means the screens, controllers and widgets are complete and the
 `domain` layer holds entity names, but there is no repository, use case or
@@ -80,6 +88,16 @@ flutter test test/golden --update-goldens
 
 This is the only check that catches a stale `Obx` — the controller asserts
 pass either way, and only the pixels reveal that nothing repainted.
+
+Goldens must not depend on the wall clock. `MainBinding(clock:)` and
+`AppointmentMockData.upcoming(now:)` exist so the Appointments images pin
+"today"; without that the first card's date line changes at midnight and the
+image never matches twice.
+
+`test/lifecycle_test.dart` covers what no golden can: what happens when a
+route goes away. Both bugs it guards — a disposed `TextEditingController` and
+clearing a stack that still holds focus — render perfectly right up to the
+moment of teardown.
 
 ## Conventions
 

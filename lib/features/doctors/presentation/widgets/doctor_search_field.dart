@@ -14,17 +14,25 @@ import '../../../../core/utils/responsive.dart';
 ///
 /// Shares the Home search bar's navy outline and 12pt radius, but this one
 /// actually accepts text — Home's is a button that opens this screen.
-class DoctorSearchField extends StatelessWidget {
+///
+/// **This widget owns its `TextEditingController`.** Callers pass
+/// [initialText] and listen through [onChanged]; a GetX controller must not
+/// hold the text controller, because GetX disposes route dependencies while
+/// the outgoing route is still painting its pop transition, and the field
+/// would then rebuild against a disposed controller.
+class DoctorSearchField extends StatefulWidget {
   const DoctorSearchField({
     super.key,
-    required this.controller,
     required this.onChanged,
+    this.initialText = '',
     this.autofocus = false,
     this.onSubmitted,
     this.hintKey = AppStrings.searchSpecialty,
   });
 
-  final TextEditingController controller;
+  /// Text to seed the field with, so a query survives leaving the screen.
+  final String initialText;
+
   final ValueChanged<String> onChanged;
   final bool autofocus;
   final ValueChanged<String>? onSubmitted;
@@ -33,14 +41,40 @@ class DoctorSearchField extends StatelessWidget {
   final String hintKey;
 
   @override
+  State<DoctorSearchField> createState() => _DoctorSearchFieldState();
+}
+
+class _DoctorSearchFieldState extends State<DoctorSearchField> {
+  late final TextEditingController _text = TextEditingController(
+    text: widget.initialText,
+  );
+
+  @override
+  void didUpdateWidget(DoctorSearchField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Lets a "clear" action upstream reset the field, without stomping on
+    // what the user is currently typing.
+    if (widget.initialText != oldWidget.initialText &&
+        widget.initialText != _text.text) {
+      _text.text = widget.initialText;
+    }
+  }
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: AppSizes.controlHeight.h,
       child: TextField(
-        controller: controller,
-        onChanged: onChanged,
-        onSubmitted: onSubmitted,
-        autofocus: autofocus,
+        controller: _text,
+        onChanged: widget.onChanged,
+        onSubmitted: widget.onSubmitted,
+        autofocus: widget.autofocus,
         textInputAction: TextInputAction.search,
         textAlignVertical: TextAlignVertical.center,
         cursorColor: AppColors.primary800,
@@ -49,7 +83,7 @@ class DoctorSearchField extends StatelessWidget {
           isDense: true,
           filled: true,
           fillColor: AppColors.transparent,
-          hintText: hintKey.tr,
+          hintText: widget.hintKey.tr,
           hintStyle: AppTextStyles.bodyLarge.rc(AppColors.fieldHint),
           contentPadding: EdgeInsets.symmetric(vertical: AppSpacing.sm.h),
           prefixIcon: Padding(

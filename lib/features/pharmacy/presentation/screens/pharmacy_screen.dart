@@ -38,8 +38,8 @@ class PharmacyScreen extends GetView<PharmacyController> {
           _UploadButton(onTap: controller.openUpload),
           AppSpacing.gapV(AppSpacing.base),
           DoctorSearchField(
-            controller: controller.searchController,
-            onChanged: (_) {},
+            initialText: controller.query.value,
+            onChanged: (value) => controller.query.value = value,
             hintKey: AppStrings.searchMedicines,
           ),
           AppSpacing.gapV(AppSpacing.sm),
@@ -281,20 +281,28 @@ class _Stores extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 96.h,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        physics: const ClampingScrollPhysics(),
-        itemCount: stores.length,
-        separatorBuilder: (_, _) => AppSpacing.gapH(AppSpacing.sm),
-        itemBuilder: (context, index) => SizedBox(
-          width: 68.w,
-          child: StoreAvatar(
-            store: stores[index],
-            onTap: () => onTap(stores[index]),
-          ),
-        ),
+    // A `Row` rather than a horizontal `ListView`: the list would need a
+    // fixed height, and a height in `.h` around an avatar in `.w` plus two
+    // lines of `.sp` text overflows as soon as those scales diverge. The row
+    // sizes itself to its tallest child instead. The store count is small
+    // and fully built either way, so nothing is lost by not being lazy.
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const ClampingScrollPhysics(),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var index = 0; index < stores.length; index++) ...[
+            if (index > 0) AppSpacing.gapH(AppSpacing.sm),
+            SizedBox(
+              width: 68.w,
+              child: StoreAvatar(
+                store: stores[index],
+                onTap: () => onTap(stores[index]),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

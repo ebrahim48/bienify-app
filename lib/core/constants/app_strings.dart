@@ -354,6 +354,240 @@ class AppStrings {
   static const String writeOrderFeedback = 'write_order_feedback';
   static const String skipToOrderFeedback = 'skip_to_order_feedback';
 
+  // ─── Profile ─────────────────────────────────────────────────────────────
+  /// Generic dismiss label for confirm dialogs.
+  static const String cancel = 'cancel';
+
+  /// Generic advance label.
+  static const String continueLabel = 'continue_label';
+
+  static const String profileTitle = 'profile_title';
+  static const String edit = 'edit';
+  static const String myHealthProfile = 'my_health_profile';
+  static const String myOrderHistory = 'my_order_history';
+  static const String myWallet = 'my_wallet';
+  static const String settings = 'settings';
+  /// The Profile row. The screen it opens is titled [becomeAPartner] — the
+  /// designs word the entry point and the destination differently.
+  static const String partnerWithBienify = 'partner_with_bienify';
+  static const String becomeAPartner = 'become_a_partner';
+  static const String logOut = 'log_out';
+  static const String readyToLogOut = 'ready_to_log_out';
+
+  static const String changePassword = 'change_password';
+  static const String aboutUs = 'about_us';
+  static const String termsAndConditions = 'terms_and_conditions';
+  static const String privacyPolicy = 'privacy_policy';
+
+  static const String oldPasswordLabel = 'old_password_label';
+  static const String oldPasswordHint = 'old_password_hint';
+  static const String newPasswordLabel2 = 'new_password_label_2';
+  static const String newPasswordHint2 = 'new_password_hint_2';
+  static const String reEnterNewPasswordLabel = 're_enter_new_password_label';
+  static const String reEnterNewPasswordHint = 're_enter_new_password_hint';
+  static const String passwordChanged = 'password_changed';
+
+  static const String joinAsPharmacyOwner = 'join_as_pharmacy_owner';
+  static const String joinAsRider = 'join_as_rider';
+  static const String partnerApplicationSent = 'partner_application_sent';
+
+  static const String noOrdersYet = 'no_orders_yet';
+  static const String noOrdersYetBody = 'no_orders_yet_body';
+  static const String itemsOnDate = 'items_on_date';
+
+  static const String noPaymentMethod = 'no_payment_method';
+  static const String noPaymentMethodBody = 'no_payment_method_body';
+  static const String addPaymentMethod = 'add_payment_method';
+  static const String availableBalance = 'available_balance';
+
+  // ─── Health profile ──────────────────────────────────────────────────────
+  static const String records = 'records';
+  static const String consultation = 'consultation';
+  static const String bienifyHelp = 'bienify_help';
+  static const String allPrescriptions = 'all_prescriptions';
+  static const String allTestReports = 'all_test_reports';
+  static const String orderHistory = 'order_history';
+  static const String chatWithUs = 'chat_with_us';
+  static const String callWithUs = 'call_with_us';
+  static const String deleteAccount = 'delete_account';
+  static const String deleteAccountQuestion = 'delete_account_question';
+  static const String delete = 'delete';
+
+  static const String yourPrescriptions = 'your_prescriptions';
+  static const String yourMedicalVault = 'your_medical_vault';
+  static const String labResult = 'lab_result';
+  static const String view = 'view';
+  static const String uploadPrescriptionAction = 'upload_prescription_action';
+  static const String noUploadsYet = 'no_uploads_yet';
+  static const String documentRemoved = 'document_removed';
+
+  static const String labReports = 'lab_reports';
+  static const String radiologyReports = 'radiology_reports';
+  static const String digitalPrescriptionNumbered =
+      'digital_prescription_numbered';
+
+  static const String filterDelivered = 'filter_delivered';
+  static const String filterPending = 'filter_pending';
+  static const String filterCancelled = 'filter_cancelled';
+  static const String orderSummaryLine = 'order_summary_line';
+
+  static const String reviewShop = 'review_shop';
+  static const String allMedicines = 'all_medicines';
+  static const String writeReviews = 'write_reviews';
+
+  static const String paymentOptions = 'payment_options';
+  static const String debitCreditCard = 'debit_credit_card';
+  static const String walletTitle = 'wallet_title';
+  static const String addAccount = 'add_account';
+  static const String availableBalanceCaps = 'available_balance_caps';
+  static const String totalSpent = 'total_spent';
+  static const String orderCount = 'order_count';
+  static const String addedThisMonth = 'added_this_month';
+  static const String activeSaver = 'active_saver';
+  static const String transactionHistory = 'transaction_history';
+  static const String noTransactionsYet = 'no_transactions_yet';
+  static const String nameOnCard = 'name_on_card';
+  static const String addDebitCard = 'add_debit_card';
+  static const String debitCard = 'debit_card';
+  static const String cardNumber = 'card_number';
+  static const String cardNumberHint = 'card_number_hint';
+  static const String cardHolder = 'card_holder';
+  static const String cardHolderHint = 'card_holder_hint';
+  static const String cardExpiry = 'card_expiry';
+  static const String cardExpiryHint = 'card_expiry_hint';
+  static const String cardCvv = 'card_cvv';
+  static const String cardCvvHint = 'card_cvv_hint';
+  static const String saveCard = 'save_card';
+  static const String cardSaved = 'card_saved';
+  static const String makeDefault = 'make_default';
+  static const String defaultCard = 'default_card';
+  static const String errorCardNumber = 'error_card_number';
+  static const String errorCardHolder = 'error_card_holder';
+  static const String errorCardExpiry = 'error_card_expiry';
+  static const String errorCardCvv = 'error_card_cvv';
+
+  // ─── Medical vault ───────────────────────────────────────────────────────
+  static const String prescriptions = 'prescriptions';
+  static const String pastAppointmentsTitle = 'past_appointments_title';
+  static const String myTestsAndResults = 'my_tests_and_results';
+
+  static const String prescriptionDetails = 'prescription_details';
+  static const String digitalPrescription = 'digital_prescription';
+  static const String prescriptionId = 'prescription_id';
+  static const String active = 'active';
+  static const String expired = 'expired';
+  static const String prescribedBy = 'prescribed_by';
+  static const String diagnosis = 'diagnosis';
+  static const String medications = 'medications';
+  static const String dosageLabel = 'dosage_label';
+  static const String frequencyLabel = 'frequency_label';
+  static const String instructionsLabel = 'instructions_label';
+  static const String downloadPrescription = 'download_prescription';
+
+  static const String resultsFilterAll = 'results_filter_all';
+  static const String labResults = 'lab_results';
+  static const String radiologyResults = 'radiology_results';
+  static const String activeOrders = 'active_orders';
+  static const String resultsReady = 'results_ready';
+  static const String reviewed = 'reviewed';
+  static const String awaitingReview = 'awaiting_review';
+  static const String requestSent = 'request_sent';
+  static const String fromDoctor = 'from_doctor';
+  static const String viewReview = 'view_review';
+  static const String uploadReport = 'upload_report';
+  static const String noTestsYet = 'no_tests_yet';
+
+  static const String laboratoryResults = 'laboratory_results';
+  static const String orderInformation = 'order_information';
+  static const String orderDate = 'order_date';
+  static const String validFor = 'valid_for';
+  static const String patientInformation = 'patient_information';
+  static const String patientNameLabel = 'patient_name_label';
+  static const String dateOfBirth = 'date_of_birth';
+  static const String medicalRecordNumber = 'medical_record_number';
+  static const String insurance = 'insurance';
+  static const String memberId = 'member_id';
+  static const String studyOrdered = 'study_ordered';
+  static const String modality = 'modality';
+  static const String bodyRegion = 'body_region';
+  static const String clinicalIndication = 'clinical_indication';
+  static const String specialInstructions = 'special_instructions';
+  static const String orderingPhysician = 'ordering_physician';
+  static const String electronicallySigned = 'electronically_signed';
+  static const String shaVerified = 'sha_verified';
+  static const String confidentialNote = 'confidential_note';
+  static const String downloadPdf = 'download_pdf';
+  static const String chooseTestingLocation = 'choose_testing_location';
+  static const String preferredHospitalSelected =
+      'preferred_hospital_selected';
+  static const String bookInExternalApp = 'book_in_external_app';
+  static const String completedMyTest = 'completed_my_test';
+
+  static const String chooseLaboratoryCentre = 'choose_laboratory_centre';
+  static const String awayOpenBookingApp = 'away_open_booking_app';
+
+  static const String uploadYourReport = 'upload_your_report';
+  static const String testComplete = 'test_complete';
+  static const String testCompleteBody = 'test_complete_body';
+  static const String yourNote = 'your_note';
+  static const String optional = 'optional';
+  static const String yourNoteHint = 'your_note_hint';
+  static const String reportDocument = 'report_document';
+  static const String addReportDocument = 'add_report_document';
+  static const String uploadAndNotify = 'upload_and_notify';
+  static const String resultsSubmitted = 'results_submitted';
+  static const String resultsSubmittedBody = 'results_submitted_body';
+
+  static const String reportAndDoctorReview = 'report_and_doctor_review';
+  static const String reportIsWith = 'report_is_with';
+  static const String reportIsWithBody = 'report_is_with_body';
+  static const String chooseTheNextStep = 'choose_the_next_step';
+  static const String doctorWantsToTalk = 'doctor_wants_to_talk';
+  static const String acceptFollowUp = 'accept_follow_up';
+  static const String message = 'message';
+  static const String referAndEscalation = 'refer_and_escalation';
+  static const String reasonForTestHint = 'reason_for_test_hint';
+
+
+  // ─── Doctor ──────────────────────────────────────────────────────────────
+  static const String navMesssage = 'nav_messsage';
+  static const String navProfile = 'nav_profile';
+  static const String goodMorning = 'good_morning';
+  static const String availableBalance2 = 'available_balance_2';
+  static const String withdraw = 'withdraw';
+  static const String pendingApptRequests = 'pending_appt_requests';
+  static const String todaysPatients = 'todays_patients';
+  static const String totalEarned = 'total_earned';
+  static const String totalPatients = 'total_patients';
+  static const String quickActions = 'quick_actions';
+  static const String setSchedule = 'set_schedule';
+  static const String setFees = 'set_fees';
+  static const String resultsToReview = 'results_to_review';
+  static const String appointmentsOverview = 'appointments_overview';
+  static const String weekly = 'weekly';
+  static const String monthly = 'monthly';
+  static const String upcomingAppointments2 = 'upcoming_appointments_2';
+  static const String confirmed = 'confirmed';
+  static const String selectYear = 'select_year';
+  static const String selectMonth = 'select_month';
+  static const String selectWeek = 'select_week';
+  static const String start = 'start';
+  static const String end = 'end';
+  static const String addSlot = 'add_slot';
+  static const String currentSlots = 'current_slots';
+  static const String weeklySummary = 'weekly_summary';
+  static const String activeDays = 'active_days';
+  static const String totalHours = 'total_hours';
+  static const String maxPatients = 'max_patients';
+  static const String saveSchedule = 'save_schedule';
+  static const String scheduleSaved = 'schedule_saved';
+  static const String slotNeedsBothTimes = 'slot_needs_both_times';
+  static const String selectCurrency = 'select_currency';
+  static const String consultationFeeLabel = 'consultation_fee_label';
+  static const String saveConsultationFee = 'save_consultation_fee';
+  static const String consultationFeeSaved = 'consultation_fee_saved';
+  static const String notAvailableYet = 'not_available_yet';
+  static const String notAvailableYetBody = 'not_available_yet_body';
   // ─── Feedback ────────────────────────────────────────────────────────────
   static const String otpResent = 'otp_resent';
   static const String somethingWentWrong = 'something_went_wrong';

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/constants/app_strings.dart';
@@ -28,7 +27,10 @@ class DoctorSearchController extends GetxController {
 
   static const Duration _debounce = Duration(milliseconds: 300);
 
-  final TextEditingController queryController = TextEditingController();
+  /// The live query. Held as a plain string, not a `TextEditingController` —
+  /// see `DoctorSearchField`, which owns the text controller so it is
+  /// disposed with the widget rather than with the route.
+  final RxString query = ''.obs;
 
   final RxList<Doctor> results = <Doctor>[].obs;
   final RxList<String> specialties = <String>[].obs;
@@ -50,7 +52,6 @@ class DoctorSearchController extends GetxController {
   @override
   void onClose() {
     _debounceTimer?.cancel();
-    queryController.dispose();
     super.onClose();
   }
 
@@ -63,7 +64,8 @@ class DoctorSearchController extends GetxController {
     }
   }
 
-  void onQueryChanged(String _) {
+  void onQueryChanged(String value) {
+    query.value = value;
     _debounceTimer?.cancel();
     _debounceTimer = Timer(_debounce, search);
   }
@@ -77,23 +79,31 @@ class DoctorSearchController extends GetxController {
   bool isSelected(String specialty) => selectedSpecialty.value == specialty;
 
   Future<void> search() async {
+    if (isClosed) return;
     isLoading.value = true;
     errorMessage.value = null;
     try {
-      results.value = await _searchDoctors(
-        query: queryController.text,
+      final found = await _searchDoctors(
+        query: query.value,
         specialty: selectedSpecialty.value == allSpecialties
             ? null
             : selectedSpecialty.value,
       );
+      // The request outlives the route: a debounced search fired just before
+      // the screen was popped still resolves afterwards, and assigning to a
+      // closed controller's observables throws.
+      if (isClosed) return;
+      results.value = found;
     } on AppException catch (error) {
+      if (isClosed) return;
       errorMessage.value = error.message;
       results.clear();
     } catch (_) {
+      if (isClosed) return;
       errorMessage.value = AppStrings.somethingWentWrong.tr;
       results.clear();
     } finally {
-      isLoading.value = false;
+      if (!isClosed) isLoading.value = false;
     }
   }
 

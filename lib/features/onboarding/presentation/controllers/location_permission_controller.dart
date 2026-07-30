@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/utils/app_navigator.dart';
 import '../../../auth/data/datasources/auth_local_data_source.dart';
 
 /// Handles the "Allow your Location" prompt.
@@ -34,7 +35,7 @@ class LocationPermissionController extends GetxController {
 
   Future<void> _continue() async {
     await _local.markLocationPromptSeen();
-    Get.offAllNamed<void>(AppRoutes.onboarding);
+    AppNavigator.resetTo(AppRoutes.onboarding);
   }
 
   /// Seam for the platform permission dialog.

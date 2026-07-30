@@ -10,6 +10,7 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_sizes.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/utils/app_navigator.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
@@ -32,7 +33,7 @@ class DeliveryFeedbackScreen extends StatelessWidget {
       topBar: AppTopBar(
         title: AppStrings.feedback.tr,
         // Dismissed rather than popped: the delivery is finished.
-        onBack: () => Get.offAllNamed<void>(AppRoutes.home),
+        onBack: () => AppNavigator.resetTo(AppRoutes.home),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -88,7 +89,7 @@ class DeliveryFeedbackScreen extends StatelessWidget {
           AppSpacing.gapV(AppSpacing.sm),
           GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: () => Get.offAllNamed<void>(AppRoutes.home),
+            onTap: () => AppNavigator.resetTo(AppRoutes.home),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -113,6 +114,6 @@ class DeliveryFeedbackScreen extends StatelessWidget {
 
   Future<void> _review(BuildContext context) async {
     final stars = await ReviewDialog.show(context);
-    if (stars != null) Get.offAllNamed<void>(AppRoutes.home);
+    if (stars != null) AppNavigator.resetTo(AppRoutes.home);
   }
 }

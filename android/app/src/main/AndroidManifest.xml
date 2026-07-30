@@ -30,10 +30,28 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <!-- Google Maps: powers the Nearby Payment Points map.
-             Restrict this key in the Google Cloud console to this app's
-             package name and signing certificate — anything shipped in an
-             APK can be extracted from it. -->
+        <!-- Google Maps: powers Nearby Payment Points and live delivery
+             tracking.
+
+             If the map draws a blank grid and logcat says "Authorization
+             failure", the key is fine here and the console is not. Three
+             things must all be true:
+
+             1. "Maps SDK for Android" is ENABLED for the key's project at
+                https://console.cloud.google.com/apis/library/maps-android.backend
+                (enabling "Maps JavaScript API" or "Maps SDK for iOS" does
+                not cover Android).
+             2. Billing is enabled on that project — the Maps SDK refuses
+                requests without it, even inside the free tier.
+             3. If the key has an "Android apps" restriction, this package
+                and the signing certificate must be listed:
+                  package: com.example.bienify_app
+                  debug SHA-1: E4:20:D3:BC:CC:CE:ED:B7:9C:B6:64:DD:0B:36:49:0C:7F:E6:99:3C
+                Add the release SHA-1 too before shipping — a debug build and
+                a release build are different certificates.
+
+             Keep the restriction. Anything shipped in an APK can be
+             extracted from it, so an unrestricted key is a billable one. -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDzIh16RvM4ajB6XGdl9adsVJJUGJP13wU"/>

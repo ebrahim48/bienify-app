@@ -34,6 +34,22 @@ class AppAssets {
   /// Courier photo on the delivery feedback screen.
   static const String deliveryFeedback = '$_images/feedback.png';
 
+  /// Storefront shot behind the "Stores Near You" row.
+  static const String storesNear = '$_images/storesnear.png';
+
+  /// The delivery rider's headshot.
+  static const String rider = '$_images/riderarif.png';
+
+  // ─── Profile & medical vault ─────────────────────────────────────────────
+  /// "Online Pharmacy" promo strip on the order-history screen.
+  static const String promoBanner = '$_images/bannar.png';
+
+  /// Empty state for a wallet with no saved card.
+  static const String noPaymentMethod = '$_images/no paymentmethod.png';
+
+  /// Uploaded test report — the chest X-ray thumbnail in the designs.
+  static const String reportDocument = '$_images/report.png';
+
   // ─── People ──────────────────────────────────────────────────────────────
   /// Fallback headshot for doctors, used wherever a profile photo is missing.
   static const String doctorPlaceholder = '$_images/profile.png';

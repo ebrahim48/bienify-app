@@ -34,15 +34,18 @@ lib/
     ├── appointments/              bookings list, shared AppointmentCard
     ├── booking/                   payment summary + confirmation
     ├── chat/                      message threads
-    └── pharmacy/                  catalogue, prescription, cart, tracking
+    ├── pharmacy/                  catalogue, prescription, cart, tracking
+    ├── profile/                   account hub, wallet, settings, partner
+    ├── doctor/                    practitioner shell, dashboard, schedule
+    └── medical_vault/             prescriptions, past visits, tests, reports
 ```
 
 ### UI-first features
 
-`booking`'s cash flow, `appointments` and `pharmacy` were built
-presentation-first by request: screens, controllers and widgets are
-complete, `domain` holds **entity names only**, and `data` holds a static
-mock file. There is no repository, use case or data source under them, and
+`booking`'s cash flow, `appointments`, `pharmacy`, `profile`, `doctor` and
+`medical_vault` were built presentation-first by request: screens,
+controllers and widgets are complete, `domain` holds **entity names only**,
+and `data` holds a static mock file. There is no repository, use case or data source under them, and
 nothing calls an API — those arrive when the screens are wired to a
 backend. Everything else in this document still applies, including the
 dependency rule: the controllers already talk to `domain` types, so adding
@@ -193,6 +196,79 @@ as its `ConversationPeer` — the courier thread is the doctor thread with a
 different peer, not a second screen. `deliveryFeedback` likewise opens the
 appointments `ReviewDialog`, so both flows rate through one blurred popup.
 
+The account section hangs off the Home header's avatar:
+
+```
+home ─ avatar ─▶ profile ─┬─ My Health profile ─▶ healthProfile ─┐
+                          ├─ My tests and results ─▶ testResults ─┤
+                          ├─ My Wallet ─▶ wallet ─┬─ Add Account ─┐      │
+                          │                       └─ transactions │      │
+                          │   paymentOptions ─ Next ─▶ addDebitCard      │
+                          │        └─ Add Debit card ─▶ walletAccounts   │
+                          ├─ Settings ─┬─▶ changePassword          │
+                          │            └─▶ legal(about|terms|privacy)
+                          ├─ Partner With Bienify ─▶ becomePartner│
+                          └─ Log out ─▶ onboarding                │
+                                                                  │
+healthProfile ─┬─ All Prescriptions ─▶ allPrescriptions ──────────┤
+               │        ├─ Your Prescriptions ─▶ reportReview     │
+               │        └─ Your Medical vault ─▶ prescriptionDetails
+               ├─ All Test Reports ─▶ allTestReports ─▶ prescriptionDetails
+               ├─ Past Appintments ─▶ pastAppointments            │
+               ├─ Order History ─▶ orderHistory ─▶ reviewShop     │
+               ├─ Chat With Us ─▶ chat(support)                   │
+               └─ Delete Account ─ confirm dialog                 │
+                                                                  │
+testResults ─ card action ─┬─▶ testOrder ─▶ testingCentres ───────┘
+                           │       └─ I Completed My Test ─┐
+                           ├─▶ uploadTestReport ◀──────────┘
+                           │       └─▶ resultsSubmitted ─┐
+                           └─▶ reportReview ◀────────────┘
+                                    └─ Accept follow-up ─▶ search
+```
+
+Three route-level reuses hold that together. `legal` is one screen for
+About Us, Terms and Privacy, chosen by a `LegalDocument` argument.
+`pastAppointments` renders the Appointments tab's own `NeedCareBanner`,
+`AppointmentHistoryCard` and `ReviewDialog` against its controller — it
+only picks the completed slice. And `testOrder`, `uploadTestReport` and
+`reportReview` each carry several designs in one screen, switched on the
+chosen centre and the doctor's outcome rather than on separate routes —
+`reportReview` covers five: waiting, an offer to talk, a Message box, a
+Refer & Escalation box, and a further test the doctor ordered.
+
+## The doctor role
+
+"Join as a Doctor" on the sign-in panel enters a second shell:
+
+```
+onboarding ─ Join as a Doctor ─▶ doctorHome
+                                    ├─ Home            (complete)
+                                    ├─ Appointments ─┐
+                                    ├─ Messsage      ├ "Not available yet"
+                                    └─ Profile      ─┘
+doctorHome ─┬─ Set Schedule ─▶ doctorSetSchedule
+            ├─ Set Fees ─ bottom sheet
+            ├─ Results to review ─▶ testResults
+            └─ bell ─▶ home            (leaves the practitioner role)
+```
+
+`DoctorShellController` is deliberately separate from `MainNavController`:
+the two shells have different destinations, and a doctor switching tabs must
+not disturb the patient shell's state or vice versa. `AppBottomNavBar` and
+`NavDestination` are already generic over their destinations, so the bar
+itself is reused rather than rebuilt — only the four entries differ, with
+`AppIcons.bottomMessage` in place of the patient shell's Pharmacy tab.
+
+Three tabs show an explicit "Not available yet" placeholder because their
+designs have not arrived. That is the one place in the app with a
+deliberately unfinished state, and it was asked for — a doctor tapping
+Appointments should be told the section is coming, not shown a blank page.
+
+`AppointmentsChart` draws the seven weekday bars with widgets rather than a
+charting package: a dependency for seven bars against a fixed axis would be
+heavier than the layout it replaces.
+
 ## Localization
 
 The `En | Spa` toggle is real, not decorative.
@@ -277,11 +353,12 @@ Obx(() {
 ```
 
 This bug is silent — state updates, assertions on the controller pass, and
-the pixels never change. It has bitten this codebase eight times: the nav
+the pixels never change. It has bitten this codebase nine times: the nav
 badge, specialty chips, availability slots, the pharmacy cart, the
 appointments tab chips and history, the select-medicines checkout bar, the
-payment address card, and the order-status panel and timeline. When a tap
-"does nothing", check this first.
+payment address card, the order-status panel and timeline, and the doctor
+dashboard's upcoming-visits card. When a tap "does nothing", check this
+first.
 
 Two of those were caught only by rendering goldens — the availability-slot
 one surfaced because two goldens that should have differed came out
@@ -308,7 +385,30 @@ golden is the test that actually detects this class of bug.
   price pair is wrapped in a `FittedBox(scaleDown)` so it shrinks rather
   than ellipsizing; the same applies to store names in header rows.
 * `Spacer()` inside a **scrolling** `Column` has no free space to take —
-  the delivery-feedback screen uses a fixed gap.
+  the delivery-feedback screen uses a fixed gap. Where a design really does
+  pin something to the foot of the page, set `AppScaffold(scrollable: false)`
+  and use a `Spacer` (Profile, Become a Partner), then guard the fit at 320pt
+  with 1.3× text.
+* **A tall golden viewport inflates every `.h`.** `.h` scales against the
+  viewport height, so a 1500pt-tall test surface renders a 132pt card at
+  226pt and the capture stops resembling the device. Render at the true
+  390×876 and scroll for the lower half — `doctor_golden_test.dart` does
+  both.
+* **`Get.offNamedUntil` clears the stack when its predicate never matches.**
+  `AccountController.saveCard` used to pop its own route and wiped the app
+  whenever a card was saved from anywhere else. Controllers now mutate only;
+  the caller decides where to go, and `AddCardController` unwinds its two
+  steps with a `Get.until` predicate that falls through safely.
+* **A `const` list assigned to an `RxList` is unmodifiable.**
+  `cards.value = ProfileMockData.cards` made the backing list const, so saving
+  a card threw *"Cannot add to an unmodifiable list"* — on device, not just in
+  tests. Wrap const mocks in `List.of(...)` whenever the observable is later
+  mutated.
+* **Nested `Flexible`s divide the row instead of sizing to content.** A
+  `Flexible` inside a `mainAxisSize: min` `Row` still splits the incoming
+  `maxWidth`, so two tags that would both fit came out as `"Laborat…"` and
+  `"Routine"`. `TestResultCard` uses a `Wrap` with `spaceBetween`: labels
+  from a fixed vocabulary drop to a second line rather than truncate.
 
 ## Known seams
 
@@ -338,3 +438,48 @@ golden is the test that actually detects this class of bug.
   credentialing steps hang off the profile flow once designed.
 - The Apple button reads **"Sign in with Apple"**; the mock-up's "Sing in with
   Apple" is a typo and was not reproduced.
+- **Profile editing** reuses the sign-up `ProfileSetupScreen`; both the Edit
+  pill and the camera badge open it. A dedicated edit form and a real photo
+  picker replace `ProfileController.edit` / `changePhoto`.
+- **Payment options and Add Debit Card have no supplied design.** They use the
+  app's card list and labelled-field form; replace them freely when designs
+  land. `AddCardController` keeps only the last four digits — the full number
+  never leaves the form — and a real gateway replaces its one
+  `Future.delayed`.
+- **Order History lives inside My Health Profile**, because the Profile design
+  gave that slot to "My tests and results". "My tests and results" is reachable
+  from both levels, which is intentional — nothing became unreachable.
+- **"Chat With Us"** opens the existing `ChatScreen` with `ChatMockData.support`
+  as the peer. **"Call With US"** and **Delete Account** acknowledge the tap;
+  placing a call and deleting an account are marked seams.
+- **All Test Reports lists the same records under both disciplines**, which is
+  what the design draws — the toggle currently only drives the pill.
+- **Legal copy is not translated.** `LegalCopy` holds the three documents
+  verbatim, Terms in Spanish as designed. Wording is a legal decision, not a
+  UI one, so it sits outside `AppTranslations`.
+- **The order sheet's identifiers** are Satoshi with tabular figures, not a
+  monospaced face: `fontFamily: 'monospace'` resolves on Android, not on
+  Apple platforms, and not under `flutter_test`. See `_identifierStyle`.
+- **PDF export and card capture** acknowledge the tap and stop —
+  `DocumentsController.download`, `TestResultsController.downloadDocument`
+  and `AccountController.addPaymentMethod` are where those plug in.
+- **Google Maps needs console setup, not code.** The key is wired into
+  `AndroidManifest.xml`. A blank map grid plus `Authorization failure` in
+  logcat means the project has the Maps SDK for Android disabled, billing
+  off, or an Android-apps key restriction that does not list this package
+  and certificate. The manifest comment carries the checklist and the debug
+  SHA-1.
+
+## Lifecycle traps
+
+* **A `TextEditingController` must be owned by the widget, never by a GetX
+  controller.** GetX disposes a route's dependencies while the outgoing
+  route is still painting its pop transition, so the field rebuilds against
+  a disposed controller and throws *"A TextEditingController was used after
+  being disposed"*. `DoctorSearchField` owns its own; controllers keep a
+  plain `RxString query`.
+* **Clearing the whole stack needs a frame.** `Get.offAllNamed` unmounts
+  every route at once, and if one still holds focus the `Overlay`'s
+  inherited element is torn down with dependents still attached —
+  `'_dependents.isEmpty': is not true`. Always go through
+  `AppNavigator.resetTo`, which unfocuses and defers by one frame.

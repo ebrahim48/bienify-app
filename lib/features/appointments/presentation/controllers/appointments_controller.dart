@@ -12,6 +12,12 @@ import '../../domain/entities/appointment.dart';
 /// UI-only: the roster is static and cancelling/reviewing mutate memory. The
 /// grouping and joinable rules are what a backend will later drive.
 class AppointmentsController extends GetxController {
+  AppointmentsController({DateTime Function() clock = DateTime.now})
+    : _clock = clock;
+
+  /// Injectable so goldens can pin "today"; production uses the wall clock.
+  final DateTime Function() _clock;
+
   final RxList<Appointment> appointments = <Appointment>[].obs;
   final Rx<AppointmentTab> tab = AppointmentTab.upcoming.obs;
   final RxBool isLoading = true.obs;
@@ -19,7 +25,7 @@ class AppointmentsController extends GetxController {
   /// A visit can be joined on the day it is scheduled.
   bool isJoinable(Appointment appointment) {
     if (appointment.status != AppointmentStatus.upcoming) return false;
-    final now = DateTime.now();
+    final now = _clock();
     final at = appointment.scheduledAt;
     return at.year == now.year && at.month == now.month && at.day == now.day;
   }
@@ -74,7 +80,7 @@ class AppointmentsController extends GetxController {
   Future<void> load() async {
     isLoading.value = true;
     await Future<void>.delayed(const Duration(milliseconds: 400));
-    appointments.value = AppointmentMockData.all();
+    appointments.value = AppointmentMockData.all(now: _clock());
     isLoading.value = false;
   }
 

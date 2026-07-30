@@ -44,7 +44,7 @@ class DoctorDirectoryView extends GetView<DoctorSearchController> {
       children: [
         const ScreenTopGap(),
         DoctorSearchField(
-          controller: controller.queryController,
+          initialText: controller.query.value,
           onChanged: controller.onQueryChanged,
           onSubmitted: (_) => controller.search(),
           autofocus: autofocus,

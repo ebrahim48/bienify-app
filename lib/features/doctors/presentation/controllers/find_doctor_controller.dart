@@ -1,4 +1,3 @@
-import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/routes/app_routes.dart';
@@ -10,7 +9,9 @@ import '../../domain/entities/doctor_category.dart';
 ///
 /// UI-only — categories come from [DoctorMockData]; nothing calls an API.
 class FindDoctorController extends GetxController {
-  final TextEditingController queryController = TextEditingController();
+  /// The live query. `DoctorSearchField` owns the text controller, so this
+  /// one lives as long as the tab without any disposal to coordinate.
+  final RxString query = ''.obs;
 
   /// The catch-all shown full-width above the grid.
   final DoctorCategory general = DoctorMockData.generalCategory;
@@ -24,12 +25,6 @@ class FindDoctorController extends GetxController {
   void onInit() {
     super.onInit();
     categories.value = DoctorMockData.categories;
-  }
-
-  @override
-  void onClose() {
-    queryController.dispose();
-    super.onClose();
   }
 
   bool isSelected(DoctorCategory category) => selected.value.id == category.id;

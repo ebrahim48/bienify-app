@@ -97,9 +97,8 @@ class HomeController extends GetxController {
 
   void openCart() => _nav.select(3);
 
-  /// Profile and location editing belong to the account module; until it
-  /// lands they surface the same information the header already shows.
-  void openProfile() => AppSnackbar.info(patientName);
+  /// The header avatar is the entry point into the account section.
+  void openProfile() => Get.toNamed<void>(AppRoutes.profile);
 
   void changeLocation() => AppSnackbar.info(location);
 

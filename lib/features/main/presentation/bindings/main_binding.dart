@@ -13,12 +13,18 @@ import '../controllers/main_nav_controller.dart';
 /// tabs alive in an `IndexedStack` — a lazily bound controller would be built
 /// on first paint anyway, and eager creation keeps tab switches instant.
 class MainBinding extends Bindings {
+  MainBinding({this.clock = DateTime.now});
+
+  /// Passed to `AppointmentsController` so goldens can pin "today"; the app
+  /// never sets it.
+  final DateTime Function() clock;
+
   @override
   void dependencies() {
     Get
       ..put(MainNavController())
       ..put(HomeController(getHomeFeed: Get.find<GetHomeFeed>()))
-      ..put(AppointmentsController())
+      ..put(AppointmentsController(clock: clock))
       ..put(FindDoctorController())
       ..put(PharmacyController());
   }

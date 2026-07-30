@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/base/base_controller.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/utils/app_navigator.dart';
 import '../../../../core/utils/validators.dart';
 import '../../domain/usecases/password_recovery_usecases.dart';
 import 'auth_flow.dart';
@@ -50,6 +51,6 @@ class NewPasswordController extends GetxController
       );
     });
 
-    if (ok) Get.offAllNamed<void>(AppRoutes.passwordUpdated);
+    if (ok) AppNavigator.resetTo(AppRoutes.passwordUpdated);
   }
 }

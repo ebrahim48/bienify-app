@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -305,7 +306,11 @@ class _Rider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const AppAvatar(name: PharmacyMockData.riderName, size: 48),
+        const AppAvatar(
+          name: PharmacyMockData.riderName,
+          size: 48,
+          fallbackAsset: AppAssets.rider,
+        ),
         AppSpacing.gapH(AppSpacing.sm),
         Expanded(
           child: Column(

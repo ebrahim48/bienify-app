@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -51,6 +52,7 @@ class ChatHeader extends StatelessWidget {
                 imageUrl: peer.photoUrl,
                 name: peer.name,
                 size: _avatar,
+                fallbackAsset: peer.photoAsset ?? AppAssets.doctorPlaceholder,
               ),
               AppSpacing.gapH(AppSpacing.sm),
               Expanded(

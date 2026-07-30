@@ -10,6 +10,8 @@ import 'package:bienify_app/features/doctors/data/static/doctor_mock_data.dart';
 import 'package:bienify_app/features/doctors/presentation/bindings/doctors_bindings.dart';
 import 'package:bienify_app/features/doctors/presentation/screens/doctor_details_screen.dart';
 import 'package:bienify_app/features/doctors/presentation/screens/doctor_search_screen.dart';
+import 'package:bienify_app/features/pharmacy/data/static/pharmacy_mock_data.dart';
+import 'package:bienify_app/features/pharmacy/presentation/controllers/order_tracking_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -159,6 +161,25 @@ void main() {
     await expectLater(
       find.byType(ChatScreen),
       matchesGoldenFile('chat.png'),
+    );
+  });
+
+  testWidgets('Chat reused for the delivery rider', (tester) async {
+    // The courier thread is this same screen with a different peer, so the
+    // only thing worth checking is that the header takes on the rider's name
+    // and headshot rather than a doctor's.
+    await pump(
+      tester,
+      const ChatScreen(),
+      binding: ChatBinding(),
+      arguments: Get.put(OrderTrackingController()).rider,
+    );
+    expect(find.text(PharmacyMockData.riderName), findsOneWidget);
+
+    await settleImages(tester);
+    await expectLater(
+      find.byType(ChatScreen),
+      matchesGoldenFile('chat_rider.png'),
     );
   });
 }
