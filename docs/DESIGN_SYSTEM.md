@@ -74,6 +74,33 @@ The pharmacy owner adds a fourth:
 | `stockLeft*` / `outOfStock*` | `#FEF3C6` / `#FFE2E2` | "3 left" and "Out of Stock" |
 | `shopFieldFill` | `#F9FAFB` | The pale inputs on Add / Edit Medicine |
 
+And the rider a fifth:
+
+| Alias | Value | Used for |
+|---|---|---|
+| `uploadSurface` | `gray100` | Grey tile behind an empty upload box |
+| `stepDisc*` / `timelineRule` | `primary50` / `primary800` / `gray200` | The How It Works timeline |
+| `applyPanel` | `primary100` | "Apply Rider?" |
+| `fee*` | `#DCFCE7` / `#008236` | A delivery fee, always a gain |
+| `delivered*` | `#0F4C35` / `#8FD2B4` | The dark-green receipt |
+
+### `PhotoUploadBox` — real camera / gallery capture
+
+```dart
+PhotoUploadBox(
+  label: AppStrings.takeSelfie.tr,
+  icon: Icons.photo_camera_outlined,
+  height: 150,
+  file: controller.selfie.value,
+  onPicked: (file) => controller.selfie.value = file,
+)
+```
+
+Tapping it opens a Camera / Gallery sheet, downscales the capture and hands
+back a `File`; the tile then *becomes* the photo with a Replace affordance.
+Controllers hold `Rxn<File>`, never the picker itself — `PhotoPickerService`
+is the one place that touches the plugin.
+
 > Every one of these was sampled from the exported designs, not eyeballed.
 > The tag, chip and step values are a cooler slate-and-amber set that belongs
 > to no brand ramp, which is why they carry literal values.
@@ -527,7 +554,11 @@ than by a second implementation:
 | `OrderDetailScreen` | awaiting / results in | `TestRequest.hasResults` |
 | `PatientRowCard` | roster, patient, additional test | `subtitle` |
 | `DestructiveBar` | Log out ×2, Delete Account ×2 | icon + label |
-| `AppBottomNavBar` | all three shells | `destinations` |
+| `AppBottomNavBar` | all four shells | `destinations` |
+| `AuthStatusScreen` | sign-up, reset, booking, rider | named constructor |
+| `RoleProfileCard` | pharmacy owner, rider | name + phone |
+| `PhotoUploadBox` | selfie, ID ×2, licence, vehicle | `file` + `onPicked` |
+| `RiderApplicationScreen` | 5 application designs | step |
 | `DashedDropZone` | licence, shop logo, shop banner | `hasFile` |
 | `MedicineFormScreen` | Add / Edit Medicine | `editing` presence |
 | `EarningWithdrawScreen` | the shop's Withdraw | route, not a copy |

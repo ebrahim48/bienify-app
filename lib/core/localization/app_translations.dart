@@ -793,6 +793,122 @@ class AppTranslations extends Translations {
     AppStrings.updateShopInformation: 'Update Shop Information',
     AppStrings.shopUpdated: 'Shop information updated',
 
+    // Photo upload
+    AppStrings.takeAPhoto: 'Take a photo',
+    AppStrings.chooseFromGallery: 'Choose from gallery',
+    AppStrings.replacePhoto: 'Replace',
+    AppStrings.uploadPhoto: 'Upload Photo',
+    AppStrings.photoNeeded: 'Add the photos marked with a star',
+
+    // Rider
+    AppStrings.navEarnings: 'Earnings',
+
+    AppStrings.riderGuide: 'RIDER GUIDE',
+    AppStrings.howItWorks: 'How It Works',
+    AppStrings.howItWorksBody:
+        'Start delivering in minutes and earn on your own schedule.',
+    AppStrings.stepSignUp: '📝 Sign Up',
+    AppStrings.stepSignUpBody:
+        'Create your rider account with basic details and verify your '
+        'identity.',
+    AppStrings.stepSignUpNote:
+        'Quick registration with phone number, ID verification, and profile '
+        'setup.',
+    AppStrings.stepGetOrders: '📦 Get Order Requests',
+    AppStrings.stepGetOrdersBody:
+        'Receive nearby delivery requests directly on your app.',
+    AppStrings.stepGetOrdersNote:
+        'Accept orders that fit your schedule and location.',
+    AppStrings.stepPickDeliver: '🚀 Pick & Deliver',
+    AppStrings.stepPickDeliverBody:
+        'Pick up the order from the store or pharmacy and deliver it to the '
+        'customer.',
+    AppStrings.stepPickDeliverNote:
+        'Use in-app navigation for fast and easy delivery.',
+    AppStrings.stepEarnMoney: '💰 Earn Money',
+    AppStrings.stepEarnMoneyBody: 'Get paid for every successful delivery.',
+    AppStrings.stepEarnMoneyNote:
+        'Track your earnings and receive payouts securely.',
+    AppStrings.stepBuildRating: '⭐ Build Your Rating',
+    AppStrings.stepBuildRatingBody:
+        'Provide great service and increase your rating.',
+    AppStrings.stepBuildRatingNote:
+        'Higher ratings bring more delivery opportunities.',
+    AppStrings.applyRiderTitle: 'Apply Rider?',
+    AppStrings.applyRiderBody:
+        'Start earning by delivering orders in your area. Join as a rider in '
+        'just a few steps',
+    AppStrings.applyNow: 'Apply Now',
+
+    AppStrings.uploadProfileTitle: 'Upload Profile',
+    AppStrings.heyName: 'Hey @name!',
+    AppStrings.applyingForRider: "You're applying for Rider",
+    AppStrings.takeSelfie: 'Take Selfie',
+    AppStrings.identityVerification: 'Identity Verification',
+    AppStrings.frontOfIdCard: 'Front of ID Card',
+    AppStrings.backOfIdCard: 'Back of ID Card',
+    AppStrings.ensureClearPhoto: 'Please ensure a clear photo',
+    AppStrings.vehicleInformation: 'Vehicle Information',
+    AppStrings.vehiclesType: 'Vehicles Type',
+    AppStrings.vehicleBicycle: 'Bicycle',
+    AppStrings.vehicleBike: 'Bike',
+    AppStrings.vehicleCar: 'Car',
+    AppStrings.drivingLicense: 'Driving License',
+    AppStrings.vehiclesPhoto: 'Vehicles Photo',
+    AppStrings.locationAndAvailability: 'Location & Availability',
+    AppStrings.country: 'Country',
+    AppStrings.city: 'City',
+    AppStrings.locationLabel: 'Location',
+    AppStrings.preferredDeliveryZone: 'Preferred Delivery Zone',
+    AppStrings.liveLocationPermission: 'Live Location Permission (GPS)',
+    AppStrings.paymentSetup: 'Payment Setup',
+    AppStrings.riderReady: "You're all set up !",
+    AppStrings.riderReadyBody: 'You can provide your Services',
+    AppStrings.applicationSent: 'Rider application sent',
+
+    AppStrings.deliveries: 'Deliveries',
+    AppStrings.onlineAcceptingOrders: 'Online — accepting orders',
+    AppStrings.offlineNotAccepting: 'Offline — not accepting orders',
+    AppStrings.viewOrders: 'View Orders',
+    AppStrings.ordersAvailable: '@count available',
+    AppStrings.earnings: 'Earnings',
+    AppStrings.recentDeliveries: 'RECENT DELIVERIES',
+
+    AppStrings.orderRequests: 'Order Requests',
+    AppStrings.newCount: '@count new',
+    AppStrings.newRequest: 'New Request',
+    AppStrings.acceptedRequest: 'Accepted Request',
+    AppStrings.cancelledRequest: 'Cancelled Request',
+    AppStrings.decline: 'Decline',
+    AppStrings.accept: 'Accept',
+    AppStrings.trackLive: 'Track LIVE',
+    AppStrings.requestAccepted: 'Request accepted',
+    AppStrings.requestDeclined: 'Request declined',
+    AppStrings.noRequestsHere: 'Nothing under this chip yet',
+
+    AppStrings.minutesAway: '@count min away',
+    AppStrings.nowArriving: 'Now Arriving @time',
+    AppStrings.latestArrival: 'Latest arrival time @time',
+    AppStrings.viewNote: 'View Note',
+    AppStrings.customerNote: 'Please provide as soon as possible !',
+    AppStrings.customer: 'Customer',
+    AppStrings.arrived: 'Arrived',
+    AppStrings.deliveryCompleted: 'Delivery Completed',
+    AppStrings.orderDeliveredTitle: 'Order successfully delivered!',
+    AppStrings.orderDeliveredBody: 'Customer has received the package.',
+    AppStrings.orderIdLabel: 'Order ID',
+    AppStrings.deliveredTo: 'DELIVERED TO',
+    AppStrings.deliveryTime: 'DELIVERY TIME',
+
+    AppStrings.overview: 'OVERVIEW',
+    AppStrings.earningsToday: 'Today',
+    AppStrings.earningsThisWeek: 'This Week',
+    AppStrings.deliveriesCount: '@count deliveries',
+    AppStrings.nextPayout: 'Next Payout',
+    AppStrings.accumulated: '@amount accumulated',
+    AppStrings.minimumPayout: 'Min. @amount',
+    AppStrings.history: 'HISTORY',
+
     // Feedback
     AppStrings.otpResent: 'A new code is on its way',
     AppStrings.somethingWentWrong: 'Something went wrong. Please try again.',
@@ -1066,7 +1182,6 @@ class AppTranslations extends Translations {
     AppStrings.consultationComplete: 'Consulta completada',
     AppStrings.waitingForPrescriptions: 'Esperando las recetas del médico',
     AppStrings.checkMedicalVault: 'Ver tu historial médico',
-    AppStrings.backToHome: 'Volver al inicio',
 
     AppStrings.myAppointments: 'Mis citas',
     AppStrings.upcoming: 'Próximas',
@@ -1139,11 +1254,6 @@ class AppTranslations extends Translations {
     AppStrings.estimatedDelivery2: 'Entrega estimada',
     AppStrings.orderProgress: 'Progreso del pedido',
     AppStrings.trackNow: 'Seguir ahora',
-
-    AppStrings.help: 'Ayuda',
-    AppStrings.stepsLeft: 'Solo @count paso restante',
-    AppStrings.pickUpFrom: 'RECOGER EN',
-    AppStrings.deliverTo: 'ENTREGAR A',
 
     AppStrings.feedback: 'Comentarios',
     AppStrings.contactlessDelivered: 'Pedido entregado sin contacto',
@@ -1585,6 +1695,122 @@ class AppTranslations extends Translations {
     AppStrings.uploadFileTypes: 'PDF, JPG o PNG (MÁX. 5MB)',
     AppStrings.updateShopInformation: 'Actualizar la farmacia',
     AppStrings.shopUpdated: 'Farmacia actualizada',
+
+    // Subir fotos
+    AppStrings.takeAPhoto: 'Hacer una foto',
+    AppStrings.chooseFromGallery: 'Elegir de la galería',
+    AppStrings.replacePhoto: 'Cambiar',
+    AppStrings.uploadPhoto: 'Subir foto',
+    AppStrings.photoNeeded: 'Añade las fotos marcadas con un asterisco',
+
+    // Repartidor
+    AppStrings.navEarnings: 'Ganancias',
+
+    AppStrings.riderGuide: 'GUÍA DEL REPARTIDOR',
+    AppStrings.howItWorks: 'Cómo funciona',
+    AppStrings.howItWorksBody:
+        'Empieza a repartir en minutos y gana con tu propio horario.',
+    AppStrings.stepSignUp: '📝 Regístrate',
+    AppStrings.stepSignUpBody:
+        'Crea tu cuenta de repartidor y verifica tu identidad.',
+    AppStrings.stepSignUpNote:
+        'Registro rápido con teléfono, verificación de identidad y perfil.',
+    AppStrings.stepGetOrders: '📦 Recibe pedidos',
+    AppStrings.stepGetOrdersBody:
+        'Recibe solicitudes de reparto cercanas en tu app.',
+    AppStrings.stepGetOrdersNote:
+        'Acepta los pedidos que encajen con tu horario y tu zona.',
+    AppStrings.stepPickDeliver: '🚀 Recoge y entrega',
+    AppStrings.stepPickDeliverBody:
+        'Recoge el pedido en la tienda o farmacia y entrégalo al cliente.',
+    AppStrings.stepPickDeliverNote:
+        'Usa la navegación de la app para entregar rápido.',
+    AppStrings.stepEarnMoney: '💰 Gana dinero',
+    AppStrings.stepEarnMoneyBody: 'Cobra por cada entrega completada.',
+    AppStrings.stepEarnMoneyNote:
+        'Sigue tus ganancias y recibe los pagos de forma segura.',
+    AppStrings.stepBuildRating: '⭐ Sube tu valoración',
+    AppStrings.stepBuildRatingBody: 'Da un buen servicio y sube tu valoración.',
+    AppStrings.stepBuildRatingNote: 'Mejores valoraciones traen más entregas.',
+    AppStrings.applyRiderTitle: '¿Ser repartidor?',
+    AppStrings.applyRiderBody:
+        'Empieza a ganar repartiendo pedidos en tu zona. Únete en unos pocos '
+        'pasos',
+    AppStrings.applyNow: 'Solicitar ahora',
+
+    AppStrings.uploadProfileTitle: 'Sube tu perfil',
+    AppStrings.heyName: '¡Hola @name!',
+    AppStrings.applyingForRider: 'Estás solicitando ser repartidor',
+    AppStrings.takeSelfie: 'Hazte un selfie',
+    AppStrings.identityVerification: 'Verificación de identidad',
+    AppStrings.frontOfIdCard: 'Anverso del documento',
+    AppStrings.backOfIdCard: 'Reverso del documento',
+    AppStrings.ensureClearPhoto: 'Asegúrate de que la foto se vea bien',
+    AppStrings.vehicleInformation: 'Datos del vehículo',
+    AppStrings.vehiclesType: 'Tipo de vehículo',
+    AppStrings.vehicleBicycle: 'Bicicleta',
+    AppStrings.vehicleBike: 'Moto',
+    AppStrings.vehicleCar: 'Coche',
+    AppStrings.drivingLicense: 'Carné de conducir',
+    AppStrings.vehiclesPhoto: 'Foto del vehículo',
+    AppStrings.locationAndAvailability: 'Zona y disponibilidad',
+    AppStrings.country: 'País',
+    AppStrings.city: 'Ciudad',
+    AppStrings.locationLabel: 'Dirección',
+    AppStrings.preferredDeliveryZone: 'Zona de reparto preferida',
+    AppStrings.liveLocationPermission: 'Ubicación en tiempo real (GPS)',
+    AppStrings.paymentSetup: 'Configura el cobro',
+    AppStrings.riderReady: '¡Todo listo!',
+    AppStrings.riderReadyBody: 'Ya puedes ofrecer tus servicios',
+    AppStrings.applicationSent: 'Solicitud enviada',
+
+    AppStrings.deliveries: 'Entregas',
+    AppStrings.onlineAcceptingOrders: 'En línea — aceptando pedidos',
+    AppStrings.offlineNotAccepting: 'Desconectado — sin pedidos',
+    AppStrings.viewOrders: 'Ver pedidos',
+    AppStrings.ordersAvailable: '@count disponibles',
+    AppStrings.earnings: 'Ganancias',
+    AppStrings.recentDeliveries: 'ENTREGAS RECIENTES',
+
+    AppStrings.orderRequests: 'Solicitudes de reparto',
+    AppStrings.newCount: '@count nuevas',
+    AppStrings.newRequest: 'Nuevas',
+    AppStrings.acceptedRequest: 'Aceptadas',
+    AppStrings.cancelledRequest: 'Canceladas',
+    AppStrings.decline: 'Rechazar',
+    AppStrings.accept: 'Aceptar',
+    AppStrings.trackLive: 'Seguir en directo',
+    AppStrings.requestAccepted: 'Solicitud aceptada',
+    AppStrings.requestDeclined: 'Solicitud rechazada',
+    AppStrings.noRequestsHere: 'Todavía no hay nada aquí',
+
+    AppStrings.minutesAway: 'a @count min',
+    AppStrings.nowArriving: 'Llegada @time',
+    AppStrings.latestArrival: 'Llegada máxima @time',
+    AppStrings.viewNote: 'Ver nota',
+    AppStrings.help: 'Ayuda',
+    AppStrings.stepsLeft: 'Solo @count paso restante',
+    AppStrings.pickUpFrom: 'RECOGER EN',
+    AppStrings.deliverTo: 'ENTREGAR A',
+    AppStrings.backToHome: 'Volver al inicio',
+    AppStrings.customerNote: '¡Por favor, cuanto antes!',
+    AppStrings.customer: 'Cliente',
+    AppStrings.arrived: 'He llegado',
+    AppStrings.deliveryCompleted: 'Entrega completada',
+    AppStrings.orderDeliveredTitle: '¡Pedido entregado!',
+    AppStrings.orderDeliveredBody: 'El cliente ha recibido el paquete.',
+    AppStrings.orderIdLabel: 'Nº de pedido',
+    AppStrings.deliveredTo: 'ENTREGADO A',
+    AppStrings.deliveryTime: 'HORA DE ENTREGA',
+
+    AppStrings.overview: 'RESUMEN',
+    AppStrings.earningsToday: 'Hoy',
+    AppStrings.earningsThisWeek: 'Esta semana',
+    AppStrings.deliveriesCount: '@count entregas',
+    AppStrings.nextPayout: 'Próximo pago',
+    AppStrings.accumulated: '@amount acumulados',
+    AppStrings.minimumPayout: 'Mín. @amount',
+    AppStrings.history: 'HISTORIAL',
 
     // Mensajes
     AppStrings.otpResent: 'Enviamos un nuevo código',

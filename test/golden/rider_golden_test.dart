@@ -1,0 +1,310 @@
+import 'package:bienify_app/app.dart';
+import 'package:bienify_app/core/di/dependency_injection.dart';
+import 'package:bienify_app/core/localization/app_translations.dart';
+import 'package:bienify_app/core/theme/app_theme.dart';
+import 'package:bienify_app/features/Role/patient/auth/presentation/screens/auth_status_screen.dart';
+import 'package:bienify_app/features/Role/rider_role/domain/entities/rider.dart';
+import 'package:bienify_app/features/Role/rider_role/presentation/bindings/rider_bindings.dart';
+import 'package:bienify_app/features/Role/rider_role/presentation/controllers/rider_application_controller.dart';
+import 'package:bienify_app/features/Role/rider_role/presentation/controllers/rider_orders_controller.dart';
+import 'package:bienify_app/features/Role/rider_role/presentation/controllers/rider_shell_controller.dart';
+import 'package:bienify_app/features/Role/rider_role/presentation/screens/rider_application_screen.dart';
+import 'package:bienify_app/features/Role/rider_role/presentation/screens/rider_delivered_screen.dart';
+import 'package:bienify_app/features/Role/rider_role/presentation/screens/rider_edit_profile_screen.dart';
+import 'package:bienify_app/features/Role/rider_role/presentation/screens/rider_guide_screen.dart';
+import 'package:bienify_app/features/Role/rider_role/presentation/screens/rider_shell_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../support/test_fonts.dart';
+
+/// Renders the courier's section.
+void main() {
+  setUpAll(loadAppFonts);
+
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    Get.testMode = true;
+    await DependencyInjection.init();
+  });
+
+  tearDown(() {
+    DependencyInjection.clear();
+    Get.reset();
+  });
+
+  Future<void> pump(
+    WidgetTester tester,
+    Widget screen, {
+    Bindings? binding,
+    Size size = const Size(390, 876),
+  }) async {
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      ScreenUtilInit(
+        designSize: BienifyApp.designSize,
+        builder: (context, child) => GetMaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          translations: AppTranslations(),
+          locale: const Locale('en', 'US'),
+          initialRoute: '/',
+          getPages: [
+            GetPage(name: '/', page: () => const Scaffold()),
+            GetPage(
+              name: '/target',
+              page: () => screen,
+              binding: binding,
+              transition: Transition.noTransition,
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pump();
+
+    Get.toNamed<void>('/target');
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+  }
+
+  testWidgets('How It Works', (tester) async {
+    await pump(tester, const RiderGuideScreen());
+
+    expect(find.text('Rider Arif'), findsOneWidget);
+    expect(find.text('Apply Rider?'), findsOneWidget);
+
+    await settleImages(tester);
+    await expectLater(
+      find.byType(RiderGuideScreen),
+      matchesGoldenFile('rider_guide.png'),
+    );
+
+    // The panel sits at the foot of a long page.
+    await tester.drag(
+      find.byType(SingleChildScrollView).first,
+      const Offset(0, -700),
+    );
+    await settleImages(tester);
+    await expectLater(
+      find.byType(RiderGuideScreen),
+      matchesGoldenFile('rider_guide_apply.png'),
+    );
+  });
+
+  testWidgets('The application walks its five steps', (tester) async {
+    await pump(
+      tester,
+      const RiderApplicationScreen(),
+      binding: RiderApplicationBinding(),
+    );
+    final controller = Get.find<RiderApplicationController>();
+
+    expect(find.text('Hey Arif!'), findsOneWidget);
+    await settleImages(tester);
+    await expectLater(
+      find.byType(RiderApplicationScreen),
+      matchesGoldenFile('rider_apply_selfie.png'),
+    );
+
+    // The selfie is not starred, so the step lets the courier past.
+    expect(controller.canContinue, isTrue);
+    controller.next();
+    await tester.pumpAndSettle();
+    expect(find.text('Front of ID Card *'), findsOneWidget);
+    // Both sides are starred, so this one does not.
+    expect(controller.canContinue, isFalse);
+
+    await settleImages(tester);
+    await expectLater(
+      find.byType(RiderApplicationScreen),
+      matchesGoldenFile('rider_apply_identity.png'),
+    );
+
+    // Step past it the way a filled form would.
+    controller.step.value = 2;
+    await tester.pumpAndSettle();
+    expect(find.text('Bike'), findsOneWidget);
+    await settleImages(tester);
+    await expectLater(
+      find.byType(RiderApplicationScreen),
+      matchesGoldenFile('rider_apply_vehicle.png'),
+    );
+
+    controller.step.value = 3;
+    await tester.pumpAndSettle();
+    expect(find.text('lester city'), findsOneWidget);
+    await settleImages(tester);
+    await expectLater(
+      find.byType(RiderApplicationScreen),
+      matchesGoldenFile('rider_apply_location.png'),
+    );
+
+    controller.step.value = 4;
+    await tester.pumpAndSettle();
+    expect(controller.isLastStep, isTrue);
+    await settleImages(tester);
+    await expectLater(
+      find.byType(RiderApplicationScreen),
+      matchesGoldenFile('rider_apply_payment.png'),
+    );
+
+    // The chevron walks back through the application.
+    expect(controller.stepBack(), isTrue);
+    expect(controller.step.value, 3);
+  });
+
+  testWidgets('Picking a zone adds a chip, tapping one removes it', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      const RiderApplicationScreen(),
+      binding: RiderApplicationBinding(),
+    );
+    final controller = Get.find<RiderApplicationController>()..step.value = 3;
+    await tester.pumpAndSettle();
+
+    expect(controller.zones.length, 3);
+    controller.selectZone('Airport');
+    await tester.pump();
+    expect(controller.zones.length, 4);
+
+    // Picking the same one twice does not double it up.
+    controller.selectZone('Airport');
+    await tester.pump();
+    expect(controller.zones.length, 4);
+
+    await tester.tap(find.text('jamaica'));
+    await tester.pumpAndSettle();
+    expect(controller.zones.contains('jamaica'), isFalse);
+  });
+
+  testWidgets("You're all set up", (tester) async {
+    await pump(tester, AuthStatusScreen.riderReady());
+
+    expect(find.text("You're all set up !"), findsOneWidget);
+    expect(find.text('Back to Home'), findsOneWidget);
+
+    await settleImages(tester);
+    await expectLater(
+      find.byType(AuthStatusScreen),
+      matchesGoldenFile('rider_ready.png'),
+    );
+  });
+
+  testWidgets('Rider dashboard', (tester) async {
+    await pump(tester, const RiderShellScreen(), binding: RiderShellBinding());
+
+    expect(find.text(r'$21.75'), findsOneWidget);
+    expect(find.text('Online — accepting orders'), findsOneWidget);
+
+    await settleImages(tester);
+    await expectLater(
+      find.byType(RiderShellScreen),
+      matchesGoldenFile('rider_home.png'),
+    );
+  });
+
+  testWidgets('Order Requests, and what each chip allows', (tester) async {
+    await pump(tester, const RiderShellScreen(), binding: RiderShellBinding());
+    Get.find<RiderShellController>().select(RiderTab.orders);
+    await tester.pumpAndSettle();
+
+    final controller = Get.find<RiderOrdersController>();
+    expect(controller.visible.length, 3);
+    // A new job offers both answers.
+    expect(find.text('Accept'), findsWidgets);
+
+    await settleImages(tester);
+    await expectLater(
+      find.byType(RiderShellScreen),
+      matchesGoldenFile('rider_orders_new.png'),
+    );
+
+    controller.selectTab(RequestTab.accepted);
+    await tester.pumpAndSettle();
+    // A taken job offers the map instead.
+    expect(find.text('Track LIVE'), findsWidgets);
+    expect(find.text('Accept'), findsNothing);
+
+    await settleImages(tester);
+    await expectLater(
+      find.byType(RiderShellScreen),
+      matchesGoldenFile('rider_orders_accepted.png'),
+    );
+
+    // Accepting moves a card between the chips.
+    controller.selectTab(RequestTab.fresh);
+    await tester.pumpAndSettle();
+    final before = controller.visible.length;
+    controller.accept(controller.visible.first);
+    await tester.pumpAndSettle(const Duration(seconds: 5));
+    expect(controller.visible.length, before - 1);
+  });
+
+  testWidgets('Earnings', (tester) async {
+    await pump(tester, const RiderShellScreen(), binding: RiderShellBinding());
+    Get.find<RiderShellController>().select(RiderTab.earnings);
+    await tester.pumpAndSettle();
+
+    expect(find.text(r'$87.50'), findsOneWidget);
+    expect(find.text('Friday'), findsOneWidget);
+
+    await settleImages(tester);
+    await expectLater(
+      find.byType(RiderShellScreen),
+      matchesGoldenFile('rider_earnings.png'),
+    );
+  });
+
+  testWidgets('Profile tab', (tester) async {
+    await pump(tester, const RiderShellScreen(), binding: RiderShellBinding());
+    Get.find<RiderShellController>().select(RiderTab.profile);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mohammod Jakuan'), findsOneWidget);
+    expect(find.text('My Wallet'), findsOneWidget);
+
+    await settleImages(tester);
+    await expectLater(
+      find.byType(RiderShellScreen),
+      matchesGoldenFile('rider_profile.png'),
+    );
+  });
+
+  testWidgets('Edit Profile', (tester) async {
+    await pump(
+      tester,
+      const RiderEditProfileScreen(),
+      binding: RiderProfileBinding(),
+      size: const Size(390, 1100),
+    );
+
+    await settleImages(tester);
+    await expectLater(
+      find.byType(RiderEditProfileScreen),
+      matchesGoldenFile('rider_edit_profile.png'),
+    );
+  });
+
+  testWidgets('Delivery completed', (tester) async {
+    await pump(tester, const RiderDeliveredScreen());
+
+    expect(find.text('Order successfully delivered!'), findsOneWidget);
+    expect(find.text('#45892'), findsOneWidget);
+
+    await settleImages(tester);
+    await expectLater(
+      find.byType(RiderDeliveredScreen),
+      matchesGoldenFile('rider_delivered.png'),
+    );
+  });
+}

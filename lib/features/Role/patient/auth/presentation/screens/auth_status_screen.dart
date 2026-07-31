@@ -52,6 +52,15 @@ class AuthStatusScreen extends StatelessWidget {
       actionKey = AppStrings.backToAppointment,
       onAction = _returnToAppointments;
 
+  /// Shown once the rider application is in — green badge, and a way into
+  /// the courier's own shell.
+  AuthStatusScreen.riderReady({super.key})
+    : badgeColor = AppColors.success,
+      titleKey = AppStrings.riderReady,
+      subtitleKey = AppStrings.riderReadyBody,
+      actionKey = AppStrings.backToHome,
+      onAction = (() => AppNavigator.resetTo(AppRoutes.riderHome));
+
   final Color badgeColor;
   final String titleKey;
 

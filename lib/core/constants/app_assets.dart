@@ -40,6 +40,14 @@ class AppAssets {
   /// The delivery rider's headshot.
   static const String rider = '$_images/riderarif.png';
 
+  /// The cyclist on the "Apply Rider?" panel.
+  static const String cycleRider = '$_images/cyclerider.png';
+
+  /// The hand-over photograph on the courier's delivered screen. Shares the
+  /// onboarding artwork — it is the same moment, and no separate export of it
+  /// shipped with the designs.
+  static const String deliveredHero = onboardingMedicine;
+
   // ─── Profile & medical vault ─────────────────────────────────────────────
   /// "Online Pharmacy" promo strip on the order-history screen.
   static const String promoBanner = '$_images/bannar.png';

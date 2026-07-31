@@ -41,11 +41,13 @@ lib/
         │   └── medical_vault/     prescriptions, past visits, tests, reports
         ├── doctor_role/           practitioner shell, dashboard, schedule,
         │                          appointments, Results to Review
-        └── pharmacy_owner_role/   shop shell, dashboard, orders, medicines
+        ├── pharmacy_owner_role/   shop shell, dashboard, orders, medicines
+        └── rider_role/            guide, application, courier shell,
+                                   deliveries, earnings
 ```
 
 Every feature lives under the role that owns it. `core/` is shared by all
-three and knows nothing about roles; a role reaching into another's screens
+four and knows nothing about roles; a role reaching into another's screens
 does so through `AppRoutes`, never by importing its widgets — the doctor's
 wallet and the shop's Payments and Credit are the patient's `wallet` route,
 not a copy of that screen.
@@ -401,6 +403,49 @@ A shop's money and its legal pages are the same as everyone else's, so
 three screens the role reuses rather than rebuilds. `MedicineFormScreen` is
 Add and Edit in one, switched on whether `ShopMedicinesController.editing`
 holds a row.
+
+## The rider role
+
+"Join as Rider" on Become a Partner opens the guide, because a courier has an
+application to fill in before a shell means anything:
+
+```
+becomePartner ─ Join as Rider ─▶ riderGuide ─ Apply Now ─▶ riderApply
+                                                              │
+riderApply   1 selfie · 2 ID card · 3 vehicle · 4 zone · 5 payment
+             └─ Add Account ─▶ paymentOptions ─▶ addDebitCard ─▶ wallet
+             └─ Next on the last step ─▶ riderReady ─▶ riderHome
+
+riderHome ─┬─ Home
+           ├─ Orders    ─ chip ─ New · Accepted · Cancelled
+           │              └─ Track LIVE ─▶ riderTracking ─ Arrived
+           │                                  └─▶ riderDelivered
+           ├─ Earnings
+           └─ Profile ─┬─ Edit ─▶ riderEditProfile
+                       ├─ My Wallet ─▶ wallet    ┐ the patient app's own
+                       ├─ Settings ─▶ settings   ┘ screens
+                       └─ Log out ─▶ onboarding
+```
+
+`RiderApplicationScreen` is all five designs in one page — the same progress
+bar and Next, with the step deciding what sits between them. The confirmation
+is `AuthStatusScreen.riderReady`, a fourth constructor on the screen the
+patient's sign-up and password reset already share.
+
+### Real photo capture
+
+Every upload box in the app takes a real photograph. `PhotoPickerService`
+owns the one `ImagePicker` and is registered in `DependencyInjection`;
+`pickPhoto` asks camera or gallery in a sheet; `PhotoUploadBox` draws the
+grey dashed tile, becomes the photo once one is taken, and offers to replace
+it. Captures are downscaled to 1600px at 85% quality — a 12MP original is
+twenty times larger than anything these forms display, and the whole file
+gets uploaded.
+
+`CAMERA` is declared in the Android manifest with
+`android.hardware.camera` marked **not required**, so a device without one
+still installs and falls back to the gallery; iOS carries the two usage
+descriptions.
 
 ## Localization
 
