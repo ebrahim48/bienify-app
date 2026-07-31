@@ -1,69 +1,86 @@
 import 'package:get/get.dart';
 
-import '../../features/appointments/presentation/bindings/appointments_bindings.dart';
-import '../../features/appointments/presentation/screens/consultation_history_screen.dart';
-import '../../features/appointments/presentation/screens/video_call_screen.dart';
-import '../../features/auth/presentation/bindings/auth_bindings.dart';
-import '../../features/auth/presentation/controllers/auth_flow.dart';
-import '../../features/auth/presentation/screens/auth_status_screen.dart';
-import '../../features/auth/presentation/screens/login_screen.dart';
-import '../../features/auth/presentation/screens/new_password_screen.dart';
-import '../../features/auth/presentation/screens/otp_screen.dart';
-import '../../features/auth/presentation/screens/phone_number_screen.dart';
-import '../../features/auth/presentation/screens/profile_credentials_screen.dart';
-import '../../features/auth/presentation/screens/profile_setup_screen.dart';
-import '../../features/booking/presentation/screens/payment_summary_screen.dart';
-import '../../features/cash_payment_process/presentation/bindings/cash_payment_bindings.dart';
-import '../../features/cash_payment_process/presentation/screens/how_to_pay_screen.dart';
-import '../../features/cash_payment_process/presentation/screens/nearby_payment_points_screen.dart';
-import '../../features/cash_payment_process/presentation/screens/payment_confirmed_screen.dart';
-import '../../features/cash_payment_process/presentation/screens/payment_pending_screen.dart';
-import '../../features/chat/presentation/screens/chat_screen.dart';
-import '../../features/doctor/presentation/bindings/doctor_bindings.dart';
-import '../../features/doctor/presentation/screens/doctor_shell_screen.dart';
-import '../../features/doctor/presentation/screens/set_schedule_screen.dart';
-import '../../features/doctors/presentation/bindings/doctors_bindings.dart';
-import '../../features/doctors/presentation/screens/doctor_details_screen.dart';
-import '../../features/doctors/presentation/screens/doctor_list_screen.dart';
-import '../../features/doctors/presentation/screens/doctor_search_screen.dart';
-import '../../features/main/presentation/bindings/main_binding.dart';
-import '../../features/main/presentation/screens/main_shell_screen.dart';
-import '../../features/medical_vault/presentation/bindings/medical_vault_bindings.dart';
-import '../../features/medical_vault/presentation/screens/all_prescriptions_screen.dart';
-import '../../features/medical_vault/presentation/screens/all_test_reports_screen.dart';
-import '../../features/medical_vault/presentation/screens/health_profile_screen.dart';
-import '../../features/medical_vault/presentation/screens/past_appointments_screen.dart';
-import '../../features/medical_vault/presentation/screens/prescription_details_screen.dart';
-import '../../features/medical_vault/presentation/screens/report_review_screen.dart';
-import '../../features/medical_vault/presentation/screens/results_submitted_screen.dart';
-import '../../features/medical_vault/presentation/screens/test_order_screen.dart';
-import '../../features/medical_vault/presentation/screens/test_results_screen.dart';
-import '../../features/medical_vault/presentation/screens/testing_centres_screen.dart';
-import '../../features/medical_vault/presentation/screens/upload_report_screen.dart';
-import '../../features/profile/presentation/bindings/profile_bindings.dart';
-import '../../features/profile/presentation/screens/add_card_screen.dart';
-import '../../features/profile/presentation/screens/become_partner_screen.dart';
-import '../../features/profile/presentation/screens/change_password_screen.dart';
-import '../../features/profile/presentation/screens/legal_screen.dart';
-import '../../features/profile/presentation/screens/order_history_screen.dart';
-import '../../features/profile/presentation/screens/payment_options_screen.dart';
-import '../../features/profile/presentation/screens/profile_screen.dart';
-import '../../features/profile/presentation/screens/review_shop_screen.dart';
-import '../../features/profile/presentation/screens/settings_screen.dart';
-import '../../features/profile/presentation/screens/wallet_accounts_screen.dart';
-import '../../features/profile/presentation/screens/wallet_screen.dart';
-import '../../features/pharmacy/presentation/bindings/pharmacy_bindings.dart';
-import '../../features/pharmacy/presentation/screens/best_matches_screen.dart';
-import '../../features/pharmacy/presentation/screens/delivery_feedback_screen.dart';
-import '../../features/pharmacy/presentation/screens/live_tracking_screen.dart';
-import '../../features/pharmacy/presentation/screens/order_status_screen.dart';
-import '../../features/pharmacy/presentation/screens/pharmacy_cart_screen.dart';
-import '../../features/pharmacy/presentation/screens/pharmacy_payment_screen.dart';
-import '../../features/pharmacy/presentation/screens/select_medicines_screen.dart';
-import '../../features/pharmacy/presentation/screens/upload_prescription_screen.dart';
-import '../../features/onboarding/presentation/screens/location_permission_screen.dart';
-import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
-import '../../features/splash/presentation/screens/splash_screen.dart';
+import '../../features/Role/patient/appointments/presentation/bindings/appointments_bindings.dart';
+import '../../features/Role/patient/appointments/presentation/screens/consultation_history_screen.dart';
+import '../../features/Role/patient/appointments/presentation/screens/video_call_screen.dart';
+import '../../features/Role/patient/auth/presentation/bindings/auth_bindings.dart';
+import '../../features/Role/patient/auth/presentation/controllers/auth_flow.dart';
+import '../../features/Role/patient/auth/presentation/screens/auth_status_screen.dart';
+import '../../features/Role/patient/auth/presentation/screens/login_screen.dart';
+import '../../features/Role/patient/auth/presentation/screens/new_password_screen.dart';
+import '../../features/Role/patient/auth/presentation/screens/otp_screen.dart';
+import '../../features/Role/patient/auth/presentation/screens/phone_number_screen.dart';
+import '../../features/Role/patient/auth/presentation/screens/profile_credentials_screen.dart';
+import '../../features/Role/patient/auth/presentation/screens/profile_setup_screen.dart';
+import '../../features/Role/patient/booking/presentation/screens/payment_summary_screen.dart';
+import '../../features/Role/patient/cash_payment_process/presentation/bindings/cash_payment_bindings.dart';
+import '../../features/Role/patient/cash_payment_process/presentation/screens/how_to_pay_screen.dart';
+import '../../features/Role/patient/cash_payment_process/presentation/screens/nearby_payment_points_screen.dart';
+import '../../features/Role/patient/cash_payment_process/presentation/screens/payment_confirmed_screen.dart';
+import '../../features/Role/patient/cash_payment_process/presentation/screens/payment_pending_screen.dart';
+import '../../features/Role/patient/chat/presentation/screens/chat_screen.dart';
+import '../../features/Role/doctor_role/presentation/bindings/doctor_bindings.dart';
+import '../../features/Role/doctor_role/presentation/screens/doctor_appointment_details_screen.dart';
+import '../../features/Role/doctor_role/presentation/screens/choose_review_option_screen.dart';
+import '../../features/Role/doctor_role/presentation/screens/doctor_edit_profile_screen.dart';
+import '../../features/Role/doctor_role/presentation/screens/earning_withdraw_screen.dart';
+import '../../features/Role/doctor_role/presentation/screens/order_detail_screen.dart';
+import '../../features/Role/doctor_role/presentation/screens/request_follow_up_screen.dart';
+import '../../features/Role/doctor_role/presentation/screens/request_test_screen.dart';
+import '../../features/Role/doctor_role/presentation/screens/results_to_review_screen.dart';
+import '../../features/Role/doctor_role/presentation/screens/review_message_screen.dart';
+import '../../features/Role/doctor_role/presentation/screens/review_patient_screen.dart';
+import '../../features/Role/doctor_role/presentation/screens/doctor_shell_screen.dart';
+import '../../features/Role/doctor_role/presentation/screens/write_prescription_screen.dart';
+import '../../features/Role/doctor_role/presentation/screens/set_schedule_screen.dart';
+import '../../features/Role/patient/doctors/presentation/bindings/doctors_bindings.dart';
+import '../../features/Role/patient/doctors/presentation/screens/doctor_details_screen.dart';
+import '../../features/Role/patient/doctors/presentation/screens/doctor_list_screen.dart';
+import '../../features/Role/patient/doctors/presentation/screens/doctor_search_screen.dart';
+import '../../features/Role/patient/main/presentation/bindings/main_binding.dart';
+import '../../features/Role/patient/main/presentation/screens/main_shell_screen.dart';
+import '../../features/Role/patient/medical_vault/presentation/bindings/medical_vault_bindings.dart';
+import '../../features/Role/patient/medical_vault/presentation/screens/all_prescriptions_screen.dart';
+import '../../features/Role/patient/medical_vault/presentation/screens/all_test_reports_screen.dart';
+import '../../features/Role/patient/medical_vault/presentation/screens/health_profile_screen.dart';
+import '../../features/Role/patient/medical_vault/presentation/screens/past_appointments_screen.dart';
+import '../../features/Role/patient/medical_vault/presentation/screens/prescription_details_screen.dart';
+import '../../features/Role/patient/medical_vault/presentation/screens/report_review_screen.dart';
+import '../../features/Role/patient/medical_vault/presentation/screens/results_submitted_screen.dart';
+import '../../features/Role/patient/medical_vault/presentation/screens/test_order_screen.dart';
+import '../../features/Role/patient/medical_vault/presentation/screens/test_results_screen.dart';
+import '../../features/Role/patient/medical_vault/presentation/screens/testing_centres_screen.dart';
+import '../../features/Role/patient/medical_vault/presentation/screens/upload_report_screen.dart';
+import '../../features/Role/patient/profile/presentation/bindings/profile_bindings.dart';
+import '../../features/Role/patient/profile/presentation/screens/add_card_screen.dart';
+import '../../features/Role/patient/profile/presentation/screens/become_partner_screen.dart';
+import '../../features/Role/patient/profile/presentation/screens/change_password_screen.dart';
+import '../../features/Role/patient/profile/presentation/screens/legal_screen.dart';
+import '../../features/Role/patient/profile/presentation/screens/order_history_screen.dart';
+import '../../features/Role/patient/profile/presentation/screens/payment_options_screen.dart';
+import '../../features/Role/patient/profile/presentation/screens/profile_screen.dart';
+import '../../features/Role/patient/profile/presentation/screens/review_shop_screen.dart';
+import '../../features/Role/patient/profile/presentation/screens/settings_screen.dart';
+import '../../features/Role/patient/profile/presentation/screens/wallet_accounts_screen.dart';
+import '../../features/Role/patient/profile/presentation/screens/wallet_screen.dart';
+import '../../features/Role/patient/pharmacy/presentation/bindings/pharmacy_bindings.dart';
+import '../../features/Role/patient/pharmacy/presentation/screens/best_matches_screen.dart';
+import '../../features/Role/patient/pharmacy/presentation/screens/delivery_feedback_screen.dart';
+import '../../features/Role/patient/pharmacy/presentation/screens/live_tracking_screen.dart';
+import '../../features/Role/patient/pharmacy/presentation/screens/order_status_screen.dart';
+import '../../features/Role/patient/pharmacy/presentation/screens/pharmacy_cart_screen.dart';
+import '../../features/Role/patient/pharmacy/presentation/screens/pharmacy_payment_screen.dart';
+import '../../features/Role/patient/pharmacy/presentation/screens/select_medicines_screen.dart';
+import '../../features/Role/patient/pharmacy/presentation/screens/upload_prescription_screen.dart';
+import '../../features/Role/pharmacy_owner_role/presentation/bindings/shop_bindings.dart';
+import '../../features/Role/pharmacy_owner_role/presentation/screens/medicine_form_screen.dart';
+import '../../features/Role/pharmacy_owner_role/presentation/screens/shop_edit_profile_screen.dart';
+import '../../features/Role/pharmacy_owner_role/presentation/screens/shop_notifications_screen.dart';
+import '../../features/Role/pharmacy_owner_role/presentation/screens/shop_order_details_screen.dart';
+import '../../features/Role/pharmacy_owner_role/presentation/screens/shop_shell_screen.dart';
+import '../../features/Role/patient/onboarding/presentation/screens/location_permission_screen.dart';
+import '../../features/Role/patient/onboarding/presentation/screens/onboarding_screen.dart';
+import '../../features/Role/patient/splash/presentation/screens/splash_screen.dart';
 import 'app_routes.dart';
 
 /// The route table handed to `GetMaterialApp`.
@@ -403,6 +420,134 @@ abstract class AppPages {
       name: AppRoutes.doctorSetSchedule,
       page: () => const SetScheduleScreen(),
       binding: DoctorScheduleBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.doctorAppointmentDetails,
+      page: () => const DoctorAppointmentDetailsScreen(),
+      binding: DoctorAppointmentsBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.doctorWritePrescription,
+      page: () => const WritePrescriptionScreen(),
+      binding: WritePrescriptionBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    // The call and its summary are the patient's own screens with the role
+    // flipped — one video screen, one summary, two entry points.
+    GetPage(
+      name: AppRoutes.doctorVideoCall,
+      page: () => const VideoCallScreen(),
+      binding: DoctorVideoCallBinding(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: AppRoutes.doctorConsultationDone,
+      page: () => const ConsultationHistoryScreen(isDoctor: true),
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: AppRoutes.doctorEarnings,
+      page: () => const EarningWithdrawScreen(),
+      binding: EarningsBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.doctorEditProfile,
+      page: () => const DoctorEditProfileScreen(),
+      binding: DoctorProfileBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+
+    // Results to Review, and the ordering / reviewing flow behind it. Every
+    // screen here reads the same controller, so one binding covers them all —
+    // apart from the wizard, which is built for the order being placed.
+    GetPage(
+      name: AppRoutes.doctorResultsToReview,
+      page: () => const ResultsToReviewScreen(),
+      binding: ResultsToReviewBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.doctorReviewPatient,
+      page: () => const ReviewPatientScreen(),
+      binding: ResultsToReviewBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.doctorRequestTest,
+      page: () => const RequestTestScreen(),
+      binding: TestRequestBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.doctorOrderDetail,
+      page: () => const OrderDetailScreen(),
+      binding: ResultsToReviewBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.doctorChooseReview,
+      page: () => const ChooseReviewOptionScreen(),
+      binding: ResultsToReviewBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.doctorReviewMessage,
+      page: () => const ReviewMessageScreen(),
+      binding: ResultsToReviewBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.doctorRequestFollowUp,
+      page: () => const RequestFollowUpScreen(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+
+    // ─── Pharmacy owner ────────────────────────────────────────────────────
+    GetPage(
+      name: AppRoutes.shopHome,
+      page: () => const ShopShellScreen(),
+      binding: ShopShellBinding(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: AppRoutes.shopOrderDetails,
+      page: () => const ShopOrderDetailsScreen(),
+      binding: ShopOrdersBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.shopNotifications,
+      page: () => const ShopNotificationsScreen(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.shopMedicineForm,
+      page: () => const MedicineFormScreen(),
+      binding: ShopMedicinesBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.shopEditProfile,
+      page: () => const ShopEditProfileScreen(),
+      binding: ShopProfileBinding(),
       transition: _transition,
       transitionDuration: _transitionDuration,
     ),

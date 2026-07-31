@@ -50,6 +50,7 @@ class AppButton extends StatelessWidget {
     this.trailingIcon,
     this.isLoading = false,
     this.isEnabled = true,
+    this.disabledFill,
     this.expanded = true,
     this.height = AppSizes.controlHeight,
     this.radius = AppRadius.xl3,
@@ -71,6 +72,11 @@ class AppButton extends StatelessWidget {
 
   final bool isLoading;
   final bool isEnabled;
+
+  /// Fill to use while disabled, drawn at full opacity. Without one a
+  /// disabled button is simply its own colour at half strength; the ordering
+  /// wizard's designs grey it out instead.
+  final Color? disabledFill;
 
   /// When true the button fills the available width (the default in every
   /// design); set to false inside a `Row` that already sizes it.
@@ -97,10 +103,12 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final greyed = !isEnabled && disabledFill != null;
+
     final button = Opacity(
-      opacity: isEnabled ? 1 : 0.5,
+      opacity: isEnabled || greyed ? 1 : 0.5,
       child: Material(
-        color: _fill,
+        color: greyed ? disabledFill! : _fill,
         borderRadius: BorderRadius.circular(radius.r),
         clipBehavior: Clip.antiAlias,
         child: InkWell(

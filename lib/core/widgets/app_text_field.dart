@@ -27,6 +27,7 @@ class AppTextField extends StatefulWidget {
   const AppTextField({
     super.key,
     this.controller,
+    this.initialText,
     this.hint,
     this.errorText,
     this.prefixIcon,
@@ -50,6 +51,11 @@ class AppTextField extends StatefulWidget {
   });
 
   final TextEditingController? controller;
+
+  /// Seeds the field when no [controller] is supplied. The state then owns a
+  /// controller and disposes it — so a screen can prefill a value without
+  /// holding a text controller of its own.
+  final String? initialText;
   final String? hint;
 
   /// Validation message; when non-null the border turns red and the message
@@ -91,6 +97,27 @@ class AppTextField extends StatefulWidget {
 class _AppTextFieldState extends State<AppTextField> {
   late bool _obscured = widget.obscureText;
 
+  /// Owned only when the caller seeds text without supplying a controller —
+  /// a `TextField` cannot be given an initial value any other way. When the
+  /// caller passes its own controller, that one is used untouched.
+  TextEditingController? _owned;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.controller == null && widget.initialText != null) {
+      _owned = TextEditingController(text: widget.initialText);
+    }
+  }
+
+  @override
+  void dispose() {
+    _owned?.dispose();
+    super.dispose();
+  }
+
+  TextEditingController? get _controller => widget.controller ?? _owned;
+
   bool get _hasError => widget.errorText != null;
 
   @override
@@ -102,7 +129,7 @@ class _AppTextFieldState extends State<AppTextField> {
         SizedBox(
           height: AppSizes.controlHeight.h,
           child: TextField(
-            controller: widget.controller,
+            controller: _controller,
             focusNode: widget.focusNode,
             enabled: widget.enabled,
             readOnly: widget.readOnly,
@@ -117,9 +144,9 @@ class _AppTextFieldState extends State<AppTextField> {
             textAlign: widget.textAlign,
             textAlignVertical: TextAlignVertical.center,
             cursorColor: AppColors.primary800,
-            style: AppTextStyles.bodyMedium.rc(AppColors.authInk).copyWith(
-              letterSpacing: widget.letterSpacing,
-            ),
+            style: AppTextStyles.bodyMedium
+                .rc(AppColors.authInk)
+                .copyWith(letterSpacing: widget.letterSpacing),
             onChanged: widget.onChanged,
             onSubmitted: widget.onSubmitted,
             onTap: widget.onTap,

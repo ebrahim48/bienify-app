@@ -58,4 +58,9 @@ class AppIcons {
   /// Filled speech bubble for the doctor shell's Message tab. `message.svg` is
   /// the outlined header glyph and reads too light at nav size.
   static const String bottomMessage = '$_path/bottommessage.svg';
+
+  /// The one bin glyph, used wherever something can be removed. Exported
+  /// stroked in `logoutFill`, so draw it untinted for destructive actions and
+  /// pass a colour only where the design tints it (the schedule's slot chips).
+  static const String delete = '$_path/deleteicon.svg';
 }

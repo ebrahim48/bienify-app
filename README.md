@@ -28,12 +28,15 @@ built on feature-first Clean Architecture with GetX.
 | Settings — change password, about, terms, privacy | ✅ Done (UI only) |
 | Health Profile — all prescriptions, all test reports, order history, review shop | ✅ Done (UI only) |
 | Medical Vault — tests & results, lab order, book a centre, upload, review | ✅ Done (UI only) |
-| Doctor role — shell + navbar, dashboard, set schedule, set fees | ✅ Home done (UI only) |
-| Doctor role — Appointments / Messsage / Profile tabs | ⏳ Placeholder, awaiting designs |
+| Doctor role — shell + navbar, dashboard, set schedule, set fees | ✅ Done (UI only) |
+| Doctor role — appointments (new + completed), details, prescriptions, call | ✅ Done (UI only) |
+| Doctor role — messages, earnings withdraw, payout request | ✅ Done (UI only) |
+| Doctor role — profile + edit profile; wallet & settings reuse the patient screens | ✅ Done (UI only) |
+| Doctor role — Results to Review: patients, lab & radiology orders, request wizard, review actions | ✅ Done (UI only) |
+| Pharmacy owner role — shell + navbar, dashboard, orders, order details, notifications | ✅ Done (UI only) |
+| Pharmacy owner role — medicines, add/edit medicine, profile + edit; wallet & settings reuse the patient screens | ✅ Done (UI only) |
 
-Every screen is reachable and every control does something. The one
-deliberately unfinished state is the doctor role's Appointments / Messsage /
-Profile tabs, which say "Not available yet" until their designs arrive.
+Every screen is reachable and every control does something.
 
 **UI only** means the screens, controllers and widgets are complete and the
 `domain` layer holds entity names, but there is no repository, use case or

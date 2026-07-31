@@ -368,4 +368,89 @@ class AppColors {
   /// "Confirmed" / "Pending" outlined pills on the dashboard's list.
   static const Color confirmedInk = primary600;
   static const Color pendingOutlineInk = Color(0xFFD97706);
+
+  /// Initials disc on a completed consultation card.
+  static const Color patientInitialsSurface = Color(0xFFFDE7EB);
+  static const Color patientInitialsInk = Color(0xFFE11D48);
+
+  /// The "Completed" pill on those cards is outlined, not filled.
+  static const Color completedSurface = Color(0xFFF0FDF4);
+  static const Color completedInk = Color(0xFF16A34A);
+
+  /// Earning Withdraw's balance card runs this gradient corner to corner.
+  static const List<Color> earningsGradient = [authInk, primary700];
+
+  /// Tinted disc behind a payout row's currency glyph.
+  static const Color payoutSurface = Color(0xFFE0F2FE);
+  static const Color payoutInk = Color(0xFF1B759F);
+
+  /// "Paid Out" statistic on that screen.
+  static const Color paidOutInk = fileAccent;
+
+  // =========================
+  // Results to Review
+  // =========================
+
+  /// "Urgent" — a deeper amber than [tagWarningSurface], which the same
+  /// design uses one row below for "Awaiting review".
+  static const Color urgentSurface = Color(0xFFFFEDD5);
+  static const Color urgentInk = tagWarningInk;
+
+  /// "Critical" is the only filled-red pill in the app.
+  static const Color criticalSurface = Color(0xFFDC2626);
+
+  /// Slate filter chips under the Lab / Radiology segments, and the tracker's
+  /// unreached steps, which share the same two values.
+  static const Color chipSurface = tagNeutralSurface;
+  static const Color chipInk = tagNeutralInk;
+
+  /// A step the order has not reached: circle, connector and label.
+  static const Color stepSurface = tagNeutralSurface;
+  static const Color stepTrack = Color(0xFFE2E8F0);
+  static const Color stepInk = Color(0xFF94A3B8);
+
+  /// The wizard's three-segment progress bar runs on [stepTrack] and fills
+  /// with [actionFill].
+  static const Color progressTrack = stepTrack;
+
+  // =========================
+  // Pharmacy owner
+  // =========================
+
+  /// The four dashboard statistics, each a tinted disc under a coloured
+  /// figure.
+  static const Color shopOrdersSurface = Color(0xFFEFF6FF);
+  static const Color shopOrdersInk = Color(0xFF1447E6);
+  static const Color shopScriptsSurface = Color(0xFFF5F3FF);
+  static const Color shopScriptsInk = Color(0xFF7008E7);
+  static const Color shopEarningsSurface = Color(0xFFECFDF5);
+  static const Color shopEarningsInk = Color(0xFF007A55);
+  static const Color shopStockSurface = Color(0xFFFFFBEB);
+  static const Color shopStockInk = Color(0xFFBB4D00);
+
+  /// Disc behind a customer's initials on an order row.
+  static const Color customerInitials = Color(0xFFD97706);
+
+  /// Low Stock Alerts: the panel, and the two counts inside it.
+  static const Color alertSurface = shopStockSurface;
+  static const Color alertBorder = Color(0xFFFEE685);
+  static const Color stockLeftSurface = Color(0xFFFEF3C6);
+  static const Color stockLeftInk = shopStockInk;
+  static const Color outOfStockSurface = Color(0xFFFFE2E2);
+  static const Color outOfStockInk = Color(0xFFE7000B);
+
+  /// Order-state pills. New, Accepted and Out of Delivery share the blue of
+  /// [shopOrdersInk]; the design only separates the three that end an order.
+  static const Color shopStateSurface = Color(0xFFDBEAFE);
+  static const Color shopStateInk = shopOrdersInk;
+  static const Color shopPreparingSurface = stockLeftSurface;
+  static const Color shopPreparingInk = shopStockInk;
+  static const Color shopDeclinedSurface = outOfStockSurface;
+  static const Color shopDeclinedInk = outOfStockInk;
+  static const Color shopDeliveredSurface = creditSurface;
+  static const Color shopDeliveredInk = orderDeliveredInk;
+
+  /// The pale form fields on Add / Edit Medicine, a shade cooler than
+  /// [fieldFill].
+  static const Color shopFieldFill = Color(0xFFF9FAFB);
 }

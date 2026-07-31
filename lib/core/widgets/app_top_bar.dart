@@ -17,6 +17,7 @@ class AppTopBar extends StatelessWidget {
   const AppTopBar({
     super.key,
     required this.title,
+    this.subtitle,
     this.onBack,
     this.showBack = true,
     this.trailing,
@@ -24,16 +25,26 @@ class AppTopBar extends StatelessWidget {
 
   final String title;
 
+  /// A grey second line under the title — who the page is about, as the
+  /// ordering flow labels every step ("Request lab Test" / "Amelia Hart").
+  /// The bar grows to fit it; without one the height is unchanged.
+  final String? subtitle;
+
   /// Defaults to popping the current route.
   final VoidCallback? onBack;
 
   final bool showBack;
   final Widget? trailing;
 
+  /// Extra height the second line needs.
+  static const double _subtitleHeight = 20;
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: AppSizes.appBarHeight.h,
+      height: subtitle == null
+          ? AppSizes.appBarHeight.h
+          : (AppSizes.appBarHeight + _subtitleHeight).h,
       child: Row(
         children: [
           if (showBack)
@@ -42,11 +53,25 @@ class AppTopBar extends StatelessWidget {
             AppSpacing.gapH(AppSpacing.xs),
           AppSpacing.gapH(AppSpacing.xs2),
           Expanded(
-            child: Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.titleMedium.rc(AppColors.authInk),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.titleMedium.rc(AppColors.authInk),
+                ),
+                if (subtitle != null)
+                  Text(
+                    subtitle!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.bodyLarge.rc(AppColors.gray600),
+                  ),
+              ],
             ),
           ),
           ?trailing,

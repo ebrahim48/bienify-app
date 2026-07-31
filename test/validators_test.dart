@@ -1,7 +1,7 @@
 import 'package:bienify_app/core/models/country.dart';
 import 'package:bienify_app/core/utils/validators.dart';
-import 'package:bienify_app/features/auth/domain/entities/age_range.dart';
-import 'package:bienify_app/features/auth/domain/entities/gender.dart';
+import 'package:bienify_app/features/Role/patient/auth/domain/entities/age_range.dart';
+import 'package:bienify_app/features/Role/patient/auth/domain/entities/gender.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
