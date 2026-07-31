@@ -453,4 +453,36 @@ class AppColors {
   /// The pale form fields on Add / Edit Medicine, a shade cooler than
   /// [fieldFill].
   static const Color shopFieldFill = Color(0xFFF9FAFB);
+
+  // =========================
+  // Rider
+  // =========================
+
+  /// Grey tile behind an upload box before anything is taken, and the track
+  /// of the application wizard's progress bar.
+  static const Color uploadSurface = gray100;
+
+  /// The numbered discs down the How It Works timeline, and the rule joining
+  /// them.
+  static const Color stepDiscSurface = primary50;
+  static const Color stepDiscInk = actionFill;
+  static const Color timelineRule = gray200;
+
+  /// "Apply Rider?" — the palest brand panel, a shade deeper than
+  /// [authPanelSoft].
+  static const Color applyPanel = primary100;
+
+  /// "Online — accepting orders" on the rider's dashboard.
+  static const Color onlineDot = online;
+
+  /// A delivery fee, always shown as a gain.
+  static const Color feeSurface = Color(0xFFDCFCE7);
+  static const Color feeInk = Color(0xFF008236);
+
+  /// The dark-green receipt on the delivered screen.
+  static const Color deliveredSurface = Color(0xFF0F4C35);
+  static const Color deliveredCaption = Color(0xFF8FD2B4);
+
+  /// Delivery-zone chips on the rider's location form.
+  static const Color zoneChip = actionFill;
 }

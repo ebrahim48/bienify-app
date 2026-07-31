@@ -35,6 +35,9 @@ built on feature-first Clean Architecture with GetX.
 | Doctor role — Results to Review: patients, lab & radiology orders, request wizard, review actions | ✅ Done (UI only) |
 | Pharmacy owner role — shell + navbar, dashboard, orders, order details, notifications | ✅ Done (UI only) |
 | Pharmacy owner role — medicines, add/edit medicine, profile + edit; wallet & settings reuse the patient screens | ✅ Done (UI only) |
+| Rider role — How It Works, five-step application with real photo capture | ✅ Done (UI only) |
+| Rider role — shell + navbar, dashboard, order requests, live tracking, delivered receipt | ✅ Done (UI only) |
+| Rider role — earnings, profile + edit; wallet & settings reuse the patient screens | ✅ Done (UI only) |
 
 Every screen is reachable and every control does something.
 

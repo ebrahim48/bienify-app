@@ -72,6 +72,13 @@ import '../../features/Role/patient/pharmacy/presentation/screens/pharmacy_cart_
 import '../../features/Role/patient/pharmacy/presentation/screens/pharmacy_payment_screen.dart';
 import '../../features/Role/patient/pharmacy/presentation/screens/select_medicines_screen.dart';
 import '../../features/Role/patient/pharmacy/presentation/screens/upload_prescription_screen.dart';
+import '../../features/Role/rider_role/presentation/bindings/rider_bindings.dart';
+import '../../features/Role/rider_role/presentation/screens/rider_application_screen.dart';
+import '../../features/Role/rider_role/presentation/screens/rider_delivered_screen.dart';
+import '../../features/Role/rider_role/presentation/screens/rider_edit_profile_screen.dart';
+import '../../features/Role/rider_role/presentation/screens/rider_guide_screen.dart';
+import '../../features/Role/rider_role/presentation/screens/rider_shell_screen.dart';
+import '../../features/Role/rider_role/presentation/screens/rider_tracking_screen.dart';
 import '../../features/Role/pharmacy_owner_role/presentation/bindings/shop_bindings.dart';
 import '../../features/Role/pharmacy_owner_role/presentation/screens/medicine_form_screen.dart';
 import '../../features/Role/pharmacy_owner_role/presentation/screens/shop_edit_profile_screen.dart';
@@ -548,6 +555,50 @@ abstract class AppPages {
       name: AppRoutes.shopEditProfile,
       page: () => const ShopEditProfileScreen(),
       binding: ShopProfileBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+
+    // ─── Rider ─────────────────────────────────────────────────────────────
+    GetPage(
+      name: AppRoutes.riderGuide,
+      page: () => const RiderGuideScreen(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.riderApply,
+      page: () => const RiderApplicationScreen(),
+      binding: RiderApplicationBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.riderReady,
+      page: AuthStatusScreen.riderReady,
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: AppRoutes.riderHome,
+      page: () => const RiderShellScreen(),
+      binding: RiderShellBinding(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: AppRoutes.riderTracking,
+      page: () => const RiderTrackingScreen(),
+      binding: RiderOrdersBinding(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: AppRoutes.riderDelivered,
+      page: () => const RiderDeliveredScreen(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: AppRoutes.riderEditProfile,
+      page: () => const RiderEditProfileScreen(),
+      binding: RiderProfileBinding(),
       transition: _transition,
       transitionDuration: _transitionDuration,
     ),

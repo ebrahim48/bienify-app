@@ -2,7 +2,6 @@ import 'package:get/get.dart';
 
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/routes/app_routes.dart';
-import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../domain/entities/profile.dart';
 
 /// Backs Become a Partner: two options, one of which is always selected.
@@ -21,20 +20,12 @@ class PartnerController extends GetxController {
     PartnerRole.rider => AppStrings.joinAsRider.tr,
   };
 
-  /// A pharmacy owner has a whole section of their own, so applying enters it
-  /// — the same way "Join as a Doctor" enters the practitioner shell. The
-  /// rider's side is not designed yet, so that choice acknowledges and
-  /// returns.
-  void submitApplication() {
-    if (selected.value == PartnerRole.pharmacyOwner) {
-      Get.toNamed<void>(AppRoutes.shopHome);
-      return;
-    }
-    AppSnackbar.success(
-      AppStrings.partnerApplicationSent.trParams({
-        'role': labelFor(selected.value),
-      }),
-    );
-    Get.back<void>();
-  }
+  /// Both partners have a section of their own, the way "Join as a Doctor"
+  /// enters the practitioner shell. A pharmacy owner lands straight in their
+  /// shop; a courier reads How It Works first, because their side has an
+  /// application to fill in before the shell means anything.
+  void submitApplication() => switch (selected.value) {
+    PartnerRole.pharmacyOwner => Get.toNamed<void>(AppRoutes.shopHome),
+    PartnerRole.rider => Get.toNamed<void>(AppRoutes.riderGuide),
+  };
 }

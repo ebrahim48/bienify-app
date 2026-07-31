@@ -776,6 +776,107 @@ class AppStrings {
   static const String uploadFileTypes = 'upload_file_types';
   static const String updateShopInformation = 'update_shop_information';
   static const String shopUpdated = 'shop_updated';
+
+  // ─── Photo upload ────────────────────────────────────────────────────────
+  static const String takeAPhoto = 'take_a_photo';
+  static const String chooseFromGallery = 'choose_from_gallery';
+  static const String replacePhoto = 'replace_photo';
+  static const String uploadPhoto = 'upload_photo';
+  static const String photoNeeded = 'photo_needed';
+
+  // ─── Rider ───────────────────────────────────────────────────────────────
+  static const String navEarnings = 'nav_earnings';
+
+  static const String riderGuide = 'rider_guide';
+  static const String howItWorks = 'how_it_works';
+  static const String howItWorksBody = 'how_it_works_body';
+  static const String stepSignUp = 'step_sign_up';
+  static const String stepSignUpBody = 'step_sign_up_body';
+  static const String stepSignUpNote = 'step_sign_up_note';
+  static const String stepGetOrders = 'step_get_orders';
+  static const String stepGetOrdersBody = 'step_get_orders_body';
+  static const String stepGetOrdersNote = 'step_get_orders_note';
+  static const String stepPickDeliver = 'step_pick_deliver';
+  static const String stepPickDeliverBody = 'step_pick_deliver_body';
+  static const String stepPickDeliverNote = 'step_pick_deliver_note';
+  static const String stepEarnMoney = 'step_earn_money';
+  static const String stepEarnMoneyBody = 'step_earn_money_body';
+  static const String stepEarnMoneyNote = 'step_earn_money_note';
+  static const String stepBuildRating = 'step_build_rating';
+  static const String stepBuildRatingBody = 'step_build_rating_body';
+  static const String stepBuildRatingNote = 'step_build_rating_note';
+  static const String applyRiderTitle = 'apply_rider_title';
+  static const String applyRiderBody = 'apply_rider_body';
+  static const String applyNow = 'apply_now';
+
+  static const String uploadProfileTitle = 'upload_profile_title';
+  static const String heyName = 'hey_name';
+  static const String applyingForRider = 'applying_for_rider';
+  static const String takeSelfie = 'take_selfie';
+  static const String identityVerification = 'identity_verification';
+  static const String frontOfIdCard = 'front_of_id_card';
+  static const String backOfIdCard = 'back_of_id_card';
+  static const String ensureClearPhoto = 'ensure_clear_photo';
+  static const String vehicleInformation = 'vehicle_information';
+  static const String vehiclesType = 'vehicles_type';
+  static const String vehicleBicycle = 'vehicle_bicycle';
+  static const String vehicleBike = 'vehicle_bike';
+  static const String vehicleCar = 'vehicle_car';
+  static const String drivingLicense = 'driving_license';
+  static const String vehiclesPhoto = 'vehicles_photo';
+  static const String locationAndAvailability = 'location_and_availability';
+  static const String country = 'country';
+  static const String city = 'city';
+  static const String locationLabel = 'location_label';
+  static const String preferredDeliveryZone = 'preferred_delivery_zone';
+  static const String liveLocationPermission = 'live_location_permission';
+  static const String paymentSetup = 'payment_setup';
+  static const String riderReady = 'rider_ready';
+  static const String riderReadyBody = 'rider_ready_body';
+  static const String applicationSent = 'application_sent';
+
+  static const String deliveries = 'deliveries';
+  static const String onlineAcceptingOrders = 'online_accepting_orders';
+  static const String offlineNotAccepting = 'offline_not_accepting';
+  static const String viewOrders = 'view_orders';
+  static const String ordersAvailable = 'orders_available';
+  static const String earnings = 'earnings';
+  static const String recentDeliveries = 'recent_deliveries';
+
+  static const String orderRequests = 'order_requests';
+  static const String newCount = 'new_count';
+  static const String newRequest = 'new_request';
+  static const String acceptedRequest = 'accepted_request';
+  static const String cancelledRequest = 'cancelled_request';
+  static const String decline = 'decline';
+  static const String accept = 'accept';
+  static const String trackLive = 'track_live';
+  static const String requestAccepted = 'request_accepted';
+  static const String requestDeclined = 'request_declined';
+  static const String noRequestsHere = 'no_requests_here';
+
+  static const String minutesAway = 'minutes_away';
+  static const String nowArriving = 'now_arriving';
+  static const String latestArrival = 'latest_arrival';
+  static const String viewNote = 'view_note';
+  static const String customerNote = 'customer_note';
+  static const String customer = 'customer';
+  static const String arrived = 'arrived';
+  static const String deliveryCompleted = 'delivery_completed';
+  static const String orderDeliveredTitle = 'order_delivered_title';
+  static const String orderDeliveredBody = 'order_delivered_body';
+  static const String orderIdLabel = 'order_id_label';
+  static const String deliveredTo = 'delivered_to';
+  static const String deliveryTime = 'delivery_time';
+
+  static const String overview = 'overview';
+  static const String earningsToday = 'earnings_today';
+  static const String earningsThisWeek = 'earnings_this_week';
+  static const String deliveriesCount = 'deliveries_count';
+  static const String nextPayout = 'next_payout';
+  static const String accumulated = 'accumulated';
+  static const String minimumPayout = 'minimum_payout';
+  static const String history = 'history';
   // ─── Feedback ────────────────────────────────────────────────────────────
   static const String otpResent = 'otp_resent';
   static const String somethingWentWrong = 'something_went_wrong';

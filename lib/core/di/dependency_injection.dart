@@ -19,6 +19,7 @@ import '../../features/Role/patient/home/domain/usecases/home_usecases.dart';
 import '../localization/localization_controller.dart';
 import '../services/api_service.dart';
 import '../services/connectivity_service.dart';
+import '../services/photo_picker_service.dart';
 import '../services/storage_service.dart';
 
 /// Wires the object graph once, before `runApp`.
@@ -43,6 +44,7 @@ class DependencyInjection {
     Get.put<StorageService>(storage, permanent: true);
     Get.put<ApiService>(ApiService(), permanent: true);
     Get.put<ConnectivityService>(ConnectivityService(), permanent: true);
+    Get.put<PhotoPickerService>(PhotoPickerService(), permanent: true);
 
     // ─── Localization ──────────────────────────────────────────────────────
     Get.put<LocalizationController>(
@@ -74,10 +76,7 @@ class DependencyInjection {
   }
 
   static void _registerHome() {
-    Get.put<HomeRemoteDataSource>(
-      MockHomeRemoteDataSource(),
-      permanent: true,
-    );
+    Get.put<HomeRemoteDataSource>(MockHomeRemoteDataSource(), permanent: true);
     Get.put<HomeRepository>(
       HomeRepositoryImpl(remote: Get.find<HomeRemoteDataSource>()),
       permanent: true,
@@ -109,10 +108,7 @@ class DependencyInjection {
       ..put<LoginWithEmail>(LoginWithEmail(repository), permanent: true)
       ..put<SignInWithProvider>(SignInWithProvider(repository), permanent: true)
       ..put<Logout>(Logout(repository), permanent: true)
-      ..put<SaveProfileDetails>(
-        SaveProfileDetails(repository),
-        permanent: true,
-      )
+      ..put<SaveProfileDetails>(SaveProfileDetails(repository), permanent: true)
       ..put<SaveCredentials>(SaveCredentials(repository), permanent: true)
       ..put<RequestPasswordResetOtp>(
         RequestPasswordResetOtp(repository),

@@ -107,6 +107,18 @@ abstract class AppRoutes {
   static const String shopMedicineForm = '/shop/medicine-form';
   static const String shopEditProfile = '/shop/edit-profile';
 
+  // ─── Rider ───────────────────────────────────────────────────────────────
+  /// How It Works, and the application behind its Apply Now.
+  static const String riderGuide = '/rider/guide';
+  static const String riderApply = '/rider/apply';
+  static const String riderReady = '/rider/ready';
+
+  /// The courier-facing shell, with its own bottom navigation.
+  static const String riderHome = '/rider';
+  static const String riderTracking = '/rider/tracking';
+  static const String riderDelivered = '/rider/delivered';
+  static const String riderEditProfile = '/rider/edit-profile';
+
   // ─── Medical vault ───────────────────────────────────────────────────────
   static const String healthProfile = '/health-profile';
   static const String allPrescriptions = '/all-prescriptions';
