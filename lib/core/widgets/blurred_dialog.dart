@@ -36,10 +36,7 @@ Future<T?> showBlurredDialog<T>({
     transitionDuration: const Duration(milliseconds: 200),
     pageBuilder: (context, _, _) => builder(context),
     transitionBuilder: (context, animation, _, child) {
-      final curved = CurvedAnimation(
-        parent: animation,
-        curve: Curves.easeOut,
-      );
+      final curved = CurvedAnimation(parent: animation, curve: Curves.easeOut);
       return BackdropFilter(
         filter: ImageFilter.blur(
           sigmaX: sigma * curved.value,
@@ -57,6 +54,55 @@ Future<T?> showBlurredDialog<T>({
         ),
       );
     },
+  );
+}
+
+/// A bottom sheet over the same blurred page as [showBlurredDialog].
+///
+/// `showModalBottomSheet`'s barrier only tints, so the blur is drawn *inside*
+/// the route: the sheet fills the screen, its upper half is the filtered,
+/// tap-to-dismiss region and [builder] sits at the foot of it.
+///
+/// ```dart
+/// final kind = await showBlurredSheet<OrderKind>(
+///   context: context,
+///   builder: (_) => const ChooseOrderSheet(),
+/// );
+/// ```
+Future<T?> showBlurredSheet<T>({
+  required BuildContext context,
+  required WidgetBuilder builder,
+  double sigma = 6,
+}) {
+  return showModalBottomSheet<T>(
+    context: context,
+    backgroundColor: AppColors.transparent,
+    barrierColor: AppColors.transparent,
+    // The sheet is the whole screen; only its bottom slice is opaque.
+    isScrollControlled: true,
+    builder: (context) => Column(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => Navigator.of(context).pop(),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+              child: ColoredBox(
+                color: AppColors.gray50.withValues(alpha: 0.45),
+                child: const SizedBox.expand(),
+              ),
+            ),
+          ),
+        ),
+        Material(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: AppRadius.rXl2.topLeft),
+          clipBehavior: Clip.antiAlias,
+          child: builder(context),
+        ),
+      ],
+    ),
   );
 }
 

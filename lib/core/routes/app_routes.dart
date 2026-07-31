@@ -80,6 +80,32 @@ abstract class AppRoutes {
   /// The practitioner-facing shell, with its own bottom navigation.
   static const String doctorHome = '/doctor';
   static const String doctorSetSchedule = '/doctor/set-schedule';
+  static const String doctorAppointmentDetails = '/doctor/appointment';
+  static const String doctorWritePrescription = '/doctor/write-prescription';
+
+  /// The practitioner's side of the call and its summary. Both render the
+  /// same screens as the patient's, with the role passed as the argument.
+  static const String doctorVideoCall = '/doctor/video-call';
+  static const String doctorConsultationDone = '/doctor/consultation-done';
+  static const String doctorEarnings = '/doctor/earnings';
+  static const String doctorEditProfile = '/doctor/edit-profile';
+
+  /// Results to Review, and the ordering / reviewing flow behind it.
+  static const String doctorResultsToReview = '/doctor/results-to-review';
+  static const String doctorReviewPatient = '/doctor/review-patient';
+  static const String doctorRequestTest = '/doctor/request-test';
+  static const String doctorOrderDetail = '/doctor/order-detail';
+  static const String doctorChooseReview = '/doctor/choose-review';
+  static const String doctorReviewMessage = '/doctor/review-message';
+  static const String doctorRequestFollowUp = '/doctor/request-follow-up';
+
+  // ─── Pharmacy owner ──────────────────────────────────────────────────────
+  /// The shop-facing shell, with its own bottom navigation.
+  static const String shopHome = '/shop';
+  static const String shopOrderDetails = '/shop/order';
+  static const String shopNotifications = '/shop/notifications';
+  static const String shopMedicineForm = '/shop/medicine-form';
+  static const String shopEditProfile = '/shop/edit-profile';
 
   // ─── Medical vault ───────────────────────────────────────────────────────
   static const String healthProfile = '/health-profile';

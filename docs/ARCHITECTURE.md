@@ -22,28 +22,39 @@ lib/
 │   └── widgets/                   the shared component library
 │
 └── features/
-    ├── splash/
-    ├── onboarding/
-    ├── auth/
-    │   ├── data/                  models · datasources · repository impl
-    │   ├── domain/                entities · repository interface · use cases
-    │   └── presentation/          bindings · controllers · screens · widgets
-    ├── main/                      signed-in shell + bottom navigation
-    ├── home/                      Home feed
-    ├── doctors/                   directory, search, profile + availability
-    ├── appointments/              bookings list, shared AppointmentCard
-    ├── booking/                   payment summary + confirmation
-    ├── chat/                      message threads
-    ├── pharmacy/                  catalogue, prescription, cart, tracking
-    ├── profile/                   account hub, wallet, settings, partner
-    ├── doctor/                    practitioner shell, dashboard, schedule
-    └── medical_vault/             prescriptions, past visits, tests, reports
+    └── Role/                      the app has three of them
+        ├── patient/
+        │   ├── splash/
+        │   ├── onboarding/
+        │   ├── auth/
+        │   │   ├── data/          models · datasources · repository impl
+        │   │   ├── domain/        entities · repository interface · use cases
+        │   │   └── presentation/  bindings · controllers · screens · widgets
+        │   ├── main/              signed-in shell + bottom navigation
+        │   ├── home/              Home feed
+        │   ├── doctors/           directory, search, profile + availability
+        │   ├── appointments/      bookings list, shared AppointmentCard
+        │   ├── booking/           payment summary + confirmation
+        │   ├── chat/              message threads
+        │   ├── pharmacy/          catalogue, prescription, cart, tracking
+        │   ├── profile/           account hub, wallet, settings, partner
+        │   └── medical_vault/     prescriptions, past visits, tests, reports
+        ├── doctor_role/           practitioner shell, dashboard, schedule,
+        │                          appointments, Results to Review
+        └── pharmacy_owner_role/   shop shell, dashboard, orders, medicines
 ```
+
+Every feature lives under the role that owns it. `core/` is shared by all
+three and knows nothing about roles; a role reaching into another's screens
+does so through `AppRoutes`, never by importing its widgets — the doctor's
+wallet and the shop's Payments and Credit are the patient's `wallet` route,
+not a copy of that screen.
 
 ### UI-first features
 
-`booking`'s cash flow, `appointments`, `pharmacy`, `profile`, `doctor` and
-`medical_vault` were built presentation-first by request: screens,
+`booking`'s cash flow, `appointments`, `pharmacy`, `profile`,
+`medical_vault`, `doctor_role` and `pharmacy_owner_role` were built
+presentation-first by request: screens,
 controllers and widgets are complete, `domain` holds **entity names only**,
 and `data` holds a static mock file. There is no repository, use case or data source under them, and
 nothing calls an API — those arrive when the screens are wired to a
@@ -243,15 +254,68 @@ Refer & Escalation box, and a further test the doctor ordered.
 
 ```
 onboarding ─ Join as a Doctor ─▶ doctorHome
-                                    ├─ Home            (complete)
-                                    ├─ Appointments ─┐
-                                    ├─ Messsage      ├ "Not available yet"
-                                    └─ Profile      ─┘
+                                    ├─ Home
+                                    ├─ Appointments
+                                    ├─ Messsage
+                                    └─ Profile
+
 doctorHome ─┬─ Set Schedule ─▶ doctorSetSchedule
             ├─ Set Fees ─ bottom sheet
-            ├─ Results to review ─▶ testResults
+            ├─ Results to Review ─▶ doctorResultsToReview
+            ├─ Withdraw ─▶ doctorEarnings ─ Request Payout ─ dialog
             └─ bell ─▶ home            (leaves the practitioner role)
+
+Profile ─┬─ Edit ─▶ doctorEditProfile
+         ├─ My Wallet ─▶ wallet          ┐
+         ├─ Results to Review ─▶ doctorResultsToReview
+         ├─ Settings ─▶ settings         ├ the patient app's own screens
+         ├─ Partner with Bienify ─▶ becomePartner
+         └─ Log out ─▶ onboarding        ┘
+
+Appointments ─┬─ card ─▶ doctorAppointmentDetails ─ View ─▶ reportReview
+              ├─ Cancel ─ CancelReasonDialog ─▶ Cancelled chip
+              └─ Join Visit ─▶ doctorVideoCall
+                                  └─ end ─▶ doctorConsultationDone
+                                        └─ Write Prescription
+                                              ─▶ doctorWritePrescription
+                                                    └─ Submit ─▶ doctorHome
+
+Messsage ─ thread ─▶ chat(patient as the peer)
 ```
+
+Results to Review is the practitioner's ordering and reviewing flow. Twenty-one
+designs collapse into eight screens, because most of them are the same screen
+in a different state:
+
+```
+doctorResultsToReview ─┬─ Patients ─ card ─▶ doctorReviewPatient
+                       ├─ Lab Requests      ┐ one pane, filtered by chip
+                       └─ Radiology Requests┘   └─ card ─▶ doctorOrderDetail
+
+doctorReviewPatient ─ Request Test ─ ChooseOrderSheet ─▶ doctorRequestTest
+                                       (lab | radiology)
+
+doctorRequestTest   step 1 ─ pick the test
+                    step 2 ─ lab: notes + sign   radiology: subtest
+                    step 3 ─ lab: priority       radiology: review + submit
+                       └─ Submit ─▶ back to doctorResultsToReview
+
+doctorOrderDetail ─ Choose Your Review ─▶ doctorChooseReview
+                       ├─ Massage patient      ─▶ doctorReviewMessage
+                       ├─ Request follow-up    ─▶ doctorRequestFollowUp
+                       ├─ Order Additional Test─▶ doctorReviewPatient
+                       └─ Refer/Escalate Care  ─▶ doctorReviewMessage
+```
+
+Four conditions do that collapsing. `ResultsToReviewScreen` is one page
+whose segment picks between the patient roster and a department's orders.
+`RequestTestScreen` is one wizard whose `OrderKind` decides what each of its
+three steps holds. `ReviewPatientScreen` is titled by the patient when the
+list opened it and by the action when a review did. And `ReviewMessageScreen`
+is Write Message and Refer/Escalation, chosen by the `ReviewOption` argument.
+`OrderDetailScreen` likewise draws both designs: without results it says it is
+waiting, with them it shows the hospital, the notes, the report and the button
+that starts a review.
 
 `DoctorShellController` is deliberately separate from `MainNavController`:
 the two shells have different destinations, and a doctor switching tabs must
@@ -260,14 +324,83 @@ not disturb the patient shell's state or vice versa. `AppBottomNavBar` and
 itself is reused rather than rebuilt — only the four entries differ, with
 `AppIcons.bottomMessage` in place of the patient shell's Pharmacy tab.
 
-Three tabs show an explicit "Not available yet" placeholder because their
-designs have not arrived. That is the one place in the app with a
-deliberately unfinished state, and it was asked for — a doctor tapping
-Appointments should be told the section is coming, not shown a blank page.
+Every tab is built, and both "Results to Review" entries — the dashboard's
+quick action and the profile row — open the same flow.
+
+The practitioner's **wallet, settings and partner programme are the patient
+app's own screens**. A doctor has the same wallet and the same legal pages,
+so `DoctorProfileController` navigates to `AppRoutes.wallet`,
+`AppRoutes.settings` and `AppRoutes.becomePartner` rather than a
+practitioner copy of each.
+
+Several things the doctor side reuses rather than rebuilds:
+
+| Screen | Shared with | Switch |
+| --- | --- | --- |
+| `VideoCallScreen` | the patient's call | `VideoCallController.isDoctor` |
+| `ConsultationHistoryScreen` | the patient's summary | `isDoctor` |
+| `ChatScreen` | every other thread | `ConversationPeer` |
+| `CancelReasonDialog` | the patient's cancel | caller |
+| `UploadedDocumentCard` | All Prescriptions | `onRemove` presence |
+| `ProfileCard` | the patient's Profile | the profile passed in |
+| `PaymentMethodTile` | booking, wallet, payout | the list passed in |
+| `wallet` / `settings` / `becomePartner` | the patient app | route, not a copy |
+| `DoctorSearchField` | Search, Pharmacy, Results to Review | `hintKey` |
+| `PatientRowCard` | roster, patient, additional test | `subtitle` |
+| `DestructiveBar` | Profile, My Health profile, Settings | icon + label |
+
+The call is a single screen for both roles: the placeholder feed and the
+photo feed in the designs are its camera-off and camera-on states, not two
+screens. `isDoctor` changes only where the call ends — the practitioner
+lands on a summary that offers to write the prescription.
 
 `AppointmentsChart` draws the seven weekday bars with widgets rather than a
 charting package: a dependency for seven bars against a fixed axis would be
 heavier than the layout it replaces.
+
+`SignaturePad` on the ordering wizard takes a real signature. **The pad owns
+its ink**: strokes are widget state, because a `GetxController` holding
+sampled points would rebuild the canvas on every one of them. The controller
+is told only whether the pad has anything on it, which is all Save needs.
+
+## The pharmacy owner role
+
+"Join as Pharmacy Owner" on Become a Partner enters a third shell:
+
+```
+becomePartner ─ Join as Pharmacy Owner ─▶ shopHome
+                                            ├─ Home
+                                            ├─ Orders
+                                            ├─ Medicines
+                                            └─ Profile
+
+Home ─┬─ Withdraw ─▶ doctorEarnings   (the practitioner's own screen)
+      ├─ bell ─▶ shopNotifications
+      ├─ See all ─ the Orders tab
+      └─ order ─▶ shopOrderDetails ─┬─ Accept ─▶ Accepted chip
+                                    ├─ Decline ─▶ Declined chip
+                                    └─ View ─▶ reportReview
+
+Orders ─ chip ─ New · Accepted · Declined · Preparing · Out of Delivery ·
+                Delivered
+
+Medicines ─┬─ Add ─▶ shopMedicineForm
+           ├─ pencil ─▶ shopMedicineForm (same screen, titled Edit)
+           ├─ bin ─ AppConfirmDialog
+           └─ toggle ─ takes a product off sale
+
+Profile ─┬─ Edit ─▶ shopEditProfile
+         ├─ Payments and Credit ─▶ wallet    ┐ the patient app's own screens
+         ├─ Settings ─▶ settings             ┘
+         └─ Log out ─▶ onboarding
+```
+
+A shop's money and its legal pages are the same as everyone else's, so
+`ShopProfileController` navigates to `AppRoutes.wallet` and
+`AppRoutes.settings`, and its Withdraw opens `AppRoutes.doctorEarnings` —
+three screens the role reuses rather than rebuilds. `MedicineFormScreen` is
+Add and Edit in one, switched on whether `ShopMedicinesController.editing`
+holds a row.
 
 ## Localization
 

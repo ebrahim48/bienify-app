@@ -52,9 +52,31 @@ Home adds a second group:
 | `tagNeutral*` | `#F1F5F9` / `#334155` | "Routine" tag |
 | `tagPending*` | `#FFFBEB` / `#B45309` | "Request sent" tag |
 
+Results to Review adds a third:
+
+| Alias | Value | Used for |
+|---|---|---|
+| `urgentSurface` / `urgentInk` | `#FFEDD5` / `#C2410C` | "Urgent" priority pill |
+| `criticalSurface` | `#DC2626` | "Critical" — the one filled-red pill |
+| `chipSurface` / `chipInk` | `#F1F5F9` / `#334155` | Slate filter chips |
+| `stepSurface` / `stepTrack` / `stepInk` | `#F1F5F9` / `#E2E8F0` / `#94A3B8` | The order tracker's unreached steps |
+| `progressTrack` | `#E2E8F0` | The wizard's three-segment bar |
+
+The pharmacy owner adds a fourth:
+
+| Alias | Value | Used for |
+|---|---|---|
+| `shopOrders*` | `#EFF6FF` / `#1447E6` | New Orders, and the New / Accepted / Out of Delivery pills |
+| `shopScripts*` | `#F5F3FF` / `#7008E7` | New Prescriptions, and the notification glyphs |
+| `shopEarnings*` | `#ECFDF5` / `#007A55` | Today's Earnings |
+| `shopStock*` | `#FFFBEB` / `#BB4D00` | Low Stock Items and its alert panel |
+| `customerInitials` | `#D97706` | Disc behind a customer's initials |
+| `stockLeft*` / `outOfStock*` | `#FEF3C6` / `#FFE2E2` | "3 left" and "Out of Stock" |
+| `shopFieldFill` | `#F9FAFB` | The pale inputs on Add / Edit Medicine |
+
 > Every one of these was sampled from the exported designs, not eyeballed.
-> The three tag pairs are a cooler slate-and-amber set that belongs to no
-> brand ramp, which is why they carry literal values.
+> The tag, chip and step values are a cooler slate-and-amber set that belongs
+> to no brand ramp, which is why they carry literal values.
 
 ### 1.2 Type — `core/theme/app_text_styles.dart`
 
@@ -153,7 +175,11 @@ short devices) and `FlexibleGap(value)`.
 AppTopBar(title: AppStrings.setUpYourProfile.tr)          // pops on back
 AppTopBar(title: 'X', onBack: myHandler, trailing: icon)  // customised
 AppTopBar(title: 'X', showBack: false)
+AppTopBar(title: 'Request lab Test', subtitle: 'Amelia Hart')
 ```
+
+A `subtitle` adds the grey second line the ordering flow labels every step
+with, and grows the bar by 20pt. Without one the height is unchanged.
 
 ### `AppButton` — every button in the app
 
@@ -172,7 +198,18 @@ AppButton(                                   // Google / Apple
 AppButton(label: 'Deny', variant: AppButtonVariant.neutral, onPressed: ...)
 AppButton(label: 'X', variant: AppButtonVariant.outlined, onPressed: ...)
 AppButton(label: 'X', expanded: false, onPressed: ...)   // inside a Row
+
+AppButton(                                   // the ordering wizard's Next
+  label: 'Next',
+  isEnabled: false,
+  disabledFill: AppColors.gray400,           // grey, not faded blue
+  onPressed: ...,
+)
 ```
+
+A disabled button is its own colour at half strength unless a `disabledFill`
+is given. The request wizard passes one because its design greys Next out
+rather than fading it.
 
 Variants: `primary` (default) · `dark` · `neutral` · `outlined`.
 `isEnabled: false` dims to 50 % and blocks taps.
@@ -182,6 +219,11 @@ Variants: `primary` (default) · `dark` · `neutral` · `outlined`.
 358 × 50, `lg` radius, 1px `gray100` border, white fill. The error message
 renders **below** the box so the 50pt height never changes and the layout
 never jumps.
+
+Pass `initialText` to prefill without holding a `TextEditingController` — the
+field then owns one and disposes it with the widget. Prefer that to passing a
+controller from a GetX controller; see `docs/ARCHITECTURE.md` on why one must
+not own a text controller.
 
 ```dart
 AppTextField(
@@ -391,9 +433,14 @@ Never write an asset path inline; every file has a named handle.
 places the real one over it at the same inset — otherwise the page shows two,
 one of them dead.
 
-Three icons ship pre-coloured and must be drawn **untinted**, like
+Four icons ship pre-coloured and must be drawn **untinted**, like
 `profile.svg`: `AppIcons.pharmacyOwner` and `AppIcons.rider` in `authInk`,
-`AppIcons.logout` in `logoutFill`.
+`AppIcons.logout` and `AppIcons.delete` in `logoutFill`.
+
+**`AppIcons.delete` is the one bin glyph in the app.** Use it wherever
+something can be removed — untinted for a destructive action, or with a
+colour where the design tints it (the schedule's green slot chips). Do not
+reach for `Icons.delete_outline_rounded`.
 
 ### Auth status screen
 
@@ -467,7 +514,23 @@ than by a second implementation:
 | `ReportReviewScreen` | waiting / follow-up offered | `ReviewOutcome` |
 | `ChatScreen` | Bienify support | `ChatMockData.support` |
 | `MedicineCard` | Review shop's catalogue | the medicine passed in |
-| `AppPillSelector` | 4 segmented / filter rows | labels + selected index |
+| `AppPillSelector` | 7 segmented / filter rows | labels + selected index |
+| `VideoCallScreen` | the doctor's call | `VideoCallController.isDoctor` |
+| `ConsultationHistoryScreen` | the doctor's summary | `isDoctor` |
+| `CancelReasonDialog` | the doctor cancelling | caller |
+| `UploadedDocumentCard` | Appointment Details | `onRemove` presence |
+| `DoctorSearchField` | doctor appointments, messages, Results to Review | `hintKey` |
+| `ResultsToReviewScreen` | patients / lab / radiology | `ResultsTab` |
+| `RequestTestScreen` | 8 wizard designs | `OrderKind` + step |
+| `ReviewPatientScreen` | Order Additional Test | route argument |
+| `ReviewMessageScreen` | Refer/Escalation | `ReviewOption` |
+| `OrderDetailScreen` | awaiting / results in | `TestRequest.hasResults` |
+| `PatientRowCard` | roster, patient, additional test | `subtitle` |
+| `DestructiveBar` | Log out ×2, Delete Account ×2 | icon + label |
+| `AppBottomNavBar` | all three shells | `destinations` |
+| `DashedDropZone` | licence, shop logo, shop banner | `hasFile` |
+| `MedicineFormScreen` | Add / Edit Medicine | `editing` presence |
+| `EarningWithdrawScreen` | the shop's Withdraw | route, not a copy |
 
 When a new flow needs one of these, pass it different data — do not fork
 the screen.
@@ -480,11 +543,18 @@ the screen.
 | `AppConfirmDialog` | question + deny/confirm pills over the blur |
 | `AppEmptyState` | illustration or glyph, title, body, optional action |
 | `AppPillSelector` | scrolling pill row — segmented control or filter chips |
+| `DestructiveBar` | white bar with a red glyph and label (Log out, Delete Account) |
 
-`AppPillSelector` covers four designs: the Lab / Radiology and Your
-Prescriptions / Your Medical vault segmented controls (`isLarge: true`), and
-the results and order-history filter rows. Both sizes set 16pt type; the large
-one is taller and bolder, not wider-set.
+`AppPillSelector` covers six designs: the Lab / Radiology, Your Prescriptions
+/ Your Medical vault and Results to Review segmented controls
+(`isLarge: true`), and the results, order-history and lab-request filter rows.
+Both sizes set 16pt type; the large one is taller and bolder, not wider-set.
+
+Three optional knobs keep it one widget rather than three. Results to Review
+fills its unselected filter chips slate (`unselectedFill` / `unselectedInk` /
+`unselectedBorder`) where every other row outlines them white, and its three
+segments only fit a 390pt frame at the design's tighter
+`horizontalPadding: AppSpacing.sm`. Omit them and nothing changes.
 
 `AppMenuRow` takes a `labelColor` so a screen can pick its tone; every screen
 currently passes `AppColors.authInk`, which is what the designs draw. The

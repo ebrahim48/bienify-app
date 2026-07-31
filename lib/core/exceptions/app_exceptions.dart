@@ -54,7 +54,7 @@ abstract class AppException implements Exception {
 /// ```
 class NoInternetException extends AppException {
   NoInternetException([String? details])
-      : super('No internet connection', details);
+    : super('No internet connection', details);
 }
 
 /// Exception thrown when an API request times out.
@@ -75,8 +75,7 @@ class NoInternetException extends AppException {
 /// }
 /// ```
 class TimeoutException extends AppException {
-  TimeoutException([String? details])
-      : super('Request timeout', details);
+  TimeoutException([String? details]) : super('Request timeout', details);
 }
 
 /// Exception thrown when the server returns an error response.
@@ -136,8 +135,7 @@ class ServerException extends AppException {
 /// }
 /// ```
 class ParsingException extends AppException {
-  ParsingException([String? details])
-      : super('Failed to parse data', details);
+  ParsingException([String? details]) : super('Failed to parse data', details);
 }
 
 /// Exception thrown when cache operations fail.
@@ -157,8 +155,7 @@ class ParsingException extends AppException {
 /// }
 /// ```
 class CacheException extends AppException {
-  CacheException([String? details])
-      : super('Cache operation failed', details);
+  CacheException([String? details]) : super('Cache operation failed', details);
 }
 
 /// Exception thrown when requested data is not found.
@@ -174,8 +171,7 @@ class CacheException extends AppException {
 /// }
 /// ```
 class NotFoundException extends AppException {
-  NotFoundException([String? details])
-      : super('Data not found', details);
+  NotFoundException([String? details]) : super('Data not found', details);
 }
 
 /// Exception thrown for unexpected or unknown errors.
@@ -195,5 +191,5 @@ class NotFoundException extends AppException {
 /// ```
 class UnknownException extends AppException {
   UnknownException([String? details])
-      : super('An unknown error occurred', details);
+    : super('An unknown error occurred', details);
 }
