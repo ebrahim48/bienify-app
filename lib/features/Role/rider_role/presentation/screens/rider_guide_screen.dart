@@ -7,7 +7,6 @@ import '../../../../../core/constants/app_strings.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
-import '../../../../../core/theme/app_sizes.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/utils/responsive.dart';
@@ -169,6 +168,7 @@ class _ApplyPanel extends StatelessWidget {
   const _ApplyPanel();
 
   static const double _artWidth = 150;
+  static const double _buttonHeight = 44;
 
   @override
   Widget build(BuildContext context) {
@@ -203,7 +203,10 @@ class _ApplyPanel extends StatelessWidget {
                 AppButton(
                   label: AppStrings.applyNow.tr,
                   expanded: false,
-                  height: AppSizes.choiceChipHeight,
+                  // 44, not the 36 of a chip: `AppButton` sets a 16pt label
+                  // inside 10pt of padding and clips what does not fit, so a
+                  // shorter box cuts the label in half.
+                  height: _buttonHeight,
                   radius: AppRadius.lg,
                   onPressed: () => Get.toNamed<void>(AppRoutes.riderApply),
                 ),
