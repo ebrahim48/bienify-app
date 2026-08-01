@@ -14,14 +14,12 @@ import '../widgets/onboarding_slide.dart';
 
 /// Onboarding: a three-slide carousel over a fixed sign-in panel.
 ///
-/// The split is proportional (54 / 46) rather than a fixed pixel height, so
-/// the panel keeps its designed weight from a 640pt handset to a tablet.
+/// The panel is laid out at its intrinsic height so no control is ever
+/// clipped, and the illustration half takes whatever is left — on the 876pt
+/// design that lands on the drawn 54 / 46 split, and on shorter handsets the
+/// illustration gives up the difference instead of the buttons being cut off.
 class OnboardingScreen extends GetView<OnboardingController> {
   const OnboardingScreen({super.key});
-
-  /// Share of the screen given to the illustration half in the design
-  /// (471 of 876).
-  static const double _topFlex = 0.537;
 
   @override
   Widget build(BuildContext context) {
@@ -30,26 +28,26 @@ class OnboardingScreen extends GetView<OnboardingController> {
       child: Scaffold(
         backgroundColor: AppColors.authBackground,
         // The panel is anchored to the bottom edge; letting the keyboard
-        // resize it would tear it away from the design.
+        // resize it would tear it away from the design. It is lifted above
+        // the keyboard by hand below instead.
         resizeToAvoidBottomInset: false,
         body: Column(
           children: [
             Expanded(
-              flex: (_topFlex * 1000).round(),
-              child: SafeArea(bottom: false, child: _TopSection()),
+              child: SafeArea(
+                bottom: false,
+                // While typing there is no room for the carousel above the
+                // raised panel; the slides come back as the keyboard closes.
+                child: context.isKeyboardOpen
+                    ? const SizedBox.shrink()
+                    : _TopSection(),
+              ),
             ),
-            Expanded(
-              flex: ((1 - _topFlex) * 1000).round(),
-              child: SingleChildScrollView(
-                reverse: true,
-                physics: const ClampingScrollPhysics(),
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: context.keyboardInset),
-                  child: SafeArea(
-                    top: false,
-                    child: AuthPanel(onLoginTap: controller.goToLogin),
-                  ),
-                ),
+            Padding(
+              padding: EdgeInsets.only(bottom: context.keyboardInset),
+              child: SafeArea(
+                top: false,
+                child: AuthPanel(onLoginTap: controller.goToLogin),
               ),
             ),
           ],
