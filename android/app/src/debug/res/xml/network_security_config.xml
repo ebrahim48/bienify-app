@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug builds only.
+
+  Android 9 and later block cleartext HTTP by default, so a debug build talking
+  to a backend on http://localhost:3500 fails every request before it leaves
+  the device. Rather than switching cleartext on for the whole app, this
+  permits it for the handful of hosts a development backend actually runs on.
+
+  Release builds never see this file, so shipped traffic stays HTTPS-only.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Reached over `adb reverse tcp:3500 tcp:3500`, which tunnels the
+             phone's localhost back to this machine. -->
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+        <!-- The host machine, as seen from the Android emulator. -->
+        <domain includeSubdomains="true">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>
