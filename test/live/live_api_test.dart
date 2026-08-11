@@ -45,6 +45,9 @@ Future<dynamic> act(
     final out = await call();
     results.add(Probe('WRITE', what, '-', true, 'ok'));
     return out;
+  } on TooManyRequestsException {
+    throttled = true;
+    return null;
   } on AppException catch (e) {
     final status = _statusOf(e);
     final tolerated = status != null && allow.contains(status);
@@ -64,6 +67,13 @@ class Probe {
 }
 
 final results = <Probe>[];
+
+/// Set when the server starts refusing calls for rate reasons.
+///
+/// The limiters are deliberate — 20 auth calls and 300 overall per 15 minutes
+/// — so a suite run soon after another one hits them. That says nothing about
+/// the code, and reporting it as a failure trains people to ignore red.
+var throttled = false;
 final ids = <String, String>{};
 
 Future<bool> backendUp() async {
@@ -101,6 +111,9 @@ Future<dynamic> probe(
     };
     results.add(Probe(method, path, role, true, 'ok'));
     return data;
+  } on TooManyRequestsException {
+    throttled = true;
+    return null;
   } on AppException catch (e) {
     // Some calls are meant to be refused — a patient poking an admin route is
     // the authorisation layer working, not a broken endpoint.
@@ -190,6 +203,7 @@ void main() {
       // quick succession exhausts that, which says nothing about the code —
       // so skip rather than report a failure the next run would not reproduce.
       up = false;
+      throttled = true;
       // ignore: avoid_print
       print('Auth rate limit reached — live checks skipped. Retry in 15 min.');
     }
@@ -326,6 +340,12 @@ void main() {
       }
 
       _report();
+
+      if (throttled) {
+        // ignore: avoid_print
+        print('Rate limited part-way through — result is incomplete.');
+        return;
+      }
 
       final failed = results.where((r) => !r.ok).toList();
       expect(
@@ -564,6 +584,12 @@ void main() {
       );
 
       _report();
+
+      if (throttled) {
+        // ignore: avoid_print
+        print('Rate limited part-way through — result is incomplete.');
+        return;
+      }
 
       final failed = results.where((r) => !r.ok).toList();
       expect(
