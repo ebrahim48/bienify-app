@@ -17,6 +17,9 @@ import '../../features/Role/patient/home/data/repositories/home_repository_impl.
 import '../../features/Role/patient/home/domain/repositories/home_repository.dart';
 import '../../features/Role/patient/home/domain/usecases/home_usecases.dart';
 import '../localization/localization_controller.dart';
+import '../network/api_client.dart';
+import '../network/bienify_api.dart';
+import '../network/token_store.dart';
 import '../services/api_service.dart';
 import '../services/connectivity_service.dart';
 import '../services/photo_picker_service.dart';
@@ -34,8 +37,11 @@ import '../services/storage_service.dart';
 class DependencyInjection {
   DependencyInjection._();
 
-  /// Set to `false` once the Bienify API is reachable.
-  static const bool _useMockBackend = true;
+  /// Whether to serve screens from the in-memory fakes instead of the API.
+  ///
+  /// Defaults to the real backend. Build with
+  /// `--dart-define=BIENIFY_USE_MOCKS=true` to walk the app without a server.
+  static const bool _useMockBackend = bool.fromEnvironment('BIENIFY_USE_MOCKS');
 
   static Future<void> init() async {
     // ─── Services ──────────────────────────────────────────────────────────
@@ -43,6 +49,12 @@ class DependencyInjection {
     await storage.init();
     Get.put<StorageService>(storage, permanent: true);
     Get.put<ApiService>(ApiService(), permanent: true);
+
+    // The whole app shares one session, so one token store and one client.
+    final tokens = PrefsTokenStore(storage);
+    Get.put<TokenStore>(tokens, permanent: true);
+    Get.put<BienifyApi>(BienifyApi(tokens: tokens), permanent: true);
+    Get.put<ApiClient>(Get.find<BienifyApi>().client, permanent: true);
     Get.put<ConnectivityService>(ConnectivityService(), permanent: true);
     Get.put<PhotoPickerService>(PhotoPickerService(), permanent: true);
 
@@ -57,7 +69,7 @@ class DependencyInjection {
     Get.put<AuthRemoteDataSource>(
       _useMockBackend
           ? MockAuthRemoteDataSource()
-          : ApiAuthRemoteDataSource(Get.find<ApiService>()),
+          : ApiAuthRemoteDataSource(Get.find<ApiClient>()),
       permanent: true,
     );
 

@@ -1,0 +1,6 @@
+tags:
+  # Talks to a real backend on localhost. The suites self-skip when nothing is
+  # listening, so a plain `flutter test` stays green without a server; run
+  # `flutter test -t live` to exercise them deliberately.
+  live:
+    timeout: 5m
