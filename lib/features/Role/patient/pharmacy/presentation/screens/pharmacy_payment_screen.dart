@@ -41,15 +41,18 @@ class PharmacyPaymentScreen extends GetView<PharmacyCartController> {
               style: AppTextStyles.titleMedium.rc(AppColors.gray900),
             ),
             AppSpacing.gapV(AppSpacing.xs),
-            for (var index = 0; index < PaymentMethod.values.length; index++)
-              ...[
-                PaymentMethodTile(
-                  method: PaymentMethod.values[index],
-                  isSelected: controller.selectedMethodIndex.value == index,
-                  onTap: () => controller.selectMethod(index),
-                ),
-                AppSpacing.gapV(AppSpacing.sm),
-              ],
+            for (
+              var index = 0;
+              index < PaymentMethod.values.length;
+              index++
+            ) ...[
+              PaymentMethodTile(
+                method: PaymentMethod.values[index],
+                isSelected: controller.selectedMethodIndex.value == index,
+                onTap: () => controller.selectMethod(index),
+              ),
+              AppSpacing.gapV(AppSpacing.sm),
+            ],
             AppSpacing.gapV(AppSpacing.xs),
             Text(
               AppStrings.deliveryAddress.tr,

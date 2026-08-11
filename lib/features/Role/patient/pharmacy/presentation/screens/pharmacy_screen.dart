@@ -56,24 +56,36 @@ class PharmacyScreen extends GetView<PharmacyController> {
             onSeeAll: controller.seeAll,
           ),
           AppSpacing.gapV(AppSpacing.xs),
-          Obx(() => _Grid(medicines: controller.commonMedicines.toList(),
-              onAdd: controller.addToCart)),
+          Obx(
+            () => _Grid(
+              medicines: controller.commonMedicines.toList(),
+              onAdd: controller.addToCart,
+            ),
+          ),
           AppSpacing.gapV(AppSpacing.md),
           PharmacySectionHeader(
             title: AppStrings.dermatologistCategories.tr,
             onSeeAll: controller.seeAll,
           ),
           AppSpacing.gapV(AppSpacing.xs),
-          Obx(() => _Grid(medicines: controller.dermatologyMedicines.toList(),
-              onAdd: controller.addToCart)),
+          Obx(
+            () => _Grid(
+              medicines: controller.dermatologyMedicines.toList(),
+              onAdd: controller.addToCart,
+            ),
+          ),
           AppSpacing.gapV(AppSpacing.md),
           PharmacySectionHeader(
             title: AppStrings.storesNearYou.tr,
             onSeeAll: controller.seeAll,
           ),
           AppSpacing.gapV(AppSpacing.sm),
-          Obx(() => _Stores(stores: controller.stores.toList(),
-              onTap: controller.openStore)),
+          Obx(
+            () => _Stores(
+              stores: controller.stores.toList(),
+              onTap: controller.openStore,
+            ),
+          ),
           AppSpacing.gapV(AppSpacing.md),
         ],
       ),
@@ -212,9 +224,7 @@ class _Chips extends StatelessWidget {
       children: [
         for (final chip in chips)
           Material(
-            color: chip == selected
-                ? AppColors.actionFill
-                : AppColors.surface,
+            color: chip == selected ? AppColors.actionFill : AppColors.surface,
             borderRadius: AppRadius.rFull,
             clipBehavior: Clip.antiAlias,
             child: InkWell(

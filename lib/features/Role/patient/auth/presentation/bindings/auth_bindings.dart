@@ -40,9 +40,8 @@ class LocationPermissionBinding extends Bindings {
   @override
   void dependencies() {
     Get.lazyPut(
-      () => LocationPermissionController(
-        local: Get.find<AuthLocalDataSource>(),
-      ),
+      () =>
+          LocationPermissionController(local: Get.find<AuthLocalDataSource>()),
     );
   }
 }

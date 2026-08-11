@@ -26,10 +26,7 @@ class ConfirmationHeader extends StatelessWidget {
             for (final glyph in _emoji)
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: AppSpacing.xs.w),
-                child: Text(
-                  glyph,
-                  style: TextStyle(fontSize: _emojiSize.sp),
-                ),
+                child: Text(glyph, style: TextStyle(fontSize: _emojiSize.sp)),
               ),
           ],
         ),

@@ -70,8 +70,8 @@ class ReportReviewScreen extends GetView<TestResultsController> {
                   doctor: controller.doctorName,
                   // Only the offer state carries the call button; the others
                   // show the panel as a heading over their own section.
-                  onAccept: controller.outcome.value ==
-                          ReviewOutcome.followUpOffered
+                  onAccept:
+                      controller.outcome.value == ReviewOutcome.followUpOffered
                       ? controller.acceptFollowUp
                       : null,
                 ),
@@ -122,10 +122,7 @@ class _Summary extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            category,
-            style: AppTextStyles.bodyLarge.rc(AppColors.link),
-          ),
+          Text(category, style: AppTextStyles.bodyLarge.rc(AppColors.link)),
           AppSpacing.gapV(AppSpacing.xs2),
           Text(
             title,
@@ -136,10 +133,7 @@ class _Summary extends StatelessWidget {
           ),
           if (note.isNotEmpty) ...[
             AppSpacing.gapV(AppSpacing.xs2),
-            Text(
-              note,
-              style: AppTextStyles.bodyMedium.rc(AppColors.gray500),
-            ),
+            Text(note, style: AppTextStyles.bodyMedium.rc(AppColors.gray500)),
           ],
         ],
       ),
@@ -342,9 +336,7 @@ class _RequestCard extends StatelessWidget {
                       children: [
                         Text(
                           request.name,
-                          style: AppTextStyles.titleSmall.rc(
-                            AppColors.gray900,
-                          ),
+                          style: AppTextStyles.titleSmall.rc(AppColors.gray900),
                         ),
                         AppTag(
                           request.priorityLabel,

@@ -47,8 +47,7 @@ class Medicine {
       oldPrice == null ? null : '\$${oldPrice!.toStringAsFixed(0)}';
 
   /// `25mg · 21 capsules`, or just the dosage when there is no pack size.
-  String get detailLabel =>
-      packSize == null ? dosage : '$dosage · $packSize';
+  String get detailLabel => packSize == null ? dosage : '$dosage · $packSize';
 }
 
 /// A medicine plus how many of it are in the basket.

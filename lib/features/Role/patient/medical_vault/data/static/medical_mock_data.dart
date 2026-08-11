@@ -179,14 +179,12 @@ class MedicalMockData {
     memberId: 'BCB-0042-XY',
     modality: 'MRI',
     bodyRegion: 'Brain',
-    clinicalIndication:
-        'Persistent headaches, rule out intracranial lesion',
+    clinicalIndication: 'Persistent headaches, rule out intracranial lesion',
     specialInstructions:
         'Patient is claustrophobic — open MRI preferred if available',
     physicianName: 'Dr. Elena Reyes, MD, FACP',
     physicianSpecialty: 'Internal Medicine',
-    boardCertification:
-        'Board Certified — American Board of Internal Medicine',
+    boardCertification: 'Board Certified — American Board of Internal Medicine',
     npi: '1234567890',
     dea: 'FR1234563',
     licence: 'CA-G-12345',

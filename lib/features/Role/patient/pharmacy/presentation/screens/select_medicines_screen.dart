@@ -341,9 +341,7 @@ class _CheckoutBar extends StatelessWidget {
                     AppSpacing.gapH(AppSpacing.xs),
                     Text(
                       AppStrings.addToCart.tr,
-                      style: AppTextStyles.titleSmall.rc(
-                        AppColors.actionLabel,
-                      ),
+                      style: AppTextStyles.titleSmall.rc(AppColors.actionLabel),
                     ),
                   ],
                 ),

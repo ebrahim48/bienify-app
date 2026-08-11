@@ -44,8 +44,7 @@ class ChatScreen extends GetView<ChatController> {
                       vertical: AppSpacing.base.h,
                     ),
                     itemCount: controller.messages.length,
-                    separatorBuilder: (_, _) =>
-                        AppSpacing.gapV(AppSpacing.sm),
+                    separatorBuilder: (_, _) => AppSpacing.gapV(AppSpacing.sm),
                     itemBuilder: (context, index) =>
                         ChatBubble(message: controller.messages[index]),
                   ),

@@ -23,8 +23,7 @@ class Wallet {
   final double balance;
   final String currencySymbol;
 
-  String get balanceLabel =>
-      '$currencySymbol${balance.toStringAsFixed(2)}';
+  String get balanceLabel => '$currencySymbol${balance.toStringAsFixed(2)}';
 }
 
 /// The money side of a booking.
@@ -49,8 +48,7 @@ class PaymentBreakdown {
   /// What the chosen payment method is actually charged.
   double get payable => (total - walletDeduction).clamp(0, double.infinity);
 
-  String format(double amount) =>
-      '$currencySymbol${amount.toStringAsFixed(0)}';
+  String format(double amount) => '$currencySymbol${amount.toStringAsFixed(0)}';
 
   String get consultationFeeLabel => format(consultationFee);
 

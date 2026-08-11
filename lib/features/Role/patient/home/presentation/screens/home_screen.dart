@@ -140,15 +140,10 @@ class _Failure extends StatelessWidget {
       padding: EdgeInsets.symmetric(vertical: AppSpacing.xl4.h),
       child: Column(
         children: [
-          Icon(
-            Icons.cloud_off_rounded,
-            size: 48.w,
-            color: AppColors.gray300,
-          ),
+          Icon(Icons.cloud_off_rounded, size: 48.w, color: AppColors.gray300),
           AppSpacing.gapV(AppSpacing.base),
           Text(
-            controller.errorMessage.value ??
-                AppStrings.somethingWentWrong.tr,
+            controller.errorMessage.value ?? AppStrings.somethingWentWrong.tr,
             textAlign: TextAlign.center,
             style: AppTextStyles.bodyMedium.rc(AppColors.textSecondary),
           ),

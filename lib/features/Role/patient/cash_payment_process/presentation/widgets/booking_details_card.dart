@@ -137,11 +137,7 @@ class _DetailRow extends StatelessWidget {
               borderRadius: AppRadius.rXl,
             ),
             alignment: Alignment.center,
-            child: Icon(
-              icon,
-              size: AppSizes.xl.w,
-              color: AppColors.primary700,
-            ),
+            child: Icon(icon, size: AppSizes.xl.w, color: AppColors.primary700),
           ),
           AppSpacing.gapH(AppSpacing.xs),
           // The value gets the larger share: a clipped value would hide the

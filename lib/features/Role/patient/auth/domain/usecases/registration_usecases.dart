@@ -26,8 +26,6 @@ class SaveCredentials {
 
   final AuthRepository _repository;
 
-  Future<UserEntity> call({
-    required String email,
-    required String password,
-  }) => _repository.saveCredentials(email: email, password: password);
+  Future<UserEntity> call({required String email, required String password}) =>
+      _repository.saveCredentials(email: email, password: password);
 }

@@ -14,7 +14,11 @@ import '../../../../../../core/utils/responsive.dart';
 /// An inline banner rather than a snackbar, because the design keeps it in
 /// the layout above the content while the code stays visible.
 class CodeCopiedBanner extends StatelessWidget {
-  const CodeCopiedBanner({super.key, required this.code, this.isVisible = true});
+  const CodeCopiedBanner({
+    super.key,
+    required this.code,
+    this.isVisible = true,
+  });
 
   final String code;
   final bool isVisible;
@@ -47,17 +51,11 @@ class CodeCopiedBanner extends StatelessWidget {
                       children: [
                         Text(
                           AppStrings.codeCopied.tr,
-                          style: AppTextStyles.titleSmall.rc(
-                            AppColors.openInk,
-                          ),
+                          style: AppTextStyles.titleSmall.rc(AppColors.openInk),
                         ),
                         Text(
-                          AppStrings.codeCopiedDetail.trParams({
-                            'code': code,
-                          }),
-                          style: AppTextStyles.bodyMedium.rc(
-                            AppColors.openInk,
-                          ),
+                          AppStrings.codeCopiedDetail.trParams({'code': code}),
+                          style: AppTextStyles.bodyMedium.rc(AppColors.openInk),
                         ),
                       ],
                     ),

@@ -154,8 +154,20 @@ class _DoctorFilterSheetState extends State<DoctorFilterSheet> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: _StarColumn(stars: _leftStars, selected: _ratings, onToggle: _toggle)),
-              Expanded(child: _StarColumn(stars: _rightStars, selected: _ratings, onToggle: _toggle)),
+              Expanded(
+                child: _StarColumn(
+                  stars: _leftStars,
+                  selected: _ratings,
+                  onToggle: _toggle,
+                ),
+              ),
+              Expanded(
+                child: _StarColumn(
+                  stars: _rightStars,
+                  selected: _ratings,
+                  onToggle: _toggle,
+                ),
+              ),
             ],
           ),
           AppSpacing.gapV(AppSpacing.md),
@@ -244,9 +256,7 @@ class _StarCheckbox extends StatelessWidget {
                 color: isChecked ? AppColors.actionFill : AppColors.surface,
                 borderRadius: AppRadius.rMd,
                 border: Border.all(
-                  color: isChecked
-                      ? AppColors.actionFill
-                      : AppColors.gray200,
+                  color: isChecked ? AppColors.actionFill : AppColors.gray200,
                   width: AppSizes.borderWidth,
                 ),
               ),

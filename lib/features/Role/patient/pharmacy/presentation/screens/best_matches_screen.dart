@@ -331,10 +331,7 @@ class _Meta extends StatelessWidget {
       children: [
         Icon(icon, size: AppSizes.lg.w, color: AppColors.gray400),
         AppSpacing.gapH(AppSpacing.xxs),
-        Text(
-          label,
-          style: AppTextStyles.bodyMedium.rc(AppColors.gray400),
-        ),
+        Text(label, style: AppTextStyles.bodyMedium.rc(AppColors.gray400)),
       ],
     );
   }

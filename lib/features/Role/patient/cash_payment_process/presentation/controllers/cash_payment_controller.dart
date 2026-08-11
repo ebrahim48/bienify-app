@@ -91,8 +91,7 @@ class CashPaymentController extends GetxController {
   void viewNearbyLocations() => Get.toNamed<void>(AppRoutes.paymentPoints);
 
   /// Leaving the points screen lands on the pending state.
-  void confirmLocationChosen() =>
-      Get.offNamed<void>(AppRoutes.paymentPending);
+  void confirmLocationChosen() => Get.offNamed<void>(AppRoutes.paymentPending);
 
   /// Manual re-check.
   ///

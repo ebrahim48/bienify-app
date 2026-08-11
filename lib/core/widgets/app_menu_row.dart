@@ -44,10 +44,7 @@ class AppMenuRow extends StatelessWidget {
         height: height.h,
         child: Row(
           children: [
-            if (leading != null) ...[
-              leading!,
-              AppSpacing.gapH(AppSpacing.sm),
-            ],
+            if (leading != null) ...[leading!, AppSpacing.gapH(AppSpacing.sm)],
             Expanded(
               child: Text(
                 label,

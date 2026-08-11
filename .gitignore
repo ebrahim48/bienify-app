@@ -11,15 +11,16 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
-
+.env.test
 # IntelliJ related
 *.iml
 *.ipr
 *.iws
 .idea/
-.vscode
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
+
+# Editor tasks and launch configs are not shared. A committed VS Code task can
+# execute on folderOpen, which is how a backdoor reached this repo once.
+.vscode/
 
 # Claude Code — local tool settings and scratch state
 .claude/
@@ -50,9 +51,4 @@ test/golden/failures/
 branch_structure.json
 temp_auto_push.bat
 temp_interactive_push.bat
-.gitignore
-
-# Editor tasks and launch configs are not shared. A committed VS Code task can
-# execute on folderOpen, which is how a backdoor reached this repo once.
-.vscode
 

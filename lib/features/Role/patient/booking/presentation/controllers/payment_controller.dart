@@ -43,10 +43,8 @@ class PaymentController extends GetxController with SubmissionMixin {
     if (method == PaymentMethod.cashOnLocation) _openCashPayment();
   }
 
-  void _openCashPayment() => Get.toNamed<void>(
-    AppRoutes.howToPay,
-    arguments: breakdown.payableLabel,
-  );
+  void _openCashPayment() =>
+      Get.toNamed<void>(AppRoutes.howToPay, arguments: breakdown.payableLabel);
 
   void toggleWallet(bool value) => useWallet.value = value;
 

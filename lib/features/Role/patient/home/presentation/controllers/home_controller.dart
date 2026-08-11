@@ -34,8 +34,7 @@ class HomeController extends GetxController {
   String get patientName => feed.value.patientName;
   String get location => feed.value.location;
   List<LabRequest> get labRequests => feed.value.labRequests;
-  List<Appointment> get upcomingAppointments =>
-      feed.value.upcomingAppointments;
+  List<Appointment> get upcomingAppointments => feed.value.upcomingAppointments;
   List<Doctor> get nearbyDoctors => feed.value.nearbyDoctors;
 
   bool get isLoading =>

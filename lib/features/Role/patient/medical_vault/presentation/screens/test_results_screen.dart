@@ -34,9 +34,8 @@ class TestResultsScreen extends GetView<TestResultsController> {
               selectedIndex: ResultDiscipline.values.indexOf(
                 controller.discipline.value,
               ),
-              onSelected: (index) => controller.selectDiscipline(
-                ResultDiscipline.values[index],
-              ),
+              onSelected: (index) =>
+                  controller.selectDiscipline(ResultDiscipline.values[index]),
               isLarge: true,
             ),
           ),

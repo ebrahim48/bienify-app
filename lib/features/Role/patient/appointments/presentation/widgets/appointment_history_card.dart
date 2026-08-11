@@ -44,6 +44,7 @@ class AppointmentHistoryCard extends StatelessWidget {
   final VoidCallback? onCancel;
 
   static const double _avatar = 56;
+
   /// Sized to the "Book Again" label and no wider, so the doctor's name keeps
   /// the ~160pt it needs at `titleMedium`.
   static const double _actionsWidth = 88;
@@ -53,8 +54,18 @@ class AppointmentHistoryCard extends StatelessWidget {
   /// `Apr 1, 2026 at 10:00 AM`.
   String get _schedule {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final at = appointment.scheduledAt;
     final hour12 = at.hour % 12 == 0 ? 12 : at.hour % 12;

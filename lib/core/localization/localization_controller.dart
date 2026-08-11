@@ -37,9 +37,9 @@ class LocalizationController extends GetxController {
   final Rx<AppLanguage> current = AppLanguage.english.obs;
 
   /// Locale to hand to `GetMaterialApp` at startup.
-  Locale get initialLocale =>
-      AppLanguage.fromCode(_storage.getString(StorageKeys.selectedLanguage))
-          .locale;
+  Locale get initialLocale => AppLanguage.fromCode(
+    _storage.getString(StorageKeys.selectedLanguage),
+  ).locale;
 
   @override
   void onInit() {

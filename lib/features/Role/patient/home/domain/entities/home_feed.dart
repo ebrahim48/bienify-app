@@ -39,4 +39,3 @@ class HomeFeed {
       upcomingAppointments.isEmpty &&
       nearbyDoctors.isEmpty;
 }
-

@@ -18,9 +18,8 @@ class PaymentPointsController extends GetxController {
   bool get isMap => view.value == PaymentPointsView.map;
 
   /// The highlighted point shown above "ALL NEARBY".
-  PaymentPoint? get featured => points.firstWhereOrNull(
-    (point) => point.id == selectedId.value,
-  );
+  PaymentPoint? get featured =>
+      points.firstWhereOrNull((point) => point.id == selectedId.value);
 
   @override
   void onInit() {

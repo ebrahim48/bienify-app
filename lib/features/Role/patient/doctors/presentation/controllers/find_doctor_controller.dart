@@ -34,8 +34,6 @@ class FindDoctorController extends GetxController {
   /// Typing a specialty is a shortcut into the same list.
   void onQuerySubmitted(String _) => openList();
 
-  void openList() => Get.toNamed<void>(
-    AppRoutes.doctorList,
-    arguments: selected.value,
-  );
+  void openList() =>
+      Get.toNamed<void>(AppRoutes.doctorList, arguments: selected.value);
 }

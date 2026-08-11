@@ -78,10 +78,7 @@ class AppScaffold extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (topBar != null)
-                      Padding(
-                        padding: AppSpacing.pagePadding,
-                        child: topBar,
-                      ),
+                      Padding(padding: AppSpacing.pagePadding, child: topBar),
                     Expanded(child: _body()),
                     if (bottomBar != null)
                       Padding(

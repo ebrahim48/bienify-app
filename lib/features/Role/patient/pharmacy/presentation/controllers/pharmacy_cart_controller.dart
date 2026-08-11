@@ -80,9 +80,7 @@ class PharmacyCartController extends GetxController {
     } else {
       selectedIds
         ..clear()
-        ..addAll(
-          prescribed.where((m) => m.isAvailable).map((m) => m.id),
-        );
+        ..addAll(prescribed.where((m) => m.isAvailable).map((m) => m.id));
     }
   }
 

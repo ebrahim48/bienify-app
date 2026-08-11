@@ -9,9 +9,11 @@ import '../../features/Role/patient/auth/domain/usecases/email_auth_usecases.dar
 import '../../features/Role/patient/auth/domain/usecases/password_recovery_usecases.dart';
 import '../../features/Role/patient/auth/domain/usecases/phone_auth_usecases.dart';
 import '../../features/Role/patient/auth/domain/usecases/registration_usecases.dart';
+import '../../features/Role/patient/doctors/data/repositories/api_doctor_repository.dart';
 import '../../features/Role/patient/doctors/data/repositories/doctor_repository_impl.dart';
 import '../../features/Role/patient/doctors/domain/repositories/doctor_repository.dart';
 import '../../features/Role/patient/doctors/domain/usecases/doctor_usecases.dart';
+import '../../features/Role/patient/home/data/datasources/api_home_remote_data_source.dart';
 import '../../features/Role/patient/home/data/datasources/home_remote_data_source.dart';
 import '../../features/Role/patient/home/data/repositories/home_repository_impl.dart';
 import '../../features/Role/patient/home/domain/repositories/home_repository.dart';
@@ -33,7 +35,7 @@ import '../services/storage_service.dart';
 /// they are created on entry and disposed on exit.
 ///
 /// Swapping the mock backend for the real one is a single line: change
-/// [_useMockBackend] to `false`.
+/// [_useMockBackend] to `true`, or pass `useMocks` to [init].
 class DependencyInjection {
   DependencyInjection._();
 
@@ -43,7 +45,14 @@ class DependencyInjection {
   /// `--dart-define=BIENIFY_USE_MOCKS=true` to walk the app without a server.
   static const bool _useMockBackend = bool.fromEnvironment('BIENIFY_USE_MOCKS');
 
-  static Future<void> init() async {
+  /// Wires the graph.
+  ///
+  /// [useMocks] overrides the build-time default. Widget and golden tests pass
+  /// `true`: they assert on rendering, and a screen that reaches for a real
+  /// server makes them depend on a backend being up and on whatever happens to
+  /// be in its database that day.
+  static Future<void> init({bool? useMocks}) async {
+    final mock = useMocks ?? _useMockBackend;
     // ─── Services ──────────────────────────────────────────────────────────
     final storage = StorageService();
     await storage.init();
@@ -67,7 +76,7 @@ class DependencyInjection {
     // ─── Auth data sources ─────────────────────────────────────────────────
     Get.put<AuthLocalDataSource>(AuthLocalDataSource(storage), permanent: true);
     Get.put<AuthRemoteDataSource>(
-      _useMockBackend
+      mock
           ? MockAuthRemoteDataSource()
           : ApiAuthRemoteDataSource(Get.find<ApiClient>()),
       permanent: true,
@@ -83,12 +92,17 @@ class DependencyInjection {
     );
 
     _registerAuthUseCases(Get.find<AuthRepository>());
-    _registerHome();
-    _registerDoctors();
+    _registerHome(mock);
+    _registerDoctors(mock);
   }
 
-  static void _registerHome() {
-    Get.put<HomeRemoteDataSource>(MockHomeRemoteDataSource(), permanent: true);
+  static void _registerHome(bool mock) {
+    Get.put<HomeRemoteDataSource>(
+      mock
+          ? MockHomeRemoteDataSource()
+          : ApiHomeRemoteDataSource(Get.find<ApiClient>()),
+      permanent: true,
+    );
     Get.put<HomeRepository>(
       HomeRepositoryImpl(remote: Get.find<HomeRemoteDataSource>()),
       permanent: true,
@@ -99,8 +113,13 @@ class DependencyInjection {
     );
   }
 
-  static void _registerDoctors() {
-    Get.put<DoctorRepository>(const DoctorRepositoryImpl(), permanent: true);
+  static void _registerDoctors(bool mock) {
+    Get.put<DoctorRepository>(
+      mock
+          ? const DoctorRepositoryImpl()
+          : ApiDoctorRepository(Get.find<ApiClient>()),
+      permanent: true,
+    );
 
     final repository = Get.find<DoctorRepository>();
     Get

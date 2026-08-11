@@ -175,8 +175,7 @@ class TestResultsController extends GetxController {
   /// Whatever the patient types into that section.
   final RxString replyNote = ''.obs;
 
-  bool get hasRequest =>
-      outcome.value == ReviewOutcome.furtherTestRequested;
+  bool get hasRequest => outcome.value == ReviewOutcome.furtherTestRequested;
 
   FollowUpRequest get request => MedicalMockData.followUpRequest;
 

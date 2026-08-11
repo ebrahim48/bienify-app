@@ -61,10 +61,7 @@ class AppAvatar extends StatelessWidget {
       width: side,
       height: side,
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: backgroundColor, shape: BoxShape.circle),
       child: child ?? _photoOrInitials(side),
     );
   }

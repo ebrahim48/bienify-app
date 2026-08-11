@@ -76,9 +76,7 @@ class _ReviewDialogState extends State<ReviewDialog> {
                   behavior: HitTestBehavior.opaque,
                   onTap: () => setState(() => _rating = star),
                   child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: AppSpacing.xxs.w,
-                    ),
+                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.xxs.w),
                     child: Icon(
                       Icons.star_rounded,
                       size: _star.w,

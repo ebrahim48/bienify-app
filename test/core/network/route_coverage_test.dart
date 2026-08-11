@@ -16,17 +16,21 @@ void main() {
   late String constants;
 
   setUpAll(() {
-    routes = (jsonDecode(File('test/fixtures/backend-routes.json').readAsStringSync()) as List)
-        .map((r) => (r as List).map((e) => e as String).toList())
-        .toList();
+    routes =
+        (jsonDecode(
+                  File('test/fixtures/backend-routes.json').readAsStringSync(),
+                )
+                as List)
+            .map((r) => (r as List).map((e) => e as String).toList())
+            .toList();
 
-    apiSource = Directory('lib/core/network/api')
-        .listSync()
-        .whereType<File>()
-        .map((f) => f.readAsStringSync())
-        .join('\n');
+    apiSource = Directory(
+      'lib/core/network/api',
+    ).listSync().whereType<File>().map((f) => f.readAsStringSync()).join('\n');
 
-    constants = File('lib/core/constants/api_constants.dart').readAsStringSync();
+    constants = File(
+      'lib/core/constants/api_constants.dart',
+    ).readAsStringSync();
   });
 
   test('the backend serves the number of routes we think it does', () {
@@ -59,7 +63,8 @@ void main() {
 
       // Find which constant holds this path, then confirm an API class uses it.
       final decl = RegExp(
-        r'static (?:const String|String) (\w+)[^=]*=[^;]*' + RegExp.escape("'$expected'"),
+        r'static (?:const String|String) (\w+)[^=]*=[^;]*' +
+            RegExp.escape("'$expected'"),
       ).firstMatch(constants);
 
       if (decl == null) {
@@ -72,7 +77,11 @@ void main() {
       }
     }
 
-    expect(uncalled, isEmpty, reason: 'these endpoints are unreachable from the app');
+    expect(
+      uncalled,
+      isEmpty,
+      reason: 'these endpoints are unreachable from the app',
+    );
   });
 
   test('no API method points at a path the backend does not serve', () {
@@ -81,10 +90,17 @@ void main() {
 
     for (final m in RegExp(r"'\$_v1(/[^']*)'").allMatches(constants)) {
       final dartPath = '/api/v1${m.group(1)}';
-      final real = dartPath.replaceAllMapped(RegExp(r'\$(\w+)'), (x) => ':${x[1]}');
+      final real = dartPath.replaceAllMapped(
+        RegExp(r'\$(\w+)'),
+        (x) => ':${x[1]}',
+      );
       if (!served.contains(real)) stray.add(real);
     }
 
-    expect(stray, isEmpty, reason: 'the app declares paths the server will 404');
+    expect(
+      stray,
+      isEmpty,
+      reason: 'the app declares paths the server will 404',
+    );
   });
 }

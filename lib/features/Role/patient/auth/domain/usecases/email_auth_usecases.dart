@@ -7,10 +7,8 @@ class LoginWithEmail {
 
   final AuthRepository _repository;
 
-  Future<AuthSession> call({
-    required String email,
-    required String password,
-  }) => _repository.loginWithEmail(email: email, password: password);
+  Future<AuthSession> call({required String email, required String password}) =>
+      _repository.loginWithEmail(email: email, password: password);
 }
 
 /// Signs in through Google or Apple.

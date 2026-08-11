@@ -48,10 +48,7 @@ class QuantityStepper extends StatelessWidget {
           ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: AppSpacing.xs.w),
-            child: Text(
-              '$quantity',
-              style: AppTextStyles.titleSmall.rc(ink),
-            ),
+            child: Text('$quantity', style: AppTextStyles.titleSmall.rc(ink)),
           ),
           _StepButton(
             icon: Icons.add_rounded,

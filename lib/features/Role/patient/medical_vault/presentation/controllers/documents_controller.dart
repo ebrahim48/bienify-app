@@ -11,8 +11,7 @@ import '../../domain/entities/medical_record.dart';
 ///
 /// UI-only — everything comes from [MedicalMockData] and nothing calls an API.
 class DocumentsController extends GetxController {
-  final RxList<DigitalPrescription> prescriptions =
-      <DigitalPrescription>[].obs;
+  final RxList<DigitalPrescription> prescriptions = <DigitalPrescription>[].obs;
 
   final RxList<UploadedDocument> uploads = <UploadedDocument>[].obs;
 
@@ -36,8 +35,7 @@ class DocumentsController extends GetxController {
 
   void openTestReports() => Get.toNamed<void>(AppRoutes.allTestReports);
 
-  void openPastAppointments() =>
-      Get.toNamed<void>(AppRoutes.pastAppointments);
+  void openPastAppointments() => Get.toNamed<void>(AppRoutes.pastAppointments);
 
   void openTestsAndResults() => Get.toNamed<void>(AppRoutes.testResults);
 
@@ -63,15 +61,11 @@ class DocumentsController extends GetxController {
   };
 
   /// `Digital Prescription 01` — the position in the list, not the reference.
-  String numberedLabel(int index) =>
-      AppStrings.digitalPrescriptionNumbered.trParams({
-        'number': '${index + 1}'.padLeft(2, '0'),
-      });
+  String numberedLabel(int index) => AppStrings.digitalPrescriptionNumbered
+      .trParams({'number': '${index + 1}'.padLeft(2, '0')});
 
-  void openPrescription(DigitalPrescription prescription) => Get.toNamed<void>(
-    AppRoutes.prescriptionDetails,
-    arguments: prescription,
-  );
+  void openPrescription(DigitalPrescription prescription) =>
+      Get.toNamed<void>(AppRoutes.prescriptionDetails, arguments: prescription);
 
   /// UI-only: file capture is a marked seam, so this adds a further copy of
   /// the sample upload rather than opening a picker.
@@ -115,8 +109,18 @@ class DocumentsController extends GetxController {
   /// `March 31, 2026` — hand-formatted, matching the other date labels.
   String issuedLabel(DateTime at) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return '${months[at.month - 1]} ${at.day}, ${at.year}';
   }
@@ -124,8 +128,18 @@ class DocumentsController extends GetxController {
   /// `Apr 3, 2026` — the shorter form the upload card uses.
   String shortDateLabel(DateTime at) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[at.month - 1]} ${at.day}, ${at.year}';
   }

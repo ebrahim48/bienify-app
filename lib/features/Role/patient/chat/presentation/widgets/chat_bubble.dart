@@ -50,10 +50,7 @@ class ChatBubble extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                message.text,
-                style: AppTextStyles.bodyLarge.rc(ink),
-              ),
+              Text(message.text, style: AppTextStyles.bodyLarge.rc(ink)),
               AppSpacing.gapV(AppSpacing.xs2),
               Text(
                 message.timeLabel,

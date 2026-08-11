@@ -8,8 +8,7 @@ import '../datasources/home_remote_data_source.dart';
 /// renders instantly and refreshes in the background rather than flashing a
 /// spinner.
 class HomeRepositoryImpl implements HomeRepository {
-  HomeRepositoryImpl({required HomeRemoteDataSource remote})
-    : _remote = remote;
+  HomeRepositoryImpl({required HomeRemoteDataSource remote}) : _remote = remote;
 
   final HomeRemoteDataSource _remote;
 

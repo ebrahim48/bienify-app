@@ -156,11 +156,7 @@ class _ConnectionPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.wifi_rounded,
-            size: AppSizes.lg.w,
-            color: AppColors.white,
-          ),
+          Icon(Icons.wifi_rounded, size: AppSizes.lg.w, color: AppColors.white),
           AppSpacing.gapH(AppSpacing.xs2),
           Text(
             AppStrings.goodConnection.tr,

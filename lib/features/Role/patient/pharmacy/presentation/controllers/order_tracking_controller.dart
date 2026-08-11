@@ -25,8 +25,7 @@ class OrderTrackingController extends GetxController {
 
   double get progress => (currentIndex / progressSteps).clamp(0, 1);
 
-  bool isComplete(OrderStep step) =>
-      steps.indexOf(step) < currentIndex - 1;
+  bool isComplete(OrderStep step) => steps.indexOf(step) < currentIndex - 1;
 
   bool isCurrent(OrderStep step) => step.stage == stage.value;
 
@@ -44,8 +43,7 @@ class OrderTrackingController extends GetxController {
 
   void backToHome() => AppNavigator.resetTo(AppRoutes.home);
 
-  void openRiderChat() =>
-      Get.toNamed<void>(AppRoutes.chat, arguments: rider);
+  void openRiderChat() => Get.toNamed<void>(AppRoutes.chat, arguments: rider);
 
   /// Closing live tracking stands in for the delivery completing.
   void finishDelivery() => Get.offNamed<void>(AppRoutes.deliveryFeedback);

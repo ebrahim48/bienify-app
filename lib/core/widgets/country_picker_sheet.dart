@@ -33,7 +33,9 @@ class CountryPickerSheet extends StatefulWidget {
       isScrollControlled: true,
       backgroundColor: AppColors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl3.r)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl3.r),
+        ),
       ),
       builder: (_) => CountryPickerSheet(selected: selected),
     );

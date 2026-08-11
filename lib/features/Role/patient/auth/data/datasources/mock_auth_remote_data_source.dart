@@ -43,11 +43,13 @@ class MockAuthRemoteDataSource implements AuthRemoteDataSource {
       ageRange: _user.ageRange,
       isProfileComplete: _user.isProfileComplete,
     );
-    return _delayed(() => {
-      'verification_id': 'mock-verification-id',
-      'phone_number': phoneNumber,
-      'resend_cooldown_seconds': 60,
-    });
+    return _delayed(
+      () => {
+        'verification_id': 'mock-verification-id',
+        'phone_number': phoneNumber,
+        'resend_cooldown_seconds': 60,
+      },
+    );
   }
 
   @override

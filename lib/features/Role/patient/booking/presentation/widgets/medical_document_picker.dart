@@ -129,10 +129,7 @@ class _AttachmentChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            name,
-            style: AppTextStyles.bodySmall.rc(AppColors.primary700),
-          ),
+          Text(name, style: AppTextStyles.bodySmall.rc(AppColors.primary700)),
           if (onRemove != null) ...[
             AppSpacing.gapH(AppSpacing.xs2),
             GestureDetector(

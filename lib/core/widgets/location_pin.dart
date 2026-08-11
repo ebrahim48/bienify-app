@@ -67,7 +67,10 @@ class _LocationPinPainter extends CustomPainter {
     const d = tipY - cy;
 
     // Tangent points from the tip to the head circle.
-    final tangentAngle = math.atan2(r * r / d, r * math.sqrt(d * d - r * r) / d);
+    final tangentAngle = math.atan2(
+      r * r / d,
+      r * math.sqrt(d * d - r * r) / d,
+    );
 
     final headRect = Rect.fromCircle(
       center: Offset(cx * sx, cy * sy),
@@ -82,10 +85,7 @@ class _LocationPinPainter extends CustomPainter {
       ..lineTo(cx * sx, tipY * sy)
       ..close()
       ..addOval(
-        Rect.fromCircle(
-          center: Offset(cx * sx, cy * sy),
-          radius: 10.5 * sx,
-        ),
+        Rect.fromCircle(center: Offset(cx * sx, cy * sy), radius: 10.5 * sx),
       );
 
     canvas.drawPath(drop, paint);

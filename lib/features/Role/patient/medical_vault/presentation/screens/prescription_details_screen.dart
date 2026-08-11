@@ -171,10 +171,8 @@ class _Divider extends StatelessWidget {
   const _Divider();
 
   @override
-  Widget build(BuildContext context) => Container(
-    height: AppSizes.borderWidth,
-    color: AppColors.surfaceBorder,
-  );
+  Widget build(BuildContext context) =>
+      Container(height: AppSizes.borderWidth, color: AppColors.surfaceBorder);
 }
 
 class _DiagnosisPanel extends StatelessWidget {
@@ -252,10 +250,7 @@ class _MedicationCard extends StatelessWidget {
             ],
           ),
           AppSpacing.gapV(AppSpacing.xs),
-          _Detail(
-            label: AppStrings.dosageLabel.tr,
-            value: medication.dosage,
-          ),
+          _Detail(label: AppStrings.dosageLabel.tr, value: medication.dosage),
           _Detail(
             label: AppStrings.frequencyLabel.tr,
             value: medication.frequency,
@@ -289,10 +284,7 @@ class _DurationPill extends StatelessWidget {
           width: AppSizes.borderWidth,
         ),
       ),
-      child: Text(
-        label,
-        style: AppTextStyles.bodyMedium.rc(AppColors.gray900),
-      ),
+      child: Text(label, style: AppTextStyles.bodyMedium.rc(AppColors.gray900)),
     );
   }
 }

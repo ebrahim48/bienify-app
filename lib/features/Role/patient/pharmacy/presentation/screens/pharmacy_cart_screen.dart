@@ -120,9 +120,7 @@ class _DeliveryHeader extends StatelessWidget {
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
               child: Text(
-                AppStrings.deliveryFrom.trParams({
-                  'store': store?.name ?? '',
-                }),
+                AppStrings.deliveryFrom.trParams({'store': store?.name ?? ''}),
                 maxLines: 1,
                 style: AppTextStyles.labelLarge.rc(AppColors.gray900),
               ),
@@ -172,10 +170,7 @@ class _Lines extends StatelessWidget {
                     ),
                     clipBehavior: Clip.antiAlias,
                     padding: EdgeInsets.all(AppSpacing.xxs.w),
-                    child: Image.asset(
-                      AppAssets.medicine,
-                      fit: BoxFit.contain,
-                    ),
+                    child: Image.asset(AppAssets.medicine, fit: BoxFit.contain),
                   ),
                   AppSpacing.gapH(AppSpacing.xs),
                   Expanded(
@@ -187,17 +182,13 @@ class _Lines extends StatelessWidget {
                           lines[index].medicine.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.titleSmall.rc(
-                            AppColors.authInk,
-                          ),
+                          style: AppTextStyles.titleSmall.rc(AppColors.authInk),
                         ),
                         Text(
                           lines[index].medicine.detailLabel,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.bodySmall.rc(
-                            AppColors.gray400,
-                          ),
+                          style: AppTextStyles.bodySmall.rc(AppColors.gray400),
                         ),
                       ],
                     ),

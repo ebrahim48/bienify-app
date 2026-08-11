@@ -37,8 +37,18 @@ class AppointmentCard extends StatelessWidget {
   /// `intl` dependency for one string.
   String get _schedule {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final at = appointment.scheduledAt;
     final hour12 = at.hour % 12 == 0 ? 12 : at.hour % 12;

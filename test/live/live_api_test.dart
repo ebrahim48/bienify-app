@@ -181,8 +181,17 @@ void main() {
       );
       return;
     }
-    for (final role in accounts.keys) {
-      clients[role] = await signInWithBackoff(role);
+    try {
+      for (final role in accounts.keys) {
+        clients[role] = await signInWithBackoff(role);
+      }
+    } on TooManyRequestsException {
+      // `/auth/*` allows 20 logins per 15 minutes. Running the suite twice in
+      // quick succession exhausts that, which says nothing about the code —
+      // so skip rather than report a failure the next run would not reproduce.
+      up = false;
+      // ignore: avoid_print
+      print('Auth rate limit reached — live checks skipped. Retry in 15 min.');
     }
   });
 

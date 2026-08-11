@@ -15,11 +15,7 @@ import '../../domain/entities/pharmacy.dart';
 /// A catalogue tile: discount ribbon, product shot, name, dosage, price and
 /// the Add action.
 class MedicineCard extends StatelessWidget {
-  const MedicineCard({
-    super.key,
-    required this.medicine,
-    required this.onAdd,
-  });
+  const MedicineCard({super.key, required this.medicine, required this.onAdd});
 
   final Medicine medicine;
   final VoidCallback onAdd;
@@ -44,10 +40,7 @@ class MedicineCard extends StatelessWidget {
                 SizedBox(
                   height: imageHeight.h,
                   child: Center(
-                    child: Image.asset(
-                      AppAssets.medicine,
-                      fit: BoxFit.contain,
-                    ),
+                    child: Image.asset(AppAssets.medicine, fit: BoxFit.contain),
                   ),
                 ),
                 AppSpacing.gapV(AppSpacing.xs2),
@@ -109,9 +102,11 @@ class MedicineCard extends StatelessWidget {
             ),
           ),
           if (medicine.discountPercent > 0)
-            Positioned(top: 0, left: AppSpacing.xs.w, child: _DiscountRibbon(
-              percent: medicine.discountPercent,
-            )),
+            Positioned(
+              top: 0,
+              left: AppSpacing.xs.w,
+              child: _DiscountRibbon(percent: medicine.discountPercent),
+            ),
         ],
       ),
     );

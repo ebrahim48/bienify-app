@@ -11,9 +11,7 @@ import '../models/country.dart';
 class Validators {
   Validators._();
 
-  static final RegExp _emailPattern = RegExp(
-    r'^[\w.+-]+@[\w-]+\.[\w.-]+$',
-  );
+  static final RegExp _emailPattern = RegExp(r'^[\w.+-]+@[\w-]+\.[\w.-]+$');
   static final RegExp _digitsOnly = RegExp(r'^\d+$');
 
   /// Minimum characters accepted for a password.

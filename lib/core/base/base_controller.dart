@@ -53,8 +53,7 @@ mixin FieldErrorMixin on GetxController {
 
   String? errorOf(String field) => fieldErrors[field];
 
-  void setError(String field, String? message) =>
-      fieldErrors[field] = message;
+  void setError(String field, String? message) => fieldErrors[field] = message;
 
   void clearError(String field) {
     if (fieldErrors[field] != null) fieldErrors[field] = null;

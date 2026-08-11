@@ -150,9 +150,7 @@ class _MonthStrip extends StatelessWidget {
                   ),
                 ),
                 child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppSpacing.base.w,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.base.w),
                   child: Center(
                     child: Text(
                       month,
@@ -234,25 +232,14 @@ class _DayChip extends StatelessWidget {
                   ? Border.all(color: AppColors.white, width: 2)
                   : null,
               boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: AppColors.actionFill,
-                        spreadRadius: 1.5,
-                      ),
-                    ]
+                  ? [BoxShadow(color: AppColors.actionFill, spreadRadius: 1.5)]
                   : null,
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  day.dayLabel,
-                  style: AppTextStyles.titleMedium.rc(ink),
-                ),
-                Text(
-                  day.weekdayLabel,
-                  style: AppTextStyles.bodySmall.rc(ink),
-                ),
+                Text(day.dayLabel, style: AppTextStyles.titleMedium.rc(ink)),
+                Text(day.weekdayLabel, style: AppTextStyles.bodySmall.rc(ink)),
               ],
             ),
           ),
@@ -323,12 +310,14 @@ class _SlotChip extends StatelessWidget {
                 AppSpacing.gapH(AppSpacing.xs2 + 2),
                 Text(
                   slot.label,
-                  style: AppTextStyles.bodyMedium.rc(ink).copyWith(
-                    decoration: slot.isBooked
-                        ? TextDecoration.lineThrough
-                        : null,
-                    decorationColor: ink,
-                  ),
+                  style: AppTextStyles.bodyMedium
+                      .rc(ink)
+                      .copyWith(
+                        decoration: slot.isBooked
+                            ? TextDecoration.lineThrough
+                            : null,
+                        decorationColor: ink,
+                      ),
                 ),
               ],
             ),

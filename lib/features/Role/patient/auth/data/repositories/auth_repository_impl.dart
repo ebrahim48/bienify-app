@@ -132,11 +132,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     final user = await _remote.saveProfileDetails(
       token: _token,
-      body: {
-        'name': name,
-        'gender': gender.value,
-        'age_range': ageRange.label,
-      },
+      body: {'name': name, 'gender': gender.value, 'age_range': ageRange.label},
     );
     return _persistUser(user);
   }

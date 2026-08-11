@@ -175,10 +175,7 @@ class _CountrySelector extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              country.flagEmoji,
-              style: TextStyle(fontSize: AppSizes.lg.sp),
-            ),
+            Text(country.flagEmoji, style: TextStyle(fontSize: AppSizes.lg.sp)),
             Flexible(
               child: Text(
                 country.dialCode,

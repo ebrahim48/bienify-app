@@ -44,10 +44,7 @@ class TimeSlot {
 
 /// One selectable day in the availability strip.
 class AvailableDay {
-  const AvailableDay({
-    required this.date,
-    required this.slots,
-  });
+  const AvailableDay({required this.date, required this.slots});
 
   final DateTime date;
   final List<TimeSlot> slots;

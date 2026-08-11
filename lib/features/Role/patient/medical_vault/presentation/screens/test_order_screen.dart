@@ -346,8 +346,9 @@ class _PriorityBand extends StatelessWidget {
 /// Android resolves it, Apple platforms do not, and the widget tests resolve
 /// it to empty boxes. Tabular figures give the same column alignment and
 /// character-by-character legibility that the monospace was there for.
-TextStyle _identifierStyle(Color color) =>
-    AppTextStyles.bodySmall.rc(color).copyWith(
+TextStyle _identifierStyle(Color color) => AppTextStyles.bodySmall
+    .rc(color)
+    .copyWith(
       letterSpacing: 0.4,
       fontFeatures: const [FontFeature.tabularFigures()],
     );
@@ -382,6 +383,7 @@ class _Field extends StatelessWidget {
 
   final String label;
   final String value;
+
   /// Reference numbers get the tabular treatment; prose does not.
   final bool isIdentifier;
 
@@ -538,10 +540,7 @@ class _SelectedCentre extends StatelessWidget {
             ],
           ),
           AppSpacing.gapV(AppSpacing.xs2),
-          Text(
-            name,
-            style: AppTextStyles.titleSmall.rc(AppColors.link),
-          ),
+          Text(name, style: AppTextStyles.titleSmall.rc(AppColors.link)),
           Text(
             AppStrings.bookInExternalApp.tr,
             style: AppTextStyles.bodyLarge.rc(AppColors.link),

@@ -68,10 +68,7 @@ class DeliveryFeedbackScreen extends StatelessWidget {
             borderRadius: AppRadius.rXl,
             child: SizedBox(
               height: _photoHeight.h,
-              child: Image.asset(
-                AppAssets.deliveryFeedback,
-                fit: BoxFit.cover,
-              ),
+              child: Image.asset(AppAssets.deliveryFeedback, fit: BoxFit.cover),
             ),
           ),
           AppSpacing.gapV(AppSpacing.base),

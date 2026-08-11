@@ -18,9 +18,7 @@ class AuthLocalDataSource {
     final raw = _storage.getString(_sessionKey);
     if (raw == null || raw.isEmpty) return null;
     try {
-      return AuthSessionModel.fromJson(
-        jsonDecode(raw) as Map<String, dynamic>,
-      );
+      return AuthSessionModel.fromJson(jsonDecode(raw) as Map<String, dynamic>);
     } on FormatException {
       // Corrupted payload — drop it rather than trapping the user on a
       // launch-time crash.

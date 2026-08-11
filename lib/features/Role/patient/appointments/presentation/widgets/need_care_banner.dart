@@ -48,30 +48,30 @@ class NeedCareBanner extends StatelessWidget {
               // soon as they drift apart.
               constraints: BoxConstraints(minHeight: height.h),
               child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: AppSpacing.base.w,
-                vertical: AppSpacing.sm.h,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    AppStrings.needCare.tr,
-                    style: AppTextStyles.titleLarge.rc(AppColors.authInk),
-                  ),
-                  AppSpacing.gapV(AppSpacing.xs2),
-                  SizedBox(
-                    width: _copyWidth.w,
-                    child: Text(
-                      AppStrings.needCareBody.tr,
-                      style: AppTextStyles.bodyMedium.rc(AppColors.authInk),
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.base.w,
+                  vertical: AppSpacing.sm.h,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      AppStrings.needCare.tr,
+                      style: AppTextStyles.titleLarge.rc(AppColors.authInk),
                     ),
-                  ),
-                  AppSpacing.gapV(AppSpacing.xs),
-                  _BookButton(onTap: onBook),
-                ],
+                    AppSpacing.gapV(AppSpacing.xs2),
+                    SizedBox(
+                      width: _copyWidth.w,
+                      child: Text(
+                        AppStrings.needCareBody.tr,
+                        style: AppTextStyles.bodyMedium.rc(AppColors.authInk),
+                      ),
+                    ),
+                    AppSpacing.gapV(AppSpacing.xs),
+                    _BookButton(onTap: onBook),
+                  ],
                 ),
               ),
             ),

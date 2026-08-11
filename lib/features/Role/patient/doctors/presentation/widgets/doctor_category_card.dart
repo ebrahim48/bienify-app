@@ -74,7 +74,9 @@ class DoctorCategoryCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: AppRadius.rXl,
             border: Border.all(
-              color: isSelected ? AppColors.actionFill : AppColors.surfaceBorder,
+              color: isSelected
+                  ? AppColors.actionFill
+                  : AppColors.surfaceBorder,
               width: AppSizes.borderWidth,
             ),
           ),
@@ -83,11 +85,7 @@ class DoctorCategoryCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (!isWide) ...[
-                Icon(
-                  iconForCategory(category.id),
-                  size: _icon.w,
-                  color: ink,
-                ),
+                Icon(iconForCategory(category.id), size: _icon.w, color: ink),
                 AppSpacing.gapV(AppSpacing.xs),
               ],
               Text(

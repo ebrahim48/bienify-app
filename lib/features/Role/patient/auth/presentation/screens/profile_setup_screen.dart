@@ -170,10 +170,7 @@ class _ErrorLine extends StatelessWidget {
         top: AppSpacing.xs2.h + 2,
         left: AppSpacing.xs2.w,
       ),
-      child: Text(
-        message!,
-        style: AppTextStyles.bodySmall.rc(AppColors.error),
-      ),
+      child: Text(message!, style: AppTextStyles.bodySmall.rc(AppColors.error)),
     );
   }
 }

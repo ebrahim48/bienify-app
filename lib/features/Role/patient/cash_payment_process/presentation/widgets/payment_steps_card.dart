@@ -45,11 +45,7 @@ class PaymentStepsCard extends StatelessWidget {
 }
 
 class _Step extends StatelessWidget {
-  const _Step({
-    required this.index,
-    required this.step,
-    required this.isLast,
-  });
+  const _Step({required this.index, required this.step, required this.isLast});
 
   final int index;
   final PaymentStep step;

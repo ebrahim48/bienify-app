@@ -77,10 +77,12 @@ class AppUnderlinedLink extends StatelessWidget {
       child: Text(
         label,
         textAlign: TextAlign.center,
-        style: AppTextStyles.titleSmall.rc(color).copyWith(
-          decoration: TextDecoration.underline,
-          decorationColor: color,
-        ),
+        style: AppTextStyles.titleSmall
+            .rc(color)
+            .copyWith(
+              decoration: TextDecoration.underline,
+              decorationColor: color,
+            ),
       ),
     );
   }

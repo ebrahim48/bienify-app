@@ -24,7 +24,9 @@ class Country {
 
   /// Regional-indicator flag rendered from [isoCode], so no image assets are
   /// needed and every country in the list is covered automatically.
-  String get flagEmoji => isoCode.toUpperCase().codeUnits
+  String get flagEmoji => isoCode
+      .toUpperCase()
+      .codeUnits
       .map((unit) => String.fromCharCode(unit + 0x1F1A5))
       .join();
 

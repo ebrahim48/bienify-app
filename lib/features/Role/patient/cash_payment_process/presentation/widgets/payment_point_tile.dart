@@ -34,8 +34,7 @@ class OpenBadge extends StatelessWidget {
         borderRadius: AppRadius.rFull,
       ),
       child: Text(
-        label ??
-            (isOpen ? AppStrings.openLabel.tr : AppStrings.closedLabel.tr),
+        label ?? (isOpen ? AppStrings.openLabel.tr : AppStrings.closedLabel.tr),
         style: AppTextStyles.labelMedium.rc(
           isOpen ? AppColors.openInk : AppColors.closedInk,
         ),

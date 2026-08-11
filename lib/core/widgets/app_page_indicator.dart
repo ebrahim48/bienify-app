@@ -35,9 +35,11 @@ class AppPageIndicator extends StatelessWidget {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeOut,
-              width: (index == currentIndex
-                  ? AppSizes.dotActiveWidth
-                  : AppSizes.dotSize).w,
+              width:
+                  (index == currentIndex
+                          ? AppSizes.dotActiveWidth
+                          : AppSizes.dotSize)
+                      .w,
               height: AppSizes.dotSize.h,
               decoration: BoxDecoration(
                 color: index == currentIndex ? activeColor : inactiveColor,

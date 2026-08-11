@@ -169,9 +169,7 @@ class _History extends StatelessWidget {
       );
     }
 
-    final visible = groups
-        .where((group) => group.items.isNotEmpty)
-        .toList();
+    final visible = groups.where((group) => group.items.isNotEmpty).toList();
 
     if (visible.isEmpty) {
       return Padding(

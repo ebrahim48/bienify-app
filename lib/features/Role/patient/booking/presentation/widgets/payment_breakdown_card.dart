@@ -49,11 +49,7 @@ class PaymentBreakdownCard extends StatelessWidget {
 }
 
 class _Row extends StatelessWidget {
-  const _Row({
-    required this.label,
-    required this.value,
-    this.isTotal = false,
-  });
+  const _Row({required this.label, required this.value, this.isTotal = false});
 
   final String label;
   final String value;
@@ -64,10 +60,7 @@ class _Row extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: AppTextStyles.bodyLarge.rc(AppColors.gray800),
-        ),
+        Text(label, style: AppTextStyles.bodyLarge.rc(AppColors.gray800)),
         Text(
           value,
           style: isTotal

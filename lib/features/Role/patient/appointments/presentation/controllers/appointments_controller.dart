@@ -31,15 +31,18 @@ class AppointmentsController extends GetxController {
   }
 
   List<Appointment> get _visible => switch (tab.value) {
-    AppointmentTab.upcoming => appointments
-        .where((a) => a.status == AppointmentStatus.upcoming)
-        .toList(),
-    AppointmentTab.past => appointments
-        .where((a) => a.status == AppointmentStatus.completed)
-        .toList(),
-    AppointmentTab.cancelled => appointments
-        .where((a) => a.status == AppointmentStatus.cancelled)
-        .toList(),
+    AppointmentTab.upcoming =>
+      appointments
+          .where((a) => a.status == AppointmentStatus.upcoming)
+          .toList(),
+    AppointmentTab.past =>
+      appointments
+          .where((a) => a.status == AppointmentStatus.completed)
+          .toList(),
+    AppointmentTab.cancelled =>
+      appointments
+          .where((a) => a.status == AppointmentStatus.cancelled)
+          .toList(),
   };
 
   /// Upcoming appointments are filed under date headings; the other tabs are
@@ -63,8 +66,18 @@ class AppointmentsController extends GetxController {
   /// `Today` for today's date, otherwise `23 February`.
   String _groupLabel(Appointment appointment) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     if (isJoinable(appointment)) return AppStrings.today.tr;
     final at = appointment.scheduledAt;

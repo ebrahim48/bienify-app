@@ -31,7 +31,7 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     Get.testMode = true;
-    await DependencyInjection.init();
+    await DependencyInjection.init(useMocks: true);
   });
 
   tearDown(() {
