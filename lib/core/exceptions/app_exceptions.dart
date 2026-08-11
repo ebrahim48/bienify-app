@@ -53,8 +53,8 @@ abstract class AppException implements Exception {
 /// }
 /// ```
 class NoInternetException extends AppException {
-  NoInternetException([String? details])
-    : super('No internet connection', details);
+  NoInternetException([String? message, String? details])
+    : super(message ?? 'No internet connection', details);
 }
 
 /// Exception thrown when an API request times out.
@@ -75,7 +75,8 @@ class NoInternetException extends AppException {
 /// }
 /// ```
 class TimeoutException extends AppException {
-  TimeoutException([String? details]) : super('Request timeout', details);
+  TimeoutException([String? message, String? details])
+    : super(message ?? 'Request timeout', details);
 }
 
 /// Exception thrown when the server returns an error response.
@@ -171,7 +172,8 @@ class CacheException extends AppException {
 /// }
 /// ```
 class NotFoundException extends AppException {
-  NotFoundException([String? details]) : super('Data not found', details);
+  NotFoundException([String? message, String? details])
+    : super(message ?? 'Data not found', details);
 }
 
 /// Exception thrown for unexpected or unknown errors.
@@ -192,4 +194,64 @@ class NotFoundException extends AppException {
 class UnknownException extends AppException {
   UnknownException([String? details])
     : super('An unknown error occurred', details);
+}
+
+/// Exception thrown when the server rejects the caller's credentials (401).
+///
+/// After the auth interceptor has already tried and failed to renew the
+/// session — so reaching this means the user must sign in again.
+class UnauthorizedException extends AppException {
+  UnauthorizedException([String? message, String? details])
+    : super(message ?? 'Please sign in again', details);
+}
+
+/// Exception thrown when the caller is authenticated but not allowed (403).
+///
+/// Distinct from [UnauthorizedException] because signing in again will not
+/// help — a patient calling a doctor-only endpoint always gets this.
+class ForbiddenException extends AppException {
+  ForbiddenException([String? message, String? details])
+    : super(message ?? 'You do not have access to this', details);
+}
+
+/// Exception thrown when the request conflicts with current state (409).
+///
+/// Booking a slot someone else just took, or registering an email that is
+/// already in use.
+class ConflictException extends AppException {
+  ConflictException([String? message, String? details])
+    : super(
+        message ?? 'That conflicts with something that already exists',
+        details,
+      );
+}
+
+/// Exception thrown when the server rejects the request body (400/422).
+///
+/// [fieldErrors] maps a field path to its message so a form can mark the
+/// offending input rather than showing one banner for the whole screen.
+class ValidationException extends AppException {
+  ValidationException([String? message, this.fieldErrors, String? details])
+    : super(message ?? 'Please check the details you entered', details);
+
+  final Map<String, String>? fieldErrors;
+
+  /// The message for [field], if the server complained about it.
+  String? forField(String field) => fieldErrors?[field];
+}
+
+/// Exception thrown when the caller is rate limited (429).
+class TooManyRequestsException extends AppException {
+  TooManyRequestsException([String? message, String? details])
+    : super(
+        message ?? 'Too many attempts. Please wait and try again.',
+        details,
+      );
+}
+
+/// Exception thrown when a request was cancelled, usually because the screen
+/// that started it was disposed. Callers normally swallow this.
+class RequestCancelledException extends AppException {
+  RequestCancelledException([String? message, String? details])
+    : super(message ?? 'Request cancelled', details);
 }
