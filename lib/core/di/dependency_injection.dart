@@ -4,6 +4,12 @@ import '../../features/Role/patient/appointments/data/repositories/api_appointme
 import '../../features/Role/patient/appointments/data/repositories/mock_appointment_repository.dart';
 import '../../features/Role/patient/appointments/domain/repositories/appointment_repository.dart';
 import '../../features/Role/patient/auth/data/datasources/auth_local_data_source.dart';
+import '../../features/Role/patient/medical_vault/data/repositories/api_vault_repository.dart';
+import '../../features/Role/patient/medical_vault/data/repositories/mock_vault_repository.dart';
+import '../../features/Role/patient/medical_vault/domain/repositories/vault_repository.dart';
+import '../../features/Role/patient/pharmacy/data/repositories/api_pharmacy_repository.dart';
+import '../../features/Role/patient/pharmacy/data/repositories/mock_pharmacy_repository.dart';
+import '../../features/Role/patient/pharmacy/domain/repositories/pharmacy_repository.dart';
 import '../../features/Role/patient/wallet/data/repositories/api_wallet_repository.dart';
 import '../../features/Role/patient/wallet/data/repositories/mock_wallet_repository.dart';
 import '../../features/Role/patient/wallet/domain/repositories/wallet_repository.dart';
@@ -104,6 +110,8 @@ class DependencyInjection {
     _registerHome(mock);
     _registerDoctors(mock);
     _registerAppointments(mock, clock);
+    _registerPharmacy(mock);
+    _registerVault(mock);
   }
 
   /// [clock] only reaches the mock: its fixtures are generated relative to
@@ -120,6 +128,22 @@ class DependencyInjection {
       mock
           ? MockAppointmentRepository(clock: clock)
           : ApiAppointmentRepository(Get.find<ApiClient>()),
+      permanent: true,
+    );
+  }
+
+  static void _registerPharmacy(bool mock) {
+    Get.put<PharmacyRepository>(
+      mock
+          ? const MockPharmacyRepository()
+          : ApiPharmacyRepository(Get.find<ApiClient>()),
+      permanent: true,
+    );
+  }
+
+  static void _registerVault(bool mock) {
+    Get.put<VaultRepository>(
+      mock ? MockVaultRepository() : ApiVaultRepository(Get.find<ApiClient>()),
       permanent: true,
     );
   }

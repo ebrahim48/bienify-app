@@ -1,16 +1,25 @@
 import 'package:get/get.dart';
 
 import '../../../../../../core/constants/app_strings.dart';
+import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/routes/app_routes.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../../chat/data/static/chat_mock_data.dart';
-import '../../data/static/medical_mock_data.dart';
 import '../../domain/entities/medical_record.dart';
+import '../../domain/repositories/vault_repository.dart';
 
 /// Backs My Health Profile and the two record lists behind it.
-///
-/// UI-only — everything comes from [MedicalMockData] and nothing calls an API.
 class DocumentsController extends GetxController {
+  DocumentsController({VaultRepository? repository})
+    : _repository = repository ?? Get.find<VaultRepository>();
+
+  final VaultRepository _repository;
+
+  final RxBool isLoading = true.obs;
+
+  /// Set when the vault cannot be read. An empty history and an unreachable
+  /// server look identical on screen unless one of them says so.
+  final RxnString error = RxnString();
   final RxList<DigitalPrescription> prescriptions = <DigitalPrescription>[].obs;
 
   final RxList<UploadedDocument> uploads = <UploadedDocument>[].obs;
@@ -25,8 +34,20 @@ class DocumentsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    prescriptions.value = MedicalMockData.prescriptions();
-    uploads.value = List.of(MedicalMockData.uploads());
+    load();
+  }
+
+  Future<void> load() async {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      prescriptions.value = await _repository.prescriptions();
+      uploads.value = await _repository.documents();
+    } on AppException catch (e) {
+      error.value = e.message;
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   // ─── Health profile tiles ────────────────────────────────────────────────

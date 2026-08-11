@@ -298,6 +298,8 @@ void main() {
       const AllPrescriptionsScreen(),
       binding: DocumentsBinding(),
     );
+    // The records are fetched, so the first frame is still empty.
+    await tester.pumpAndSettle();
     await settleImages(tester);
     await expectLater(
       find.byType(AllPrescriptionsScreen),

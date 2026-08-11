@@ -1,18 +1,31 @@
 import 'package:get/get.dart';
 
 import '../../../../../../core/constants/app_strings.dart';
+import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/routes/app_routes.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../data/static/medical_mock_data.dart';
 import '../../domain/entities/medical_record.dart';
+import '../../domain/repositories/vault_repository.dart';
 
 /// Backs My tests and results: the discipline toggle, the filter chips and
 /// the card list, plus the order → book → upload → review journey.
 ///
 /// One controller across those screens because the chosen order and the
-/// chosen testing centre follow the patient through all of them. UI-only.
+/// chosen testing centre follow the patient through all of them.
 class TestResultsController extends GetxController {
+  TestResultsController({VaultRepository? repository})
+    : _repository = repository ?? Get.find<VaultRepository>();
+
+  final VaultRepository _repository;
+
   final RxList<TestOrder> allOrders = <TestOrder>[].obs;
+
+  /// Where the patient can have a test done.
+  final RxList<TestingCentre> centres = <TestingCentre>[].obs;
+
+  final RxBool isLoading = true.obs;
+  final RxnString error = RxnString();
 
   final Rx<ResultDiscipline> discipline = ResultDiscipline.laboratory.obs;
   final Rx<ResultFilter> filter = ResultFilter.all.obs;
@@ -33,7 +46,20 @@ class TestResultsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    allOrders.value = MedicalMockData.testOrders;
+    load();
+  }
+
+  Future<void> load() async {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      allOrders.value = await _repository.testOrders();
+      centres.value = await _repository.testingCentres();
+    } on AppException catch (e) {
+      error.value = e.message;
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   // ─── List ────────────────────────────────────────────────────────────────

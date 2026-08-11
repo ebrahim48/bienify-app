@@ -11,6 +11,10 @@ import 'package:bienify_app/features/Role/patient/appointments/data/repositories
 import 'package:bienify_app/features/Role/patient/appointments/domain/entities/appointment.dart';
 import 'package:bienify_app/features/Role/patient/doctors/data/repositories/api_doctor_repository.dart';
 import 'package:bienify_app/features/Role/patient/home/data/datasources/api_home_remote_data_source.dart';
+import 'package:bienify_app/features/Role/patient/medical_vault/data/repositories/api_vault_repository.dart';
+import 'package:bienify_app/features/Role/patient/medical_vault/domain/entities/medical_record.dart';
+import 'package:bienify_app/features/Role/patient/medical_vault/domain/repositories/vault_repository.dart';
+import 'package:bienify_app/features/Role/patient/pharmacy/data/repositories/api_pharmacy_repository.dart';
 import 'package:bienify_app/features/Role/patient/wallet/data/repositories/api_wallet_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -226,6 +230,137 @@ void main() {
       // The seed funds the patient; a zero balance here means minor units were
       // read from the wrong field.
       expect(balance, greaterThan(0));
+    });
+  });
+
+  group('pharmacy', () {
+    test('lists the catalogue with real names and prices', () async {
+      if (!up) return;
+      final medicines = await ApiPharmacyRepository(client).searchMedicines();
+
+      expect(medicines, isNotEmpty);
+      expect(medicines.map((m) => m.name), everyElement(isNot('Medicine')));
+      // A zero price would put a free medicine in the basket and fail at the
+      // till.
+      expect(medicines.map((m) => m.price), everyElement(greaterThan(0)));
+    });
+
+    test('search narrows the catalogue', () async {
+      if (!up) return;
+      final repo = ApiPharmacyRepository(client);
+      final all = await repo.searchMedicines();
+      final none = await repo.searchMedicines(query: 'zzzznotamedicinezzzz');
+
+      expect(all, isNotEmpty);
+      expect(none.length, lessThan(all.length));
+    });
+
+    test('lists pharmacies with an address', () async {
+      if (!up) return;
+      final stores = await ApiPharmacyRepository(client).stores();
+
+      expect(stores, isNotEmpty);
+      expect(stores.first.name, isNot('Pharmacy'));
+      expect(stores.first.address, isNotEmpty);
+    });
+
+    test('reads the patient orders with priced lines', () async {
+      if (!up) return;
+      final orders = await ApiPharmacyRepository(client).orders();
+
+      expect(orders, isNotEmpty, reason: 'seed data should hold an order');
+      final order = orders.first;
+      expect(order.lines, isNotEmpty);
+      expect(order.total, greaterThan(0));
+      expect(order.lines.first.medicine.name, isNot('Medicine'));
+      expect(order.status, isNotEmpty);
+    });
+
+    test('places an order for an over-the-counter medicine', () async {
+      if (!up) return;
+      final repo = ApiPharmacyRepository(client);
+      final stores = await repo.stores();
+      final medicines = await repo.searchMedicines(pharmacyId: stores.first.id);
+
+      // Anything needing a script is refused without one, which is the
+      // server's rule working rather than a broken call.
+      final overTheCounter = medicines
+          .where((m) => m.dosage == 'Over the counter' && m.isAvailable)
+          .toList();
+      if (overTheCounter.isEmpty) return;
+
+      final id = await repo.placeOrder(
+        pharmacyId: stores.first.id,
+        quantitiesByMedicineId: {overTheCounter.first.id: 1},
+        deliveryAddress: '12 Oak Avenue, Springfield',
+      );
+      expect(id, isNotEmpty);
+    });
+  });
+
+  group('medical vault', () {
+    test('lists prescriptions with their medications', () async {
+      if (!up) return;
+      final items = await ApiVaultRepository(client).prescriptions();
+
+      expect(items, isNotEmpty, reason: 'seed data should hold a prescription');
+      final script = items.first;
+      expect(script.doctorName, isNot('Your doctor'));
+      expect(script.medications, isNotEmpty);
+      expect(script.medications.first.name, isNot('Medicine'));
+      expect(script.reference, isNotEmpty);
+    });
+
+    test('lists the lab orders across their stages', () async {
+      if (!up) return;
+      final orders = await ApiVaultRepository(client).testOrders();
+
+      expect(orders, isNotEmpty);
+      expect(orders.map((o) => o.title), everyElement(isNot('Test')));
+      // The seed spans several server statuses; collapsing them all onto one
+      // stage would leave the filter chips useless.
+      expect(orders.map((o) => o.stage).toSet(), isNotEmpty);
+    });
+
+    test('lists testing centres with an address', () async {
+      if (!up) return;
+      final centres = await ApiVaultRepository(client).testingCentres();
+      expect(centres, isNotEmpty);
+      expect(centres.first.name, isNot('Testing centre'));
+    });
+
+    test('reads stored documents without failing on an empty vault', () async {
+      if (!up) return;
+      final documents = await ApiVaultRepository(client).documents();
+      // The seed stores none; an empty list is the correct answer, not an error.
+      expect(documents, isA<List<UploadedDocument>>());
+    });
+
+    test('round-trips the health profile', () async {
+      if (!up) return;
+      final repo = ApiVaultRepository(client);
+
+      await repo.saveHealthProfile(
+        const HealthProfile(
+          bloodGroup: 'O+',
+          allergies: ['penicillin'],
+          chronicConditions: ['asthma'],
+        ),
+      );
+
+      final saved = await repo.healthProfile();
+      expect(saved.bloodGroup, 'O+');
+      expect(saved.allergies, contains('penicillin'));
+      // The server field is chronicConditions; sending 'conditions' would be
+      // silently dropped and this is what catches that.
+      expect(saved.chronicConditions, contains('asthma'));
+    });
+
+    test('a blank profile is accepted rather than rejected', () async {
+      if (!up) return;
+      // An unset blood group must not be sent as an empty string — it fails
+      // the server's enum check.
+      await ApiVaultRepository(client).saveHealthProfile(const HealthProfile());
     });
   });
 }

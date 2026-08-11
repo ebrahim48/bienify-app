@@ -1,16 +1,27 @@
 import 'package:get/get.dart';
 
 import '../../../../../../core/constants/app_strings.dart';
+import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/routes/app_routes.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../data/static/pharmacy_mock_data.dart';
 import '../../domain/entities/pharmacy.dart';
+import '../../domain/repositories/pharmacy_repository.dart';
 
 /// Backs the Pharmacy tab: the catalogue, its filter chips, and the cart
 /// badge in the header.
-///
-/// UI-only — the catalogue is static and the cart is an in-memory count.
 class PharmacyController extends GetxController {
+  PharmacyController({PharmacyRepository? repository})
+    : _repository = repository ?? Get.find<PharmacyRepository>();
+
+  final PharmacyRepository _repository;
+
+  final RxBool isLoading = true.obs;
+
+  /// Set when the catalogue cannot be loaded, so the tab can say why instead
+  /// of showing an empty shelf that reads as "nothing in stock".
+  final RxnString error = RxnString();
+
   /// The medicine query. `DoctorSearchField` owns the text controller.
   final RxString query = ''.obs;
 
@@ -29,9 +40,30 @@ class PharmacyController extends GetxController {
     super.onInit();
     chips.value = PharmacyMockData.searchChips;
     selectedChip.value = chips.first;
-    commonMedicines.value = PharmacyMockData.commonMedicines;
-    dermatologyMedicines.value = PharmacyMockData.dermatologyMedicines;
-    stores.value = PharmacyMockData.nearbyStores;
+    load();
+  }
+
+  Future<void> load() async {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      final medicines = await _repository.searchMedicines(query: query.value);
+      commonMedicines.value = medicines;
+      // The catalogue carries no department, so the design's second shelf
+      // shows the same stock rather than a section invented client-side.
+      dermatologyMedicines.value = medicines;
+      stores.value = await _repository.stores();
+    } on AppException catch (e) {
+      error.value = e.message;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Re-runs the catalogue search for the current [query].
+  Future<void> search(String term) async {
+    query.value = term;
+    await load();
   }
 
   void selectChip(String chip) => selectedChip.value = chip;

@@ -48,7 +48,7 @@ ResponseBody ok(Object data) => json({'success': true, 'data': data}, 200);
 
 ResponseBody err(int status, String message, {List<Object>? details}) => json({
   'success': false,
-  'error': {'message': message, if (details != null) 'details': details},
+  'error': {'message': message, 'details': ?details},
 }, status);
 
 /// Builds a client whose request and refresh channels share one adapter, so a

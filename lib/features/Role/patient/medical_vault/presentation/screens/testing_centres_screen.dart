@@ -11,7 +11,6 @@ import '../../../../../../core/utils/responsive.dart';
 import '../../../../../../core/widgets/app_card.dart';
 import '../../../../../../core/widgets/app_scaffold.dart';
 import '../../../../../../core/widgets/app_top_bar.dart';
-import '../../data/static/medical_mock_data.dart';
 import '../../domain/entities/medical_record.dart';
 import '../controllers/test_results_controller.dart';
 
@@ -24,19 +23,23 @@ class TestingCentresScreen extends GetView<TestResultsController> {
   Widget build(BuildContext context) {
     return AppScaffold(
       topBar: AppTopBar(title: AppStrings.chooseLaboratoryCentre.tr),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AppSpacing.gapV(AppSpacing.base),
-          for (final centre in MedicalMockData.centres) ...[
-            _CentreCard(
-              centre: centre,
-              onTap: () => controller.selectCentre(centre),
-            ),
-            AppSpacing.gapV(AppSpacing.sm),
+      // Obx, because the centres arrive from the server after the first
+      // build — read outside it the list is captured empty and never redrawn.
+      child: Obx(
+        () => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppSpacing.gapV(AppSpacing.base),
+            for (final centre in controller.centres) ...[
+              _CentreCard(
+                centre: centre,
+                onTap: () => controller.selectCentre(centre),
+              ),
+              AppSpacing.gapV(AppSpacing.sm),
+            ],
+            AppSpacing.gapV(AppSpacing.md),
           ],
-          AppSpacing.gapV(AppSpacing.md),
-        ],
+        ),
       ),
     );
   }

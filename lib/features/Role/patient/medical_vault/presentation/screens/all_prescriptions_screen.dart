@@ -50,10 +50,21 @@ class AllPrescriptionsScreen extends GetView<DocumentsController> {
             ),
           ),
           AppSpacing.gapV(AppSpacing.base),
+          // The lists are read *here*, inside the Obx, and handed down as
+          // plain values. Reading them in the child's own build would put the
+          // access outside this reactive scope, so records arriving from the
+          // server would never repaint — which is exactly what happened while
+          // the fixtures were loaded synchronously and hid it.
           Obx(
             () => controller.source.value == PrescriptionSource.uploads
-                ? _Uploads(controller: controller)
-                : _Vault(controller: controller),
+                ? _Uploads(
+                    controller: controller,
+                    uploads: controller.uploads.toList(),
+                  )
+                : _Vault(
+                    controller: controller,
+                    prescriptions: controller.prescriptions.toList(),
+                  ),
           ),
           AppSpacing.gapV(AppSpacing.md),
         ],
@@ -63,15 +74,13 @@ class AllPrescriptionsScreen extends GetView<DocumentsController> {
 }
 
 class _Uploads extends StatelessWidget {
-  const _Uploads({required this.controller});
+  const _Uploads({required this.controller, required this.uploads});
 
   final DocumentsController controller;
+  final List<UploadedDocument> uploads;
 
   @override
   Widget build(BuildContext context) {
-    // `.toList()` materialises the observable inside this `Obx`.
-    final uploads = controller.uploads.toList();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -97,14 +106,13 @@ class _Uploads extends StatelessWidget {
 }
 
 class _Vault extends StatelessWidget {
-  const _Vault({required this.controller});
+  const _Vault({required this.controller, required this.prescriptions});
 
   final DocumentsController controller;
+  final List<DigitalPrescription> prescriptions;
 
   @override
   Widget build(BuildContext context) {
-    final prescriptions = controller.prescriptions.toList();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
