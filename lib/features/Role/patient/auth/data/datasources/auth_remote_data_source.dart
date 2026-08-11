@@ -68,23 +68,19 @@ abstract class AuthRemoteDataSource {
 /// * Social login has one endpoint per provider.
 /// * Profile completion is `PATCH /users/me`, not an auth route.
 ///
-/// One mismatch cannot be reconciled here and needs a product decision: the
-/// app's recovery screens ask for a phone number and a six-digit code, while
-/// the server resets passwords by emailing a token
-/// (`POST /auth/password/forgot` takes an email). [requestPasswordResetOtp]
-/// therefore expects an email address, and [verifyPasswordResetOtp] has no
-/// server call to make — see its comment.
+/// Password recovery runs by phone, matching the app's screens: the server
+/// now accepts either identifier, because an account signed up by phone and
+/// given a password afterwards has no email to recover through.
 class ApiAuthRemoteDataSource implements AuthRemoteDataSource {
   ApiAuthRemoteDataSource(this._api);
 
   final ApiClient _api;
 
-  /// The address recovery was started for.
+  /// The number recovery was started for.
   ///
-  /// `POST /auth/password/reset` needs the email alongside the token, but the
-  /// screen that submits the new password only has the token — so the address
-  /// is held from the forgot-password step that immediately precedes it.
-  String? _pendingResetEmail;
+  /// The screen that submits the new password only carries the code, so the
+  /// number is held from the forgot-password step that precedes it.
+  String? _pendingResetPhone;
 
   @override
   Future<Map<String, dynamic>> requestOtp(String phoneNumber) async {
@@ -159,47 +155,54 @@ class ApiAuthRemoteDataSource implements AuthRemoteDataSource {
     );
   }
 
-  /// Starts password recovery. Despite the parameter name, the server expects
-  /// an **email address** — it mails a reset token rather than texting a code.
+  /// Texts a recovery code to [phoneNumber].
+  ///
+  /// The server answers the same way whether or not the number has an account,
+  /// so this cannot be used to discover who is registered.
   @override
   Future<Map<String, dynamic>> requestPasswordResetOtp(
     String phoneNumber,
   ) async {
-    _pendingResetEmail = phoneNumber;
+    _pendingResetPhone = phoneNumber;
     await _api.post(
       ApiConstants.postAuthPasswordForgot,
-      body: {'email': phoneNumber},
+      body: {'phone': phoneNumber},
     );
     return {'verification_id': phoneNumber};
   }
 
-  /// There is no server-side verify step for password recovery: the token
-  /// arrives by email and is submitted directly to [resetPassword]. Returning
-  /// the code unchanged keeps the existing screen flow working — it becomes
-  /// the `token` that the reset call sends.
+  /// Carries the code through to [resetPassword].
+  ///
+  /// There is deliberately no server call here. A recovery code is single-use:
+  /// checking it now would consume it, and the reset that follows would then
+  /// be refused with the code the user had just been told was good. The check
+  /// happens once, at the reset itself.
   @override
   Future<String> verifyPasswordResetOtp({
     required String verificationId,
     required String code,
-  }) async => code;
+  }) async {
+    _pendingResetPhone = verificationId;
+    return code;
+  }
 
   @override
   Future<void> resetPassword({
     required String resetToken,
     required String newPassword,
   }) async {
-    final email = _pendingResetEmail;
-    if (email == null) {
+    final phone = _pendingResetPhone;
+    if (phone == null) {
       throw StateError(
-        'Password reset needs the address recovery was started for; '
+        'Password reset needs the number recovery was started for; '
         'call requestPasswordResetOtp first.',
       );
     }
     await _api.post(
       ApiConstants.postAuthPasswordReset,
-      body: {'email': email, 'token': resetToken, 'newPassword': newPassword},
+      body: {'phone': phone, 'code': resetToken, 'newPassword': newPassword},
     );
-    _pendingResetEmail = null;
+    _pendingResetPhone = null;
   }
 
   @override

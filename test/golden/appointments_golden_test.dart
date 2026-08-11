@@ -24,13 +24,20 @@ import '../support/test_fonts.dart';
 
 /// Renders the Appointments journey: the three history tabs, both blurred
 /// dialogs, the call, and the consultation summary.
+/// "Today" for every render in this file.
+///
+/// Without pinning it, the first card's date line comes from the wall clock and
+/// the golden stops matching at the next midnight. The mock repository builds
+/// its fixtures relative to this too, so it is pinned at both ends.
+DateTime fixedNow() => DateTime(2026, 2, 20, 9);
+
 void main() {
   setUpAll(loadAppFonts);
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     Get.testMode = true;
-    await DependencyInjection.init(useMocks: true);
+    await DependencyInjection.init(useMocks: true, clock: fixedNow);
   });
 
   tearDown(() {
@@ -77,12 +84,6 @@ void main() {
     await tester.pump();
   }
 
-  /// "Today" for every render in this file.
-  ///
-  /// Without pinning it, the first card's date line comes from the wall clock
-  /// and the golden stops matching at the next midnight.
-  DateTime fixedNow() => DateTime(2026, 2, 20, 9);
-
   /// Opens the shell on the Appointments tab with its roster loaded.
   Future<AppointmentsController> openTab(WidgetTester tester) async {
     await pump(
@@ -101,9 +102,7 @@ void main() {
     final controller = await openTab(tester);
 
     // Today's visit is joinable; a February one is not.
-    final upcoming = controller.groups
-        .expand((group) => group.items)
-        .toList();
+    final upcoming = controller.groups.expand((group) => group.items).toList();
     expect(upcoming.any(controller.isJoinable), isTrue);
     expect(upcoming.any((a) => !controller.isJoinable(a)), isTrue);
     expect(find.text('Today'), findsOneWidget);

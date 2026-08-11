@@ -158,10 +158,7 @@ void main() {
   testWidgets('Chat', (tester) async {
     await pump(tester, const ChatScreen(), binding: ChatBinding());
     await settleImages(tester);
-    await expectLater(
-      find.byType(ChatScreen),
-      matchesGoldenFile('chat.png'),
-    );
+    await expectLater(find.byType(ChatScreen), matchesGoldenFile('chat.png'));
   });
 
   testWidgets('Chat reused for the delivery rider', (tester) async {

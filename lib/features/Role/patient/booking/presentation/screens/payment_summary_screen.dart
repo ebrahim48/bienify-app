@@ -51,7 +51,7 @@ class PaymentSummaryScreen extends GetView<PaymentController> {
             PaymentBreakdownCard(breakdown: controller.breakdown),
             AppSpacing.gapV(AppSpacing.sm),
             WalletCard(
-              wallet: PaymentController.wallet,
+              wallet: controller.wallet.value,
               isEnabled: controller.useWallet.value,
               onChanged: controller.toggleWallet,
             ),

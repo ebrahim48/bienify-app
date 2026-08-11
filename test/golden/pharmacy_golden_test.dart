@@ -198,7 +198,11 @@ void main() {
     final cart = Get.put(PharmacyCartController())
       ..store.value = prescription.matches.last;
 
-    await pump(tester, const SelectMedicinesScreen(), size: const Size(390, 941));
+    await pump(
+      tester,
+      const SelectMedicinesScreen(),
+      size: const Size(390, 941),
+    );
 
     expect(cart.availableCount, 4);
     expect(find.text('Not Available'), findsNWidgets(2));

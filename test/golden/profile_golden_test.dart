@@ -184,10 +184,7 @@ void main() {
       size: const Size(390, 1800),
     );
     await settleImages(tester);
-    await expectLater(
-      find.byType(LegalScreen),
-      matchesGoldenFile('terms.png'),
-    );
+    await expectLater(find.byType(LegalScreen), matchesGoldenFile('terms.png'));
   });
 
   testWidgets('Privacy Policy', (tester) async {
@@ -205,11 +202,7 @@ void main() {
   });
 
   testWidgets('Become a Partner', (tester) async {
-    await pump(
-      tester,
-      const BecomePartnerScreen(),
-      binding: PartnerBinding(),
-    );
+    await pump(tester, const BecomePartnerScreen(), binding: PartnerBinding());
     await settleImages(tester);
     await expectLater(
       find.byType(BecomePartnerScreen),
@@ -262,11 +255,7 @@ void main() {
   });
 
   testWidgets('Wallet accounts list', (tester) async {
-    await pump(
-      tester,
-      const WalletAccountsScreen(),
-      binding: AccountBinding(),
-    );
+    await pump(tester, const WalletAccountsScreen(), binding: AccountBinding());
     final account = Get.find<AccountController>();
 
     // Empty until an account is added, then one removable row.
@@ -291,7 +280,11 @@ void main() {
   // ─── Medical vault ───────────────────────────────────────────────────────
 
   testWidgets('My Health profile', (tester) async {
-    await pump(tester, const HealthProfileScreen(), binding: DocumentsBinding());
+    await pump(
+      tester,
+      const HealthProfileScreen(),
+      binding: DocumentsBinding(),
+    );
     await settleImages(tester);
     await expectLater(
       find.byType(HealthProfileScreen),
@@ -352,11 +345,7 @@ void main() {
   });
 
   testWidgets('Payment Options picks a method', (tester) async {
-    await pump(
-      tester,
-      const PaymentOptionsScreen(),
-      binding: AccountBinding(),
-    );
+    await pump(tester, const PaymentOptionsScreen(), binding: AccountBinding());
     final account = Get.find<AccountController>();
 
     // Debit/Credit is selected on open, as the design shows.

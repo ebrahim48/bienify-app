@@ -118,6 +118,7 @@ Appointment appointmentFrom(Map<String, dynamic> json) {
     scheduledAt: Api.date(json['slotStart']),
     status: appointmentStatusFrom(Api.str(json['status'])),
     doctorPhotoUrl: Api.avatarOf(doctorRef),
+    consultationFee: Api.majorUnits(json['feeMinor']),
   );
 }
 

@@ -1,22 +1,32 @@
 import 'package:get/get.dart';
 
 import '../../../../../../core/constants/app_strings.dart';
+import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/routes/app_routes.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../../main/presentation/controllers/main_nav_controller.dart';
-import '../../data/static/appointment_mock_data.dart';
 import '../../domain/entities/appointment.dart';
+import '../../domain/repositories/appointment_repository.dart';
 
 /// Backs the Appointments tab.
 ///
-/// UI-only: the roster is static and cancelling/reviewing mutate memory. The
-/// grouping and joinable rules are what a backend will later drive.
+/// The roster comes from an [AppointmentRepository]; the grouping and joinable
+/// rules are this controller's own.
 class AppointmentsController extends GetxController {
-  AppointmentsController({DateTime Function() clock = DateTime.now})
-    : _clock = clock;
+  AppointmentsController({
+    DateTime Function() clock = DateTime.now,
+    AppointmentRepository? repository,
+  }) : _clock = clock,
+       _repository = repository ?? Get.find<AppointmentRepository>();
 
   /// Injectable so goldens can pin "today"; production uses the wall clock.
   final DateTime Function() _clock;
+
+  final AppointmentRepository _repository;
+
+  /// Set when a load fails, so the screen can say what went wrong rather than
+  /// showing an empty list that reads as "you have no appointments".
+  final RxnString error = RxnString();
 
   final RxList<Appointment> appointments = <Appointment>[].obs;
   final Rx<AppointmentTab> tab = AppointmentTab.upcoming.obs;
@@ -92,9 +102,14 @@ class AppointmentsController extends GetxController {
 
   Future<void> load() async {
     isLoading.value = true;
-    await Future<void>.delayed(const Duration(milliseconds: 400));
-    appointments.value = AppointmentMockData.all(now: _clock());
-    isLoading.value = false;
+    error.value = null;
+    try {
+      appointments.value = await _repository.list();
+    } on AppException catch (e) {
+      error.value = e.message;
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   void selectTab(AppointmentTab value) => tab.value = value;
@@ -113,21 +128,41 @@ class AppointmentsController extends GetxController {
 
   void reschedule(Appointment appointment) => bookAppointment();
 
-  /// Moves an appointment into the Cancelled tab.
-  void cancel(Appointment appointment, String reason) {
+  /// Cancels [appointment] and moves it into the Cancelled tab.
+  ///
+  /// The list is only updated after the server agrees. Moving the card first
+  /// would tell the patient a consultation was cancelled when it may still be
+  /// on the doctor's calendar — and cancelling can genuinely be refused, for
+  /// instance once the consultation has started.
+  Future<void> cancel(Appointment appointment, String reason) async {
+    try {
+      await _repository.cancel(appointment.id, reason: reason);
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    }
+
     final index = appointments.indexWhere((a) => a.id == appointment.id);
-    if (index == -1) return;
-    appointments[index] = Appointment(
-      id: appointment.id,
-      doctorName: appointment.doctorName,
-      specialty: appointment.specialty,
-      scheduledAt: appointment.scheduledAt,
-      status: AppointmentStatus.cancelled,
-      doctorPhotoUrl: appointment.doctorPhotoUrl,
-    );
+    if (index != -1) {
+      appointments[index] = Appointment(
+        id: appointment.id,
+        doctorName: appointment.doctorName,
+        specialty: appointment.specialty,
+        scheduledAt: appointment.scheduledAt,
+        status: AppointmentStatus.cancelled,
+        doctorPhotoUrl: appointment.doctorPhotoUrl,
+      );
+    }
     AppSnackbar.success(AppStrings.appointmentCancelled.tr);
   }
 
-  void submitReview(Appointment appointment, int stars) =>
-      AppSnackbar.success(AppStrings.reviewSubmitted.tr);
+  Future<void> submitReview(Appointment appointment, int stars) async {
+    try {
+      await _repository.review(appointmentId: appointment.id, rating: stars);
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    }
+    AppSnackbar.success(AppStrings.reviewSubmitted.tr);
+  }
 }

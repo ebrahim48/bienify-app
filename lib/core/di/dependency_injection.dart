@@ -1,6 +1,12 @@
 import 'package:get/get.dart';
 
+import '../../features/Role/patient/appointments/data/repositories/api_appointment_repository.dart';
+import '../../features/Role/patient/appointments/data/repositories/mock_appointment_repository.dart';
+import '../../features/Role/patient/appointments/domain/repositories/appointment_repository.dart';
 import '../../features/Role/patient/auth/data/datasources/auth_local_data_source.dart';
+import '../../features/Role/patient/wallet/data/repositories/api_wallet_repository.dart';
+import '../../features/Role/patient/wallet/data/repositories/mock_wallet_repository.dart';
+import '../../features/Role/patient/wallet/domain/repositories/wallet_repository.dart';
 import '../../features/Role/patient/auth/data/datasources/auth_remote_data_source.dart';
 import '../../features/Role/patient/auth/data/datasources/mock_auth_remote_data_source.dart';
 import '../../features/Role/patient/auth/data/repositories/auth_repository_impl.dart';
@@ -51,7 +57,10 @@ class DependencyInjection {
   /// `true`: they assert on rendering, and a screen that reaches for a real
   /// server makes them depend on a backend being up and on whatever happens to
   /// be in its database that day.
-  static Future<void> init({bool? useMocks}) async {
+  static Future<void> init({
+    bool? useMocks,
+    DateTime Function() clock = DateTime.now,
+  }) async {
     final mock = useMocks ?? _useMockBackend;
     // ─── Services ──────────────────────────────────────────────────────────
     final storage = StorageService();
@@ -94,6 +103,25 @@ class DependencyInjection {
     _registerAuthUseCases(Get.find<AuthRepository>());
     _registerHome(mock);
     _registerDoctors(mock);
+    _registerAppointments(mock, clock);
+  }
+
+  /// [clock] only reaches the mock: its fixtures are generated relative to
+  /// "now", so a golden that pins today has to pin it here too, not just on
+  /// the controller that groups the results.
+  static void _registerAppointments(bool mock, DateTime Function() clock) {
+    Get.put<WalletRepository>(
+      mock
+          ? const MockWalletRepository()
+          : ApiWalletRepository(Get.find<ApiClient>()),
+      permanent: true,
+    );
+    Get.put<AppointmentRepository>(
+      mock
+          ? MockAppointmentRepository(clock: clock)
+          : ApiAppointmentRepository(Get.find<ApiClient>()),
+      permanent: true,
+    );
   }
 
   static void _registerHome(bool mock) {

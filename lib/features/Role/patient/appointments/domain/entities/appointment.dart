@@ -22,6 +22,7 @@ class Appointment {
     required this.scheduledAt,
     this.status = AppointmentStatus.upcoming,
     this.doctorPhotoUrl,
+    this.consultationFee = 0,
   });
 
   final String id;
@@ -30,6 +31,13 @@ class Appointment {
   final DateTime scheduledAt;
   final AppointmentStatus status;
   final String? doctorPhotoUrl;
+
+  /// What the consultation costs, in major units.
+  ///
+  /// The server decides the fee and sends it with the appointment, so the
+  /// payment screen shows what will actually be charged rather than a figure
+  /// the client worked out for itself.
+  final double consultationFee;
 
   /// A video room only opens shortly before the slot, so the Join affordance
   /// is a property of the appointment rather than of the button.

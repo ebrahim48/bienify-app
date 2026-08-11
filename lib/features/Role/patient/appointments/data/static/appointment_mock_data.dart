@@ -8,6 +8,10 @@ class AppointmentMockData {
   AppointmentMockData._();
 
   static const String _doctor = 'Dr. Kwame Mensah';
+
+  /// The consultation fee the design shows on the payment summary.
+  static const double _fee = 400;
+
   static const String _specialty = 'Pediatrician';
 
   /// One appointment today (joinable) plus two later ones, matching the
@@ -23,18 +27,21 @@ class AppointmentMockData {
         doctorName: _doctor,
         specialty: _specialty,
         scheduledAt: DateTime(now.year, now.month, now.day, 10),
+        consultationFee: _fee,
       ),
       Appointment(
         id: 'appt-2',
         doctorName: _doctor,
         specialty: _specialty,
         scheduledAt: DateTime(2026, 2, 23, 10),
+        consultationFee: _fee,
       ),
       Appointment(
         id: 'appt-3',
         doctorName: _doctor,
         specialty: _specialty,
         scheduledAt: DateTime(2026, 2, 23, 14, 30),
+        consultationFee: _fee,
       ),
     ];
   }
@@ -46,6 +53,7 @@ class AppointmentMockData {
         doctorName: _doctor,
         specialty: _specialty,
         scheduledAt: DateTime(2026, 4, 1, 10),
+        consultationFee: _fee,
         status: AppointmentStatus.completed,
       ),
   ];
@@ -57,6 +65,7 @@ class AppointmentMockData {
         doctorName: _doctor,
         specialty: _specialty,
         scheduledAt: DateTime(2026, 4, 1, 10),
+        consultationFee: _fee,
         status: AppointmentStatus.cancelled,
       ),
   ];
