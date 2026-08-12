@@ -365,6 +365,45 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
     );
   }
 
+  /// Threads, named by joining them to the appointment list.
+  ///
+  /// `GET /consultations/threads` carries a bare `counterpartId`, so on its own
+  /// every row would read as an id. The appointment list does populate the
+  /// patient, and both are keyed by appointment — so the name comes from
+  /// there. See docs/API-GAPS.md.
+  @override
+  Future<List<PatientThread>> threads() async {
+    final results = await Future.wait([
+      _api.getList(ApiConstants.consultationsThreads, query: {'limit': 100}),
+      _api.getList(ApiConstants.appointments, query: _asDoctor),
+    ]);
+
+    final byAppointment = {
+      for (final row in results[1]) Api.id(row): row,
+    };
+
+    return results[0].map((thread) {
+      final appointmentId = Api.id(thread['appointmentId']);
+      final booking = Api.map(byAppointment[appointmentId]);
+      final name = Api.nameOf(booking['patientId'], 'Patient');
+      final last = Api.map(thread['lastMessage']);
+
+      return PatientThread(
+        id: appointmentId,
+        patientName: name,
+        preview: Api.str(last['body']),
+        timeLabel: _threadTimeLabel(Api.date(last['createdAt'])),
+        unreadCount: Api.integer(thread['unread']),
+        photoUrl: Api.avatarOf(booking['patientId']),
+      );
+    }).toList();
+  }
+
+  /// `18:31` — the thread list prints a 24-hour clock, unlike the bubbles.
+  String _threadTimeLabel(DateTime at) =>
+      '${at.hour.toString().padLeft(2, '0')}:'
+      '${at.minute.toString().padLeft(2, '0')}';
+
   /// Built from the appointment list, because a doctor's patients are exactly
   /// the people they have consulted and the server has no separate roster
   /// endpoint for them.

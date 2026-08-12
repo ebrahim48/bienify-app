@@ -1,4 +1,5 @@
 import '../../../../../../core/exceptions/app_exceptions.dart';
+import '../../../../../../core/network/token_store.dart';
 import '../../domain/entities/age_range.dart';
 import '../../domain/entities/auth_session.dart';
 import '../../domain/entities/gender.dart';
@@ -14,19 +15,29 @@ import '../models/user_model.dart';
 ///
 /// Responsibilities kept here (and nowhere else):
 /// * caching the session after every successful call,
+/// * handing the tokens to the [TokenStore] the API client authenticates with,
 /// * keeping the in-memory session in sync when the profile changes,
 /// * translating datasource payloads into domain objects.
 class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({
     required AuthRemoteDataSource remote,
     required AuthLocalDataSource local,
+    TokenStore? tokens,
   }) : _remote = remote,
-       _local = local {
+       _local = local,
+       _tokens = tokens {
     _session = _local.readSession();
   }
 
   final AuthRemoteDataSource _remote;
   final AuthLocalDataSource _local;
+
+  /// Where the API client reads the bearer token from.
+  ///
+  /// Signing in has to write here, not only into the local session cache:
+  /// nothing else does, so without it every authenticated request after a
+  /// sign-in goes out with no `Authorization` header and comes back 401.
+  final TokenStore? _tokens;
 
   AuthSessionModel? _session;
 
@@ -51,6 +62,12 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<AuthSession> _persist(AuthSessionModel session) async {
     _session = session;
     await _local.writeSession(session);
+    if (session.accessToken.isNotEmpty) {
+      await _tokens?.save(
+        accessToken: session.accessToken,
+        refreshToken: session.refreshToken ?? '',
+      );
+    }
     return session;
   }
 
@@ -193,6 +210,7 @@ class AuthRepositoryImpl implements AuthRepository {
     } finally {
       _session = null;
       await _local.clear();
+      await _tokens?.clear();
     }
   }
 }

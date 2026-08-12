@@ -2,6 +2,7 @@ import '../../features/Role/doctor_role/domain/entities/doctor_practice.dart';
 import '../../features/Role/patient/appointments/domain/entities/appointment.dart';
 import '../../features/Role/patient/cash_payment_process/domain/entities/cash_payment.dart';
 import '../../features/Role/patient/cash_payment_process/domain/repositories/cash_payment_repository.dart';
+import '../../features/Role/patient/chat/domain/entities/conversation.dart';
 import '../../features/Role/patient/doctors/domain/entities/doctor.dart';
 import '../../features/Role/patient/home/domain/entities/home_feed.dart';
 import '../../features/Role/patient/home/domain/entities/lab_request.dart';
@@ -624,6 +625,22 @@ CashIntentState cashIntentStateFrom(String raw) => switch (raw) {
   'cancelled' => CashIntentState.cancelled,
   _ => CashIntentState.pending,
 };
+
+// ─── Messaging ─────────────────────────────────────────────────────────────
+
+/// `GET /consultations/:id/messages` — one bubble.
+///
+/// The payload says who sent it, not whether that was you, so the side of the
+/// thread it sits on is decided by comparing the sender to [myUserId].
+ChatMessage chatMessageFrom(Map<String, dynamic> json, String myUserId) =>
+    ChatMessage(
+      id: Api.id(json),
+      text: Api.str(json['body']),
+      sentAt: Api.date(json['createdAt']),
+      author: Api.id(json['senderId']) == myUserId
+          ? MessageAuthor.patient
+          : MessageAuthor.doctor,
+    );
 
 /// `GET /vault` — a stored document.
 UploadedDocument vaultRecordFrom(Map<String, dynamic> json) => UploadedDocument(

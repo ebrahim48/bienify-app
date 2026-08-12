@@ -56,6 +56,9 @@ abstract class DoctorPracticeRepository {
     required List<PrescribedMedicine> medicines,
   });
 
+  /// The practitioner's message threads, newest activity first.
+  Future<List<PatientThread>> threads();
+
   /// The patients this practitioner has consulted, as Results to Review lists
   /// them — one entry per person, not one per booking.
   Future<List<ReviewPatient>> reviewPatients();

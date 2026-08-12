@@ -4,12 +4,21 @@ class ConversationPeer {
     required this.id,
     required this.name,
     required this.specialty,
+    this.appointmentId,
     this.photoUrl,
     this.photoAsset,
     this.isOnline = false,
   });
 
   final String id;
+
+  /// The consultation this thread belongs to.
+  ///
+  /// Messages are keyed by appointment on the server — there is no general
+  /// inbox — so a thread opened outside one (a courier, support, a doctor the
+  /// patient has not booked) has nowhere to send to and shows the sample
+  /// conversation instead. See `docs/API-GAPS.md`.
+  final String? appointmentId;
   final String name;
   final String specialty;
   final String? photoUrl;

@@ -99,6 +99,10 @@ class StaticDoctorPracticeRepository implements DoctorPracticeRepository {
   }) async {}
 
   @override
+  Future<List<PatientThread>> threads() async =>
+      List.of(DoctorPracticeData.threads);
+
+  @override
   Future<List<ReviewPatient>> reviewPatients() async =>
       List.of(DoctorOrdersData.patients);
 

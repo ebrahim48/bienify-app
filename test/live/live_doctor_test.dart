@@ -7,7 +7,9 @@ import 'package:bienify_app/core/constants/api_constants.dart';
 import 'package:bienify_app/core/exceptions/app_exceptions.dart';
 import 'package:bienify_app/core/network/api_client.dart';
 import 'package:bienify_app/core/network/token_store.dart';
+import 'package:bienify_app/core/network/mappers.dart';
 import 'package:bienify_app/features/Role/doctor_role/data/repositories/api_doctor_practice_repository.dart';
+import 'package:bienify_app/features/Role/patient/chat/data/repositories/api_conversation_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Checks the practitioner repository against real data.
@@ -21,6 +23,7 @@ import 'package:flutter_test/flutter_test.dart';
 ///   flutter test test/live/live_doctor_test.dart --tags live
 void main() {
   late ApiDoctorPracticeRepository repository;
+  late ApiConversationRepository conversations;
   var up = false;
 
   setUpAll(() async {
@@ -56,6 +59,10 @@ void main() {
       return;
     }
     repository = ApiDoctorPracticeRepository(client);
+    conversations = ApiConversationRepository(
+      client,
+      myUserId: () async => Api.id(await client.getMap(ApiConstants.usersMe)),
+    );
   });
 
   /// Treats a rate-limit refusal as "environment unavailable", not a failure.
@@ -111,7 +118,10 @@ void main() {
         );
         expect(appointments.first.patientName, isNot('Patient'));
         expect(appointments.first.id, isNotEmpty);
-        expect(appointments.map((a) => a.scheduledAt.year), isNot(contains(1970)));
+        expect(
+          appointments.map((a) => a.scheduledAt.year),
+          isNot(contains(1970)),
+        );
       });
     });
 
@@ -181,7 +191,10 @@ void main() {
 
         final open = days.firstWhere((d) => d.isOpen);
         expect(open.slots, isNotEmpty);
-        expect(open.slots.first.endMinute, greaterThan(open.slots.first.startMinute));
+        expect(
+          open.slots.first.endMinute,
+          greaterThan(open.slots.first.startMinute),
+        );
       });
     });
 
@@ -197,6 +210,56 @@ void main() {
           before.where((d) => d.isOpen).map((d) => d.dayOfWeek),
           reason: 'a round trip must not close a day the doctor had open',
         );
+      });
+    });
+  });
+
+  group('messages', () {
+    test(
+      'a sent message comes back in the thread, on the right side',
+      () async {
+        if (!up) return;
+        await live(() async {
+          final appointments = await repository.appointments();
+          final id = appointments.first.id;
+
+          final sent = await conversations.send(
+            appointmentId: id,
+            body: 'Live check ${DateTime.now().millisecondsSinceEpoch}',
+          );
+          expect(sent.isMine, isTrue);
+
+          final thread = await conversations.messages(id);
+          expect(thread.map((m) => m.id), contains(sent.id));
+          // Oldest first: the server pages newest-first, and a thread read in
+          // that order puts the reply above the question.
+          expect(
+            thread.first.sentAt.isAfter(thread.last.sentAt),
+            isFalse,
+            reason: 'a thread reads oldest first',
+          );
+          // Every bubble has to land on a side, and the doctor's own must be
+          // theirs — the payload says who sent it, not whether that was you.
+          expect(thread.where((m) => m.isMine), isNotEmpty);
+        });
+      },
+    );
+
+    test('threads are named rather than listed by id', () async {
+      if (!up) return;
+      await live(() async {
+        final threads = await repository.threads();
+
+        expect(threads, isNotEmpty);
+        expect(
+          threads.first.patientName,
+          isNot('Patient'),
+          reason:
+              'the threads endpoint does not populate its counterpart, so '
+              'the name is joined from the appointment list',
+        );
+        expect(threads.first.id, isNotEmpty);
+        expect(threads.first.timeLabel, matches(RegExp(r'^\d{2}:\d{2}$')));
       });
     });
   });

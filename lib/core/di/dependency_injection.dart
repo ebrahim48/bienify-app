@@ -30,6 +30,9 @@ import '../../features/Role/patient/auth/domain/usecases/registration_usecases.d
 import '../../features/Role/patient/cash_payment_process/data/repositories/api_cash_payment_repository.dart';
 import '../../features/Role/patient/cash_payment_process/data/repositories/mock_cash_payment_repository.dart';
 import '../../features/Role/patient/cash_payment_process/domain/repositories/cash_payment_repository.dart';
+import '../../features/Role/patient/chat/data/repositories/api_conversation_repository.dart';
+import '../../features/Role/patient/chat/data/repositories/mock_conversation_repository.dart';
+import '../../features/Role/patient/chat/domain/repositories/conversation_repository.dart';
 import '../../features/Role/patient/doctors/data/repositories/api_doctor_repository.dart';
 import '../../features/Role/patient/doctors/data/repositories/doctor_repository_impl.dart';
 import '../../features/Role/patient/doctors/domain/repositories/doctor_repository.dart';
@@ -46,7 +49,9 @@ import '../../features/Role/rider_role/data/repositories/api_rider_repository.da
 import '../../features/Role/rider_role/data/repositories/static_rider_repository.dart';
 import '../../features/Role/rider_role/domain/repositories/rider_repository.dart';
 import '../localization/localization_controller.dart';
+import '../constants/api_constants.dart';
 import '../network/api_client.dart';
+import '../network/mappers.dart';
 import '../network/bienify_api.dart';
 import '../network/token_store.dart';
 import '../services/api_service.dart';
@@ -117,6 +122,9 @@ class DependencyInjection {
       AuthRepositoryImpl(
         remote: Get.find<AuthRemoteDataSource>(),
         local: Get.find<AuthLocalDataSource>(),
+        // Signing in writes the bearer token every other repository's calls
+        // are authenticated with.
+        tokens: Get.find<TokenStore>(),
       ),
       permanent: true,
     );
@@ -132,6 +140,24 @@ class DependencyInjection {
     _registerRiderRole(mock);
     _registerAccount(mock);
     _registerCashPayment(mock);
+    _registerConversations(mock);
+  }
+
+  static void _registerConversations(bool mock) {
+    Get.put<ConversationRepository>(
+      mock
+          ? const MockConversationRepository()
+          : ApiConversationRepository(
+              Get.find<ApiClient>(),
+              // Read on demand and not cached: which side of a thread a
+              // message sits on depends on who is signed in, and that changes
+              // when a role switches without the graph being rebuilt.
+              myUserId: () async => Api.id(
+                await Get.find<ApiClient>().getMap(ApiConstants.usersMe),
+              ),
+            ),
+      permanent: true,
+    );
   }
 
   static void _registerCashPayment(bool mock) {

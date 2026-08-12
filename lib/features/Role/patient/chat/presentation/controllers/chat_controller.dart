@@ -3,17 +3,33 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
+import '../../../../../../core/exceptions/app_exceptions.dart';
+import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../data/static/chat_mock_data.dart';
 import '../../domain/entities/conversation.dart';
+import '../../domain/repositories/conversation_repository.dart';
 
 /// Backs the message thread.
 ///
-/// Sending appends the outgoing bubble immediately and schedules the doctor's
-/// reply, so the screen exercises both bubble styles without a backend.
+/// Messages are keyed by appointment on the server, so a thread opened for a
+/// consultation is real. One opened outside one — a courier, support, a doctor
+/// the patient has not booked — has nowhere to send to and falls back to the
+/// sample conversation. See `docs/API-GAPS.md`.
 class ChatController extends GetxController {
-  ChatController({required this.peer});
+  ChatController({required this.peer, ConversationRepository? repository})
+    : _repository = repository ?? Get.find<ConversationRepository>();
 
   final ConversationPeer peer;
+
+  final ConversationRepository _repository;
+
+  /// True when this thread has a consultation behind it.
+  bool get isLive =>
+      peer.appointmentId != null && peer.appointmentId!.isNotEmpty;
+
+  final RxBool isLoading = true.obs;
+  final RxBool isSending = false.obs;
+  final RxnString error = RxnString();
 
   final TextEditingController inputController = TextEditingController();
   final ScrollController scrollController = ScrollController();
@@ -26,10 +42,29 @@ class ChatController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    messages.value = ChatMockData.thread();
     inputController.addListener(_onInputChanged);
+    load();
     // The thread opens at the newest message, as a chat should.
     WidgetsBinding.instance.addPostFrameCallback((_) => jumpToLatest());
+  }
+
+  Future<void> load() async {
+    if (!isLive) {
+      messages.value = ChatMockData.thread();
+      isLoading.value = false;
+      return;
+    }
+
+    isLoading.value = true;
+    error.value = null;
+    try {
+      messages.value = await _repository.messages(peer.appointmentId!);
+    } on AppException catch (e) {
+      error.value = e.message;
+    } finally {
+      isLoading.value = false;
+    }
+    _scrollToLatest();
   }
 
   @override
@@ -45,10 +80,40 @@ class ChatController extends GetxController {
   void _onInputChanged() =>
       canSend.value = inputController.text.trim().isNotEmpty;
 
-  void send() {
+  Future<void> send() async {
     final text = inputController.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty || isSending.value) return;
 
+    if (!isLive) {
+      _sendLocally(text);
+      return;
+    }
+
+    // The bubble is added only once the server has the message. Adding it
+    // first and reconciling later is what makes a chat show a message that was
+    // never delivered.
+    isSending.value = true;
+    try {
+      messages.add(
+        await _repository.send(
+          appointmentId: peer.appointmentId!,
+          body: text,
+        ),
+      );
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    } finally {
+      isSending.value = false;
+    }
+
+    inputController.clear();
+    _scrollToLatest();
+  }
+
+  /// The sample thread's behaviour: append the outgoing bubble and schedule a
+  /// reply, so a chat with nothing behind it still exercises both styles.
+  void _sendLocally(String text) {
     messages.add(
       ChatMessage(
         id: 'local-${DateTime.now().microsecondsSinceEpoch}',

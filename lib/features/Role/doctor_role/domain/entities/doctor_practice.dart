@@ -367,6 +367,7 @@ class PatientThread {
     required this.timeLabel,
     required this.unreadCount,
     this.photoAsset,
+    this.photoUrl,
   });
 
   final String id;
@@ -379,7 +380,12 @@ class PatientThread {
   final String timeLabel;
 
   final int unreadCount;
+
+  /// Bundled placeholder, used by the static data the goldens render.
   final String? photoAsset;
+
+  /// The patient's own photo, when the server has one.
+  final String? photoUrl;
 }
 
 // ─── Schedule ──────────────────────────────────────────────────────────────

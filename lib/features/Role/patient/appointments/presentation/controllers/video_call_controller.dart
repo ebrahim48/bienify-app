@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:get/get.dart';
 
 import '../../../../../../core/routes/app_routes.dart';
+import '../../../chat/domain/entities/conversation.dart';
 import '../../domain/entities/appointment.dart';
 
 /// Backs the video consultation.
@@ -48,7 +49,20 @@ class VideoCallController extends GetxController {
 
   void toggleCamera() => isCameraOff.toggle();
 
-  void openChat() => Get.toNamed<void>(AppRoutes.chat);
+  /// The thread beside the call is the consultation's own, so it carries the
+  /// appointment — which is what makes its messages real rather than the
+  /// sample conversation.
+  void openChat() => Get.toNamed<void>(
+    AppRoutes.chat,
+    arguments: ConversationPeer(
+      id: appointment.id,
+      appointmentId: appointment.id,
+      name: appointment.doctorName,
+      specialty: appointment.specialty,
+      photoUrl: appointment.doctorPhotoUrl,
+      isOnline: true,
+    ),
+  );
 
   /// Ending the call lands on the consultation summary — the doctor's own,
   /// which offers to write the prescription. `offNamed` keeps Back from

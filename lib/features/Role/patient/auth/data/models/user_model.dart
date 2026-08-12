@@ -17,15 +17,34 @@ class UserModel extends UserEntity {
     super.isProfileComplete,
   });
 
+  /// Reads both the API's shape and this model's own.
+  ///
+  /// The server nests the display fields under `profile` and names its key
+  /// `_id`; [toJson] writes the flat snake_case form that the local session
+  /// cache is stored in. Both come back through here, so a cached session
+  /// written before a sign-in still reads.
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    final profile = json['profile'] is Map
+        ? (json['profile'] as Map).cast<String, dynamic>()
+        : const <String, dynamic>{};
+
+    final name = (json['name'] ?? profile['name']) as String?;
+    final gender = (json['gender'] ?? profile['gender']) as String?;
+
     return UserModel(
-      id: json['id']?.toString() ?? '',
-      name: json['name'] as String?,
+      id: (json['_id'] ?? json['id'])?.toString() ?? '',
+      name: name,
       email: json['email'] as String?,
-      phoneNumber: json['phone_number'] as String?,
-      gender: Gender.fromValue(json['gender'] as String?),
-      ageRange: AgeRange.fromLabel(json['age_range'] as String?),
-      isProfileComplete: json['is_profile_complete'] as bool? ?? false,
+      phoneNumber: (json['phone_number'] ?? json['phone']) as String?,
+      gender: Gender.fromValue(gender),
+      ageRange: AgeRange.fromLabel(
+        (json['age_range'] ?? profile['ageRange']) as String?,
+      ),
+      // The server has no such flag: a profile is complete once it carries the
+      // two things the setup screen collects.
+      isProfileComplete:
+          json['is_profile_complete'] as bool? ??
+          (name != null && name.isNotEmpty && gender != null),
     );
   }
 
