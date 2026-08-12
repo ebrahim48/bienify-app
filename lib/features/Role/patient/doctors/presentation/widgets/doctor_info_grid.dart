@@ -44,8 +44,9 @@ class DoctorInfoGrid extends StatelessWidget {
             caption: AppStrings.workingTime.tr,
             value: details.workingTime,
           ),
+          // The caption named the value: this tile read "en / en".
           right: _LabelledStat(
-            caption: details.languagesLabel,
+            caption: AppStrings.languagesSpoken.tr,
             value: details.languagesLabel,
           ),
         ),

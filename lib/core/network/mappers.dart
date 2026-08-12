@@ -91,6 +91,45 @@ class Api {
   /// Money crosses the wire in minor units (integer cents) so no arithmetic
   /// ever happens in floating point. The UI wants a major-unit amount.
   static double majorUnits(dynamic minor) => integer(minor) / 100;
+
+  /// A server code as something to put in front of a person.
+  ///
+  /// `in_person` → `In person`, `cardiology` → `Cardiology`. The server's
+  /// vocabulary is snake_case and lower — printing it raw put "in_person"
+  /// under a doctor's name on the home feed.
+  static String label(dynamic code, [String fallback = '']) {
+    final raw = str(code).trim();
+    if (raw.isEmpty) return fallback;
+
+    final words = raw.replaceAll('_', ' ').split(' ').where((w) => w.isNotEmpty);
+    // Only the first word is capitalised: "In person", not "In Person" —
+    // sentence case is what the designs use for these.
+    return words
+        .toList()
+        .asMap()
+        .entries
+        .map(
+          (e) => e.key == 0
+              ? '${e.value[0].toUpperCase()}${e.value.substring(1)}'
+              : e.value,
+        )
+        .join(' ');
+  }
+
+  /// The languages the platform offers, by the code the server stores.
+  static const Map<String, String> _languageNames = {
+    'en': 'English',
+    'es': 'Spanish',
+    'fr': 'French',
+  };
+
+  /// `en` → `English`. An unlisted code is title-cased rather than dropped,
+  /// so a doctor who speaks something the platform has not enumerated still
+  /// reads as a language and not as a two-letter code.
+  static String languageName(dynamic code) {
+    final raw = str(code).trim().toLowerCase();
+    return _languageNames[raw] ?? label(raw);
+  }
 }
 
 /// `GET /doctors` and the doctor entries embedded in other payloads.
@@ -103,8 +142,8 @@ Doctor doctorFrom(Map<String, dynamic> json) {
     name: Api.nameOf(json['userId'], 'Doctor'),
     // The server keeps a list; the card shows one.
     specialty: specialties is List && specialties.isNotEmpty
-        ? Api.str(specialties.first)
-        : Api.str(json['specialty'], 'General'),
+        ? Api.label(specialties.first)
+        : Api.label(json['specialty'], 'General'),
     photoUrl: Api.avatarOf(json['userId']),
     rating: Api.decimal(rating['average']),
     reviewCount: Api.integer(rating['count']),
@@ -130,9 +169,11 @@ Appointment appointmentFrom(Map<String, dynamic> json) {
   return Appointment(
     id: Api.id(json),
     doctorName: Api.nameOf(doctorRef, 'Doctor'),
+    // The kind of visit is the fallback when the doctor profile is not
+    // populated — `Api.label` so it reads "In person" rather than "in_person".
     specialty: specialties is List && specialties.isNotEmpty
-        ? Api.str(specialties.first)
-        : Api.str(json['type'], 'Consultation'),
+        ? Api.label(specialties.first)
+        : Api.label(json['type'], 'Consultation'),
     scheduledAt: Api.date(json['slotStart']),
     status: appointmentStatusFrom(Api.str(json['status'])),
     doctorPhotoUrl: Api.avatarOf(doctorRef),

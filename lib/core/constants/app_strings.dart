@@ -150,6 +150,7 @@ class AppStrings {
   static const String experience = 'experience';
   static const String patients = 'patients';
   static const String workingTime = 'working_time';
+  static const String languagesSpoken = 'languages_spoken';
   static const String biography = 'biography';
   static const String selectYearAndDate = 'select_year_and_date';
   static const String availableTime = 'available_time';

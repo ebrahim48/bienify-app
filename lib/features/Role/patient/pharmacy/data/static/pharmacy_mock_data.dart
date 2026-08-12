@@ -9,15 +9,6 @@ class PharmacyMockData {
 
   // ─── Catalogue ───────────────────────────────────────────────────────────
 
-  /// Search suggestion chips.
-  static const List<String> searchChips = [
-    'ex 50',
-    'Napa 50',
-    'Cosec 50',
-    'Biltin 50',
-    'emojil',
-    'fiver 50',
-  ];
 
   /// The three names the designs cycle through across a six-tile grid.
   static const List<String> _catalogueNames = [

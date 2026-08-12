@@ -1,5 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../../../../../core/constants/app_assets.dart';
 import '../../../../../../core/constants/app_icons.dart';
@@ -61,7 +63,7 @@ class DoctorHero extends StatelessWidget {
                   height: _portraitSize.w,
                   clipBehavior: Clip.antiAlias,
                   decoration: const BoxDecoration(shape: BoxShape.circle),
-                  child: Image.asset(portraitAsset, fit: BoxFit.cover),
+                  child: _portrait(),
                 ),
               ),
             ),
@@ -73,6 +75,28 @@ class DoctorHero extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  /// The doctor's own photo when the server has one, the bundled portrait
+  /// otherwise. This took [imageUrl] but never read it, so every practitioner
+  /// on Doctor Details wore the same stock face.
+  Widget _portrait() {
+    final url = imageUrl;
+    if (url == null || url.isEmpty) {
+      return Image.asset(portraitAsset, fit: BoxFit.cover);
+    }
+
+    return CachedNetworkImage(
+      imageUrl: url,
+      fit: BoxFit.cover,
+      placeholder: (context, _) => Shimmer.fromColors(
+        baseColor: AppColors.primary200,
+        highlightColor: AppColors.primary100,
+        child: ColoredBox(color: AppColors.primary200),
+      ),
+      errorWidget: (context, _, _) =>
+          Image.asset(portraitAsset, fit: BoxFit.cover),
     );
   }
 }

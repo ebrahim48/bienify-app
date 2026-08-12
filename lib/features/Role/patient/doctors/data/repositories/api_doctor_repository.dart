@@ -64,8 +64,9 @@ class ApiDoctorRepository implements DoctorRepository {
       // number would be worse than showing none.
       patientCount: '—',
       workingTime: _workingTime(json['availability']),
+      // Named, not coded: the tile used to read "en".
       languages: languages is List
-          ? languages.map(Api.str).where((s) => s.isNotEmpty).toList()
+          ? languages.map(Api.languageName).where((s) => s.isNotEmpty).toList()
           : const [],
       biography: Api.str(json['bio']),
       heroImage: Api.avatarOf(json['userId']),

@@ -8,6 +8,7 @@ import 'package:bienify_app/features/Role/patient/main/presentation/screens/main
 import 'package:bienify_app/features/Role/patient/pharmacy/domain/entities/pharmacy.dart';
 import 'package:bienify_app/features/Role/patient/pharmacy/presentation/bindings/pharmacy_bindings.dart';
 import 'package:bienify_app/features/Role/patient/pharmacy/presentation/controllers/pharmacy_cart_controller.dart';
+import 'package:bienify_app/features/Role/patient/pharmacy/presentation/controllers/pharmacy_controller.dart';
 import 'package:bienify_app/features/Role/patient/pharmacy/presentation/controllers/prescription_controller.dart';
 import 'package:bienify_app/features/Role/patient/pharmacy/presentation/screens/best_matches_screen.dart';
 import 'package:bienify_app/features/Role/patient/pharmacy/presentation/screens/delivery_feedback_screen.dart';
@@ -106,11 +107,48 @@ void main() {
     Get.find<MainNavController>().select(3);
     await tester.pump();
 
+    // The chips name what is actually on the shelf. They used to be six fixed
+    // strings out of the design ("ex 50", "emojil") over a live catalogue.
+    final pharmacy = Get.find<PharmacyController>();
+    expect(pharmacy.chips.first, 'All');
+    expect(
+      pharmacy.chips.skip(1),
+      everyElement(
+        predicate<String>(
+          (chip) => pharmacy.commonMedicines.any((m) => m.name.startsWith(chip)),
+          'names a medicine on the shelf',
+        ),
+      ),
+    );
+
     await settleImages(tester);
     await expectLater(
       find.byType(MainShellScreen),
       matchesGoldenFile('pharmacy_tab.png'),
     );
+  });
+
+  testWidgets('Choosing a chip searches for it, rather than only tinting it', (
+    tester,
+  ) async {
+    await pump(tester, const MainShellScreen(), binding: MainBinding());
+    Get.find<MainNavController>().select(3);
+    await tester.pump();
+
+    final pharmacy = Get.find<PharmacyController>();
+    final chip = pharmacy.chips[1];
+
+    await pharmacy.selectChip(chip);
+    await tester.pump();
+
+    expect(pharmacy.selectedChip.value, chip);
+    expect(pharmacy.query.value, chip, reason: 'the chip drives the search');
+
+    // And back out again: All has to clear the query, or the shelf stays
+    // narrowed with no way to widen it.
+    await pharmacy.selectChip(pharmacy.chips.first);
+    await tester.pump();
+    expect(pharmacy.query.value, isEmpty);
   });
 
   testWidgets('Stores Near You survives a narrow device with large text', (

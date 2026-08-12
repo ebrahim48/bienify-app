@@ -43,7 +43,10 @@ class DoctorDetailsScreen extends GetView<DoctorDetailsController> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             AppSpacing.gapV(AppSpacing.xs),
-            DoctorHero(onMessage: controller.openChat),
+            DoctorHero(
+              imageUrl: details.doctor.photoUrl,
+              onMessage: controller.openChat,
+            ),
             AppSpacing.gapV(AppSpacing.base),
             DoctorSummary(doctor: details.doctor),
             AppSpacing.gapV(AppSpacing.base),

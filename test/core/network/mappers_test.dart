@@ -53,8 +53,9 @@ void main() {
       expect(doctorFrom(json_(doctorJson)).name, 'Dr Dana Okafor');
     });
 
-    test('shows the first specialty', () {
-      expect(doctorFrom(json_(doctorJson)).specialty, 'cardiology');
+    test('shows the first specialty, readably', () {
+      // The card used to print the server's own `cardiology`.
+      expect(doctorFrom(json_(doctorJson)).specialty, 'Cardiology');
     });
 
     // Minor units are integers on the wire so no money is ever held as a
@@ -169,6 +170,26 @@ void main() {
       final feed = homeFeedFrom(json_('{}'));
       expect(feed.isEmpty, isTrue);
       expect(feed.patientName, '');
+    });
+  });
+
+  group('Api.label', () {
+    test('turns a server code into something readable', () {
+      // The home feed printed "in_person" under a doctor's name: the visit
+      // type is the fallback when the doctor profile is not populated.
+      expect(Api.label('in_person'), 'In person');
+      expect(Api.label('video'), 'Video');
+      expect(Api.label('cardiology'), 'Cardiology');
+    });
+
+    test('sentence case, not title case', () {
+      expect(Api.label('general_practice'), 'General practice');
+    });
+
+    test('falls back rather than printing an empty line', () {
+      expect(Api.label(null, 'Consultation'), 'Consultation');
+      expect(Api.label('', 'Consultation'), 'Consultation');
+      expect(Api.label('  ', 'Consultation'), 'Consultation');
     });
   });
 }

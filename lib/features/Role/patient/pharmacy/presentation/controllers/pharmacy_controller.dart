@@ -4,7 +4,6 @@ import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/routes/app_routes.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
-import '../../data/static/pharmacy_mock_data.dart';
 import '../../domain/entities/pharmacy.dart';
 import '../../domain/repositories/pharmacy_repository.dart';
 
@@ -38,8 +37,6 @@ class PharmacyController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    chips.value = PharmacyMockData.searchChips;
-    selectedChip.value = chips.first;
     load();
   }
 
@@ -53,6 +50,7 @@ class PharmacyController extends GetxController {
       // shows the same stock rather than a section invented client-side.
       dermatologyMedicines.value = medicines;
       stores.value = await _repository.stores();
+      _rebuildChips(medicines);
     } on AppException catch (e) {
       error.value = e.message;
     } finally {
@@ -60,13 +58,41 @@ class PharmacyController extends GetxController {
     }
   }
 
+  /// The chip row, drawn from what is actually on the shelf.
+  ///
+  /// These were six fixed strings out of the design ("ex 50", "emojil") over
+  /// a live catalogue, and tapping one only tinted it — the shelf never
+  /// changed. Now each chip is a real medicine to search for, so the row both
+  /// says something true and does something.
+  ///
+  /// Only rebuilt while the query is empty: narrowing the shelf must not
+  /// narrow the chips that got you there, or a search leaves one chip and no
+  /// way back.
+  void _rebuildChips(List<Medicine> medicines) {
+    if (query.value.isNotEmpty && chips.isNotEmpty) return;
+
+    final names = <String>{
+      for (final medicine in medicines) medicine.name.split(' ').first,
+    }.take(_maxChips).toList();
+
+    chips.value = [AppStrings.filterAll.tr, ...names];
+    selectedChip.value = chips.first;
+  }
+
+  static const int _maxChips = 5;
+
   /// Re-runs the catalogue search for the current [query].
   Future<void> search(String term) async {
     query.value = term;
     await load();
   }
 
-  void selectChip(String chip) => selectedChip.value = chip;
+  /// Searching the catalogue for the chip, rather than only tinting it.
+  Future<void> selectChip(String chip) async {
+    selectedChip.value = chip;
+    query.value = chip == AppStrings.filterAll.tr ? '' : chip;
+    await load();
+  }
 
   void addToCart(Medicine medicine) {
     cartCount.value++;
