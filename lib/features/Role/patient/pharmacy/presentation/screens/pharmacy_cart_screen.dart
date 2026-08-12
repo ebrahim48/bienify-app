@@ -16,7 +16,6 @@ import '../../../../../../core/widgets/app_card.dart';
 import '../../../../../../core/widgets/app_scaffold.dart';
 import '../../../../../../core/widgets/app_svg_icon.dart';
 import '../../../../../../core/widgets/app_top_bar.dart';
-import '../../data/static/pharmacy_mock_data.dart';
 import '../../domain/entities/pharmacy.dart';
 import '../controllers/pharmacy_cart_controller.dart';
 import '../widgets/quantity_stepper.dart';
@@ -35,8 +34,13 @@ class PharmacyCartScreen extends GetView<PharmacyCartController> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             AppSpacing.gapV(AppSpacing.base),
-            _DeliveryHeader(store: controller.store.value),
-            AppSpacing.gapV(AppSpacing.sm),
+            // Only when a pharmacy has been chosen. A basket filled from the
+            // catalogue has none yet, and the row then read "Delivery from"
+            // with nothing after it.
+            if (controller.store.value != null) ...[
+              _DeliveryHeader(store: controller.store.value),
+              AppSpacing.gapV(AppSpacing.sm),
+            ],
             _Lines(controller: controller),
             AppSpacing.gapV(AppSpacing.sm),
             _EditLink(onTap: controller.editMedicines),
@@ -45,15 +49,15 @@ class PharmacyCartScreen extends GetView<PharmacyCartController> {
               icon: AppIcons.wallet,
               title: AppStrings.rxWallet.tr,
               subtitle: AppStrings.walletBalance.trParams({
-                'amount': controller.format(PharmacyMockData.walletBalance),
+                'amount': controller.format(controller.walletBalance.value),
               }),
               value: controller.useWallet.value,
               onChanged: controller.toggleWallet,
+              // What will actually come out, not the whole balance: the note
+              // promised "$45.00 will be deducted" against a $17.99 bill.
               note: controller.useWallet.value
                   ? AppStrings.walletDeduction.trParams({
-                      'amount': controller.format(
-                        PharmacyMockData.walletBalance,
-                      ),
+                      'amount': controller.format(controller.walletCredit),
                     })
                   : null,
             ),

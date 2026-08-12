@@ -109,7 +109,7 @@ class _Header extends StatelessWidget {
         ),
         Obx(
           () => _CartAction(
-            count: controller.cartCount.value,
+            count: controller.cartCount,
             onTap: controller.openCart,
           ),
         ),

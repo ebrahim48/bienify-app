@@ -151,6 +151,33 @@ void main() {
     expect(pharmacy.query.value, isEmpty);
   });
 
+  testWidgets('Add puts the medicine in the basket the badge counts', (
+    tester,
+  ) async {
+    await pump(tester, const MainShellScreen(), binding: MainBinding());
+    Get.find<MainNavController>().select(3);
+    await tester.pump();
+
+    final pharmacy = Get.find<PharmacyController>();
+    // An empty basket wore a "1": the badge was its own counter, seeded at 1
+    // and only ever incremented, with nothing behind it.
+    expect(pharmacy.cartCount, 0);
+
+    final medicine = pharmacy.commonMedicines.first;
+    pharmacy.addToCart(medicine);
+    await settleSnackbar(tester);
+
+    final cart = Get.find<PharmacyCartController>();
+    expect(cart.lines.single.medicine.id, medicine.id);
+    expect(pharmacy.cartCount, 1);
+
+    // The same medicine again is one line of two, not two lines.
+    pharmacy.addToCart(medicine);
+    await settleSnackbar(tester);
+    expect(cart.lines, hasLength(1));
+    expect(pharmacy.cartCount, 2);
+  });
+
   testWidgets('Stores Near You survives a narrow device with large text', (
     tester,
   ) async {

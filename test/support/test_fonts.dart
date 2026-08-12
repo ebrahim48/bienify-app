@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
 
 /// Loads the app's real fonts into the test binding.
 ///
@@ -46,4 +47,16 @@ Future<void> settleImages(WidgetTester tester) async {
   // before capture would otherwise be frozen at its starting position and
   // look like it never moved.
   await tester.pump(const Duration(milliseconds: 300));
+}
+
+/// Runs a GetX snackbar to completion and clears it.
+///
+/// `AppSnackbar` shows one as its own route with a ticker behind it. A test
+/// that triggers one and finishes before it does tears the tree down with the
+/// ticker still running, and every later test in the file fails on the leak
+/// rather than on anything it asserted.
+Future<void> settleSnackbar(WidgetTester tester) async {
+  await tester.pump();
+  if (Get.isSnackbarOpen) Get.closeAllSnackbars();
+  await tester.pumpAndSettle();
 }

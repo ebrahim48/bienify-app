@@ -5,6 +5,7 @@ import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/routes/app_routes.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../domain/entities/pharmacy.dart';
+import 'pharmacy_cart_controller.dart';
 import '../../domain/repositories/pharmacy_repository.dart';
 
 /// Backs the Pharmacy tab: the catalogue, its filter chips, and the cart
@@ -31,8 +32,22 @@ class PharmacyController extends GetxController {
   final RxList<Medicine> dermatologyMedicines = <Medicine>[].obs;
   final RxList<PharmacyStore> stores = <PharmacyStore>[].obs;
 
-  /// Badge on the cart icon.
-  final RxInt cartCount = 1.obs;
+  /// Badge on the cart icon: what is actually in the basket.
+  ///
+  /// This was its own counter that started at 1 and only ever went up, so an
+  /// empty basket wore a "1" and adding a medicine moved the badge without
+  /// moving the cart.
+  int get cartCount => _cart.itemCount;
+
+  /// The basket is shared with the prescription flow, and either entry point
+  /// can be the first one used, so it is created on demand rather than
+  /// assumed present.
+  PharmacyCartController get _cart {
+    if (!Get.isRegistered<PharmacyCartController>()) {
+      Get.lazyPut(PharmacyCartController.new, fenix: true);
+    }
+    return Get.find<PharmacyCartController>();
+  }
 
   @override
   void onInit() {
@@ -95,7 +110,7 @@ class PharmacyController extends GetxController {
   }
 
   void addToCart(Medicine medicine) {
-    cartCount.value++;
+    _cart.addMedicine(medicine);
     AppSnackbar.success(AppStrings.addedToCart.tr);
   }
 

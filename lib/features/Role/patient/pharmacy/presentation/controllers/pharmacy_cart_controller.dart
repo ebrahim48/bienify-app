@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 
+import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/routes/app_routes.dart';
+import '../../../wallet/domain/repositories/wallet_repository.dart';
 import '../../data/static/pharmacy_mock_data.dart';
 import '../../domain/entities/pharmacy.dart';
 
@@ -10,8 +12,34 @@ import '../../domain/entities/pharmacy.dart';
 /// address all follow the patient across those screens. UI-only: totals are
 /// computed locally and no payment is taken.
 class PharmacyCartController extends GetxController {
+  PharmacyCartController({WalletRepository? wallet})
+    : _wallet = wallet ?? Get.find<WalletRepository>();
+
+  final WalletRepository _wallet;
+
   /// Which store is filling the script; drives which lines are available.
   final Rxn<PharmacyStore> store = Rxn<PharmacyStore>();
+
+  /// The patient's own balance, not the design's $45. Read on open, because
+  /// it moves whenever a consultation is paid for or an order settles, and a
+  /// stale figure promises a deduction the server will refuse.
+  final RxDouble walletBalance = 0.0.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _loadBalance();
+  }
+
+  Future<void> _loadBalance() async {
+    try {
+      walletBalance.value = await _wallet.balance();
+    } on AppException {
+      // A wallet that cannot be read is a wallet with nothing to spend; the
+      // toggle then credits nothing rather than a number nobody has.
+      walletBalance.value = 0;
+    }
+  }
 
   final RxList<CartLine> lines = <CartLine>[].obs;
 
@@ -98,8 +126,11 @@ class PharmacyCartController extends GetxController {
   double get deliveryFee =>
       pickupYourself.value ? 0 : PharmacyMockData.deliveryFee;
 
-  double get walletCredit =>
-      useWallet.value ? PharmacyMockData.walletBalance : 0;
+  /// Never more than the bill: crediting the whole balance against a smaller
+  /// order printed a negative deduction on the summary.
+  double get walletCredit => useWallet.value
+      ? walletBalance.value.clamp(0, subtotal + deliveryFee)
+      : 0;
 
   double get total =>
       (subtotal + deliveryFee - walletCredit).clamp(0, double.infinity);
@@ -122,6 +153,22 @@ class PharmacyCartController extends GetxController {
         if (selectedIds.contains(medicine.id)) CartLine(medicine: medicine),
     ];
     Get.toNamed<void>(AppRoutes.pharmacyCart);
+  }
+
+  /// Puts one medicine in the basket, from the catalogue rather than from a
+  /// prescription.
+  ///
+  /// The Pharmacy tab's Add button used to increment a counter and nothing
+  /// else, so the badge climbed while the basket stayed empty. Adding the same
+  /// medicine twice raises its quantity rather than listing it twice.
+  void addMedicine(Medicine medicine) {
+    final index = lines.indexWhere((l) => l.medicine.id == medicine.id);
+    if (index == -1) {
+      lines.add(CartLine(medicine: medicine));
+      selectedIds.add(medicine.id);
+      return;
+    }
+    lines[index] = lines[index].copyWith(quantity: lines[index].quantity + 1);
   }
 
   void increment(CartLine line) => _setQuantity(line, line.quantity + 1);
