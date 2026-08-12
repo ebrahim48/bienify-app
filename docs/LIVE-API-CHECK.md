@@ -4,8 +4,8 @@ Ran against `http://localhost:3500` through `ApiClient`.
 
 | Metric | Result |
 |---|---|
-| Calls | 65 |
-| Passed | 65 |
+| Calls | 68 |
+| Passed | 68 |
 | Failed | 0 |
 
 | Result | Role | Method | Path | Detail |
@@ -55,7 +55,7 @@ Ran against `http://localhost:3500` through `ApiClient`.
 | PASS | anon | GET | `/api/v1/appointments/slots` | ok |
 | PASS | anon | GET | `/api/v1/reviews/doctors/6a7aaebd9edac194dd587765` | ok |
 | PASS | patient | GET | `/api/v1/appointments/6a7aaebb68ba3172df927840` | ok |
-| PASS | patient | GET | `/api/v1/medicine-orders/6a7bf2f1d831277af223bd04` | ok |
+| PASS | patient | GET | `/api/v1/medicine-orders/6a7bfa38d831277af223c2cd` | ok |
 | PASS | patient | GET | `/api/v1/prescriptions/6a7aaebc68ba3172df927843` | ok |
 | PASS | - | WRITE | `patient updates their profile` | ok |
 | PASS | - | WRITE | `patient asks for an avatar upload URL` | ok |
@@ -75,3 +75,6 @@ Ran against `http://localhost:3500` through `ApiClient`.
 | PASS | - | WRITE | `admin reads the approval queues` | ok |
 | PASS | - | WRITE | `admin reads the settings` | ok |
 | PASS | - | WRITE | `admin changes a setting` | ok |
+| PASS | - | WRITE | `admin refuses an unknown setting key` | 400 Unknown setting(s): not.a.real.key |
+| PASS | - | WRITE | `admin lists the test catalogue` | ok |
+| PASS | - | WRITE | `admin sees the pending doctors` | ok |

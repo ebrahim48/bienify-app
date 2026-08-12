@@ -107,3 +107,27 @@ patient with more than 100 movements.
 
 **Fix:** the same shape `GET /wallet/earnings` gives a provider — a couple of
 aggregate totals on the patient's wallet.
+
+## There is no messaging outside a consultation
+
+Messages are keyed by appointment: `POST /consultations/:id/messages`. There is
+no route for a thread with a courier, with support, or with a doctor the
+patient has not booked.
+
+**Where it shows:** those three threads fall back to the sample conversation.
+A thread opened from a consultation — the doctor's Message tab, the chat beside
+a video call — is real, and carries its appointment to prove it.
+
+**Fix:** either a general thread resource, or let the existing one be keyed by
+counterpart as well as by appointment.
+
+## A thread does not say who it is with
+
+`GET /consultations/threads` returns a bare `counterpartId`, so on its own
+every row in the doctor's Message tab would read as an id.
+
+**Where it shows:** the app joins the thread list to the appointment list,
+which does populate the patient, and takes the name from there — one extra
+request per load of that tab.
+
+**Fix:** `.populate('counterpartId', 'profile.name profile.avatarUrl')`.

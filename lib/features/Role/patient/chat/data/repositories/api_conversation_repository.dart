@@ -30,8 +30,9 @@ class ApiConversationRepository implements ConversationRepository {
     final rows = ApiClient.listFrom(results[0]);
     final me = results[1]! as String;
 
-    // The server sorts newest first for paging; a thread reads the other way.
-    return rows.reversed.map((row) => chatMessageFrom(row, me)).toList();
+    // Already oldest first, which is the order a thread reads in — unlike the
+    // list endpoints, which page newest first.
+    return rows.map((row) => chatMessageFrom(row, me)).toList();
   }
 
   @override
