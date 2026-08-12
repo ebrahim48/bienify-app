@@ -175,6 +175,64 @@ void main() {
         expect(details.consultationFee, greaterThan(0));
       });
     });
+
+    test('a changed fee is saved without erasing the rest', () async {
+      if (!up) return;
+      await live(() async {
+        final before = await repository.profileDetails();
+
+        // `POST /doctors/me` is an upsert, not a patch: it requires
+        // `specialties` and `licenseNumber` on every call and replaces the
+        // document with what it is given. A fee-only body is refused with
+        // "Validation failed", and a fee-plus-required body would erase the
+        // bio, the languages and the years of experience.
+        await repository.saveConsultationFee(
+          amount: before.consultationFee + 5,
+          currency: before.currency,
+        );
+
+        final after = await repository.profileDetails();
+        expect(after.consultationFee, before.consultationFee + 5);
+        expect(after.currency, before.currency);
+        expect(after.licenceNumber, before.licenceNumber);
+        expect(after.specialty, before.specialty);
+        expect(after.biography, before.biography);
+        expect(after.experience, before.experience);
+
+        // Put it back so a re-run starts where this one did.
+        await repository.saveConsultationFee(
+          amount: before.consultationFee,
+          currency: before.currency,
+        );
+      });
+    });
+
+    test('a changed biography leaves the fee alone', () async {
+      if (!up) return;
+      await live(() async {
+        final before = await repository.profileDetails();
+
+        await repository.saveProfileDetails(
+          specialty: before.specialty,
+          experience: before.experience,
+          biography: 'Live check biography',
+          licenceNumber: before.licenceNumber,
+          language: before.language,
+        );
+
+        final after = await repository.profileDetails();
+        expect(after.biography, 'Live check biography');
+        expect(after.consultationFee, before.consultationFee);
+
+        await repository.saveProfileDetails(
+          specialty: before.specialty,
+          experience: before.experience,
+          biography: before.biography,
+          licenceNumber: before.licenceNumber,
+          language: before.language,
+        );
+      });
+    });
   });
 
   group('schedule', () {

@@ -67,6 +67,8 @@ class DoctorDashboard {
     required this.totalPatients,
     required this.load,
     required this.visits,
+    required this.consultationFee,
+    required this.currency,
   });
 
   final Practitioner practitioner;
@@ -80,6 +82,11 @@ class DoctorDashboard {
 
   final List<DayLoad> load;
   final List<PatientVisit> visits;
+
+  /// What the practice charges, so Set Fees opens on the current figure
+  /// rather than on the design's placeholder.
+  final double consultationFee;
+  final String currency;
 
   /// The chart's y-axis top.
   ///

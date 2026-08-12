@@ -1,6 +1,7 @@
 import '../../domain/entities/age_range.dart';
 import '../../domain/entities/gender.dart';
 import '../../domain/entities/user_entity.dart';
+import '../../domain/entities/user_role.dart';
 
 /// Serialisation layer for [UserEntity].
 ///
@@ -14,6 +15,7 @@ class UserModel extends UserEntity {
     super.phoneNumber,
     super.gender,
     super.ageRange,
+    super.role,
     super.isProfileComplete,
   });
 
@@ -37,6 +39,7 @@ class UserModel extends UserEntity {
       email: json['email'] as String?,
       phoneNumber: (json['phone_number'] ?? json['phone']) as String?,
       gender: Gender.fromValue(gender),
+      role: UserRole.fromValue(json['role'] as String?),
       ageRange: AgeRange.fromLabel(
         (json['age_range'] ?? profile['ageRange']) as String?,
       ),
@@ -60,6 +63,7 @@ class UserModel extends UserEntity {
       phoneNumber: entity.phoneNumber,
       gender: entity.gender,
       ageRange: entity.ageRange,
+      role: entity.role,
       isProfileComplete: entity.isProfileComplete,
     );
   }
@@ -71,6 +75,7 @@ class UserModel extends UserEntity {
     'phone_number': phoneNumber,
     'gender': gender?.value,
     'age_range': ageRange?.label,
+    'role': role.value,
     'is_profile_complete': isProfileComplete,
   };
 }

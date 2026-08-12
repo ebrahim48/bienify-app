@@ -1,6 +1,7 @@
 import 'package:bienify_app/features/Role/patient/auth/data/models/auth_session_model.dart';
 import 'package:bienify_app/features/Role/patient/auth/data/models/user_model.dart';
 import 'package:bienify_app/features/Role/patient/auth/domain/entities/gender.dart';
+import 'package:bienify_app/features/Role/patient/auth/domain/entities/user_role.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Pins the shape of a signed-in session against what the server actually
@@ -75,6 +76,44 @@ void main() {
         'profile': {'name': 'Dr Dana Okafor'},
       });
       expect(user.isProfileComplete, isTrue);
+    });
+
+    test('reads the role the account belongs to', () {
+      // Sign-in routes on this. Reading it as a patient for everyone left the
+      // practitioner, shop and courier shells reachable only through the links
+      // that sign people up for them.
+      final user = UserModel.fromJson(
+        (loginResponse['user']! as Map).cast<String, dynamic>(),
+      );
+      expect(user.role, UserRole.patient);
+
+      expect(
+        UserModel.fromJson(const {'_id': 'u1', 'role': 'doctor'}).role,
+        UserRole.doctor,
+      );
+      expect(
+        UserModel.fromJson(const {'_id': 'u1', 'role': 'pharmacy_owner'}).role,
+        UserRole.pharmacyOwner,
+      );
+      expect(
+        UserModel.fromJson(const {'_id': 'u1', 'role': 'rider'}).role,
+        UserRole.rider,
+      );
+      // An account whose role the app does not know still has a home.
+      expect(
+        UserModel.fromJson(const {'_id': 'u1', 'role': 'wizard'}).role,
+        UserRole.patient,
+      );
+    });
+
+    test('a role survives the local session cache', () {
+      final cached = AuthSessionModel.fromJson(
+        AuthSessionModel.fromJson(const {
+          'accessToken': 'a',
+          'user': {'_id': 'u1', 'role': 'rider', 'profile': {'name': 'R'}},
+        }).toJson(),
+      );
+      expect(cached.user.role, UserRole.rider);
     });
 
     test('a profile with no name still needs setting up', () {

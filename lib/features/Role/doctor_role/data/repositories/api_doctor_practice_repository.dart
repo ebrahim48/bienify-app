@@ -36,12 +36,14 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
       _api.getMap(ApiConstants.doctorsMeStats),
       _api.getMap(ApiConstants.wallet),
       _api.getMap(ApiConstants.walletEarnings),
+      _api.getMap(ApiConstants.doctorsMe),
     ]);
 
     final user = results[0];
     final stats = results[1];
     final wallet = results[2];
     final earned = results[3];
+    final practice = results[4];
 
     final appointments = Api.map(stats['appointments']);
     final currency = Api.str(wallet['currency'], 'USD');
@@ -60,6 +62,8 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
       totalPatients: '${Api.integer(appointments['total'])}',
       load: Api.rows(stats['load']).map(_dayLoadFrom).toList(),
       visits: Api.rows(stats['todayVisits']).map(_visitFrom).toList(),
+      consultationFee: Api.majorUnits(practice['consultationFeeMinor']),
+      currency: Api.str(practice['currency'], currency),
     );
   }
 
@@ -237,32 +241,54 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
     required String biography,
     required String licenceNumber,
     required String language,
-  }) async {
-    // `POST /doctors/me` upserts the practice profile — the same route creates
-    // it and edits it, so there is no separate update path to choose between.
-    await _api.post(
-      ApiConstants.postDoctorsMe,
-      body: {
-        if (specialty.isNotEmpty) 'specialties': [specialty],
-        if (language.isNotEmpty) 'languages': [language],
-        if (experience.isNotEmpty)
-          'yearsOfExperience': int.tryParse(experience.trim()) ?? 0,
-        if (biography.isNotEmpty) 'bio': biography,
-        if (licenceNumber.isNotEmpty) 'licenseNumber': licenceNumber,
-      },
-    );
-  }
+  }) => _upsertPractice({
+    if (specialty.isNotEmpty) 'specialties': [specialty],
+    if (language.isNotEmpty) 'languages': [language],
+    if (experience.isNotEmpty)
+      'yearsOfExperience': int.tryParse(experience.trim()) ?? 0,
+    if (biography.isNotEmpty) 'bio': biography,
+    if (licenceNumber.isNotEmpty) 'licenseNumber': licenceNumber,
+  });
 
   @override
   Future<void> saveConsultationFee({
     required double amount,
     required String currency,
-  }) async {
+  }) => _upsertPractice({
+    'consultationFeeMinor': (amount * 100).round(),
+    'currency': currency,
+  });
+
+  /// Writes [changes] over the practice profile the server already holds.
+  ///
+  /// `POST /doctors/me` is an upsert, not a patch: it requires `specialties`
+  /// and `licenseNumber` on every call and replaces the document with what it
+  /// is given. Sending only the changed field is refused outright — which is
+  /// what "Validation failed" on Set Fees was — and sending it without the
+  /// rest would erase the rest.
+  Future<void> _upsertPractice(Map<String, dynamic> changes) async {
+    final current = await _api.getMap(ApiConstants.doctorsMe);
+
+    final specialties = current['specialties'];
+    final languages = current['languages'];
+
     await _api.post(
       ApiConstants.postDoctorsMe,
       body: {
-        'consultationFeeMinor': (amount * 100).round(),
-        'currency': currency,
+        'specialties': specialties is List && specialties.isNotEmpty
+            ? specialties
+            : const ['general'],
+        'licenseNumber': Api.str(current['licenseNumber'], 'PENDING'),
+        if (languages is List && languages.isNotEmpty) 'languages': languages,
+        if (current['bio'] != null) 'bio': current['bio'],
+        if (current['yearsOfExperience'] != null)
+          'yearsOfExperience': current['yearsOfExperience'],
+        'consultationFeeMinor': Api.integer(current['consultationFeeMinor']),
+        'currency': Api.str(current['currency'], 'USD'),
+        if (current['timezone'] != null) 'timezone': current['timezone'],
+        if (current['isAcceptingPatients'] != null)
+          'isAcceptingPatients': current['isAcceptingPatients'],
+        ...changes,
       },
     );
   }

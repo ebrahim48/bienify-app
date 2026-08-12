@@ -75,8 +75,14 @@ class SetFeesSheet extends GetView<DoctorHomeController> {
             style: AppTextStyles.bodyLarge.rc(AppColors.gray900),
           ),
           AppSpacing.gapV(AppSpacing.xs),
-          _FeeField(
-            onChanged: (value) => controller.consultationFee.value = value,
+          // Keyed on the load so the field seeds from the fee that arrived;
+          // it owns its text controller and reads [initialText] once.
+          Obx(
+            () => _FeeField(
+              key: ValueKey(controller.feeGeneration.value),
+              initialText: controller.consultationFee.value,
+              onChanged: (value) => controller.consultationFee.value = value,
+            ),
           ),
           AppSpacing.gapV(AppSpacing.base),
           AppButton(
@@ -89,10 +95,29 @@ class SetFeesSheet extends GetView<DoctorHomeController> {
   }
 }
 
-class _FeeField extends StatelessWidget {
-  const _FeeField({required this.onChanged});
+class _FeeField extends StatefulWidget {
+  const _FeeField({super.key, required this.onChanged, this.initialText});
 
   final ValueChanged<String> onChanged;
+
+  /// Seeds the field with the fee the practice charges now.
+  final String? initialText;
+
+  @override
+  State<_FeeField> createState() => _FeeFieldState();
+}
+
+class _FeeFieldState extends State<_FeeField> {
+  /// Owned here so nothing is disposed out from under the sheet.
+  late final TextEditingController _text = TextEditingController(
+    text: widget.initialText,
+  );
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,10 +133,9 @@ class _FeeField extends StatelessWidget {
         ),
       ),
       alignment: Alignment.center,
-      // No controller passed: the field owns its own, so nothing is disposed
-      // out from under it when the sheet closes.
       child: TextField(
-        onChanged: onChanged,
+        controller: _text,
+        onChanged: widget.onChanged,
         keyboardType: TextInputType.number,
         cursorColor: AppColors.primary800,
         style: AppTextStyles.bodyLarge.rc(AppColors.authInk),

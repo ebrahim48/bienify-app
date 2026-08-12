@@ -68,27 +68,36 @@ class AppointmentsChart extends StatelessWidget {
                   children: [
                     // Gridlines sit behind the bars, aligned with the ticks by
                     // sharing the same `spaceBetween` distribution.
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        for (var i = 0; i < ticks.length; i++)
-                          Container(
-                            height: AppSizes.borderWidth,
-                            color: AppColors.surfaceBorder,
-                          ),
-                      ],
+                    Positioned.fill(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          for (var i = 0; i < ticks.length; i++)
+                            Container(
+                              height: AppSizes.borderWidth,
+                              color: AppColors.surfaceBorder,
+                            ),
+                        ],
+                      ),
                     ),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        for (var i = 0; i < load.length; i++)
-                          _Bar(
-                            fraction: (load[i].count / maxValue).clamp(0, 1),
-                            color: AppColors
-                                .chartBars[i % AppColors.chartBars.length],
-                          ),
-                      ],
+                    // Filled, not shrink-wrapped: a `FractionallySizedBox`
+                    // measures against the height it is given, so a Row that
+                    // sized itself to its tallest bar would scale every bar
+                    // against that instead of against the axis — and float the
+                    // whole set above the zero line.
+                    Positioned.fill(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          for (var i = 0; i < load.length; i++)
+                            _Bar(
+                              fraction: (load[i].count / maxValue).clamp(0, 1),
+                              color: AppColors
+                                  .chartBars[i % AppColors.chartBars.length],
+                            ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../../../../../core/routes/app_routes.dart';
+import '../../../../../../core/routes/home_for_role.dart';
 import '../../../../../../core/utils/app_navigator.dart';
 import '../../../auth/data/datasources/auth_local_data_source.dart';
 import '../../../auth/domain/repositories/auth_repository.dart';
@@ -8,7 +9,7 @@ import '../../../auth/domain/repositories/auth_repository.dart';
 /// Decides where the app opens.
 ///
 /// Order of precedence:
-/// 1. a restored session → straight to Home,
+/// 1. a restored session → straight to that account's own shell,
 /// 2. a first run → the location prompt,
 /// 3. otherwise → onboarding.
 class SplashController extends GetxController {
@@ -34,8 +35,11 @@ class SplashController extends GetxController {
   Future<void> _resolveDestination() async {
     await Future<void>.delayed(_minimumDisplay);
 
-    if (_repository.isSignedIn) {
-      AppNavigator.resetTo(AppRoutes.home);
+    final session = _repository.currentSession;
+    if (_repository.isSignedIn && session != null) {
+      // A practitioner reopening the app lands on their dashboard, not in the
+      // patient section — the same place signing in would have put them.
+      AppNavigator.resetTo(homeForRole(session.user.role));
       return;
     }
 

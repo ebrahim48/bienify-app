@@ -23,6 +23,8 @@ class StaticDoctorPracticeRepository implements DoctorPracticeRepository {
     totalPatients: DoctorPracticeData.totalPatients,
     load: List.of(DoctorPracticeData.weeklyLoad),
     visits: List.of(DoctorPracticeData.upcomingVisits),
+    consultationFee: 440,
+    currency: 'CAD',
   );
 
   @override

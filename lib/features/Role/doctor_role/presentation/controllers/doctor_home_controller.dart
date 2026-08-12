@@ -74,6 +74,10 @@ class DoctorHomeController extends GetxController {
   final RxString currency = DoctorPracticeData.currencies.first.obs;
   final RxString consultationFee = ''.obs;
 
+  /// Bumped when the fee lands, so the sheet's field is rebuilt against it —
+  /// it owns its text controller and seeds it once.
+  final RxInt feeGeneration = 0.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -91,6 +95,16 @@ class DoctorHomeController extends GetxController {
       visits.value = dashboard.visits;
       chartMax.value = dashboard.chartMax;
       stats.value = _statsFrom(dashboard);
+      // Set Fees opens on what the practice charges now, not on the design's
+      // placeholder — a sheet that shows $440 to a doctor charging $50 invites
+      // them to save a figure they never chose.
+      consultationFee.value = dashboard.consultationFee == 0
+          ? ''
+          : dashboard.consultationFee.toStringAsFixed(0);
+      currency.value = DoctorPracticeData.currencies.contains(dashboard.currency)
+          ? dashboard.currency
+          : DoctorPracticeData.currencies.first;
+      feeGeneration.value++;
     } on AppException catch (e) {
       error.value = e.message;
     } finally {

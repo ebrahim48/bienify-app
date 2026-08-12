@@ -1,5 +1,6 @@
 import 'age_range.dart';
 import 'gender.dart';
+import 'user_role.dart';
 
 /// A signed-in Bienify patient, independent of any API or storage shape.
 class UserEntity {
@@ -10,6 +11,7 @@ class UserEntity {
     this.phoneNumber,
     this.gender,
     this.ageRange,
+    this.role = UserRole.patient,
     this.isProfileComplete = false,
   });
 
@@ -23,6 +25,9 @@ class UserEntity {
   final Gender? gender;
   final AgeRange? ageRange;
 
+  /// Which shell this account lands in after signing in.
+  final UserRole role;
+
   /// False until both profile-setup steps have been submitted.
   final bool isProfileComplete;
 
@@ -33,6 +38,7 @@ class UserEntity {
     String? phoneNumber,
     Gender? gender,
     AgeRange? ageRange,
+    UserRole? role,
     bool? isProfileComplete,
   }) {
     return UserEntity(
@@ -42,6 +48,7 @@ class UserEntity {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       gender: gender ?? this.gender,
       ageRange: ageRange ?? this.ageRange,
+      role: role ?? this.role,
       isProfileComplete: isProfileComplete ?? this.isProfileComplete,
     );
   }
