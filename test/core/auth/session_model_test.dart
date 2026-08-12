@@ -58,20 +58,27 @@ void main() {
       expect(user.gender, Gender.male);
     });
 
-    test('a profile with a name and a gender counts as complete', () {
+    test('a named profile counts as complete', () {
       // The server has no `is_profile_complete` flag. Reading its absence as
-      // "incomplete" sent every signed-in patient back through profile setup.
+      // "incomplete" sent every signed-in user back through profile setup.
       final user = UserModel.fromJson(
         (loginResponse['user']! as Map).cast<String, dynamic>(),
       );
       expect(user.isProfileComplete, isTrue);
     });
 
-    test('a profile missing a gender is not complete', () {
+    test('a name alone is enough', () {
+      // The seeded doctor has a name and no gender. Demanding both sent them
+      // through the patient setup flow on every sign-in.
       final user = UserModel.fromJson(const {
         '_id': 'u1',
-        'profile': {'name': 'Pat Patient'},
+        'profile': {'name': 'Dr Dana Okafor'},
       });
+      expect(user.isProfileComplete, isTrue);
+    });
+
+    test('a profile with no name still needs setting up', () {
+      final user = UserModel.fromJson(const {'_id': 'u1', 'profile': {}});
       expect(user.isProfileComplete, isFalse);
     });
   });

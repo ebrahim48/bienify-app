@@ -40,11 +40,15 @@ class UserModel extends UserEntity {
       ageRange: AgeRange.fromLabel(
         (json['age_range'] ?? profile['ageRange']) as String?,
       ),
-      // The server has no such flag: a profile is complete once it carries the
-      // two things the setup screen collects.
+      // The server has no such flag, and this decides whether a sign-in lands
+      // on profile setup — so the bar is the one field the rest of the app
+      // needs to render a person. Gender and age are demographic detail the
+      // setup screen also collects; demanding them would send a practitioner
+      // whose profile carries only a name through the patient setup flow on
+      // every sign-in.
       isProfileComplete:
           json['is_profile_complete'] as bool? ??
-          (name != null && name.isNotEmpty && gender != null),
+          (name != null && name.isNotEmpty),
     );
   }
 
