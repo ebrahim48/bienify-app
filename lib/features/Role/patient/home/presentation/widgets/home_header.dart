@@ -8,6 +8,7 @@ import '../../../../../../core/theme/app_spacing.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/utils/responsive.dart';
 import '../../../../../../core/widgets/app_svg_icon.dart';
+import '../../../../../../core/widgets/app_avatar.dart';
 
 /// Home greeting bar: avatar, name over a tappable location, and the three
 /// header actions on the right.
@@ -16,6 +17,7 @@ class HomeHeader extends StatelessWidget {
     super.key,
     required this.name,
     required this.location,
+    this.photoUrl,
     required this.onProfileTap,
     required this.onLocationTap,
     required this.onCartTap,
@@ -24,6 +26,11 @@ class HomeHeader extends StatelessWidget {
   });
 
   final String name;
+
+  /// The patient's own picture. Null until the feed lands, and for an account
+  /// that has never set one.
+  final String? photoUrl;
+
   final String location;
   final VoidCallback onProfileTap;
   final VoidCallback onLocationTap;
@@ -41,9 +48,17 @@ class HomeHeader extends StatelessWidget {
       children: [
         GestureDetector(
           onTap: onProfileTap,
-          // `profile.svg` already ships as the finished 40pt avatar — navy
-          // disc and white figure — so it is drawn untinted and unwrapped.
-          child: AppSvgIcon(AppIcons.profile, size: _avatarSize),
+          // With a picture, the patient's own; without one, `profile.svg`
+          // already ships as the finished 40pt avatar — navy disc and white
+          // figure — so it is drawn untinted and unwrapped.
+          child: photoUrl == null
+              ? AppSvgIcon(AppIcons.profile, size: _avatarSize)
+              : AppAvatar(
+                  imageUrl: photoUrl,
+                  name: name,
+                  size: _avatarSize,
+                  fallbackAsset: null,
+                ),
         ),
         AppSpacing.gapH(AppSpacing.sm),
         Expanded(

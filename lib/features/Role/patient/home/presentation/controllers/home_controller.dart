@@ -32,6 +32,8 @@ class HomeController extends GetxController {
   // ─── Derived view state ──────────────────────────────────────────────────
 
   String get patientName => feed.value.patientName;
+
+  String? get patientPhotoUrl => feed.value.patientPhotoUrl;
   String get location => feed.value.location;
   List<LabRequest> get labRequests => feed.value.labRequests;
   List<Appointment> get upcomingAppointments => feed.value.upcomingAppointments;

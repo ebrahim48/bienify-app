@@ -302,7 +302,7 @@ class _CompletedCard extends StatelessWidget {
                       ),
                     ),
                     AppSpacing.gapH(AppSpacing.xs),
-                    _StatusPill(label: statusLabel),
+                    _StatusPill(label: statusLabel, state: appointment.filter),
                   ],
                 ),
                 Text(
@@ -365,29 +365,40 @@ class _CompletedCard extends StatelessWidget {
 /// Outlined green pill, unlike the filled status tags elsewhere — which is
 /// how the design distinguishes a settled consultation.
 class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.label});
+  const _StatusPill({required this.label, required this.state});
 
   final String label;
+  final DoctorApptFilter state;
+
+  /// Green reads as "went well", so only a completed consultation wears it —
+  /// a cancelled one used to, which said the opposite of what happened.
+  (Color, Color) get _tint => switch (state) {
+    DoctorApptFilter.completed => (
+      AppColors.completedSurface,
+      AppColors.completedInk,
+    ),
+    DoctorApptFilter.cancelled => (
+      AppColors.cancelledSurface,
+      AppColors.cancelledInk,
+    ),
+    DoctorApptFilter.fresh => (AppColors.freshSurface, AppColors.freshInk),
+  };
 
   @override
   Widget build(BuildContext context) {
+    final (surface, ink) = _tint;
+
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: AppSpacing.xs.w,
         vertical: AppSpacing.xxs.h,
       ),
       decoration: BoxDecoration(
-        color: AppColors.completedSurface,
+        color: surface,
         borderRadius: AppRadius.rFull,
-        border: Border.all(
-          color: AppColors.completedInk,
-          width: AppSizes.borderWidth,
-        ),
+        border: Border.all(color: ink, width: AppSizes.borderWidth),
       ),
-      child: Text(
-        label,
-        style: AppTextStyles.bodyMedium.rc(AppColors.completedInk),
-      ),
+      child: Text(label, style: AppTextStyles.bodyMedium.rc(ink)),
     );
   }
 }

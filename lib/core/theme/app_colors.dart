@@ -31,9 +31,9 @@ class AppColors {
   static const Color gray50 = Color(0xFFF8F4F5);
   static const Color gray100 = Color(0xFFE4E0E1);
   static const Color gray200 = Color(0xFFD2CCCD);
-  static const Color gray300 = Color(0xFFBFB8BA);
+  static const Color gray300 = Color(0xFFBFB9BA);
   static const Color gray400 = Color(0xFFADA6A6);
-  static const Color gray500 = Color(0xFF8D868A);
+  static const Color gray500 = Color(0xFF8D8586);
   static const Color gray600 = Color(0xFF6F6667);
   static const Color gray700 = Color(0xFF514949);
   static const Color gray800 = Color(0xFF352E2E);
@@ -43,11 +43,11 @@ class AppColors {
   // =========================
   // Stoplight (Error / Danger)
   // =========================
-  static const Color error50 = Color(0xFFFFDBC9);
+  static const Color error50 = Color(0xFFFFDBCF);
   static const Color error100 = Color(0xFFFFBEB1);
   static const Color error200 = Color(0xFFFF9C8E);
   static const Color error300 = Color(0xFFFF7A6B);
-  static const Color error400 = Color(0xFFF15448);
+  static const Color error400 = Color(0xFFEE5448);
   static const Color error500 = Color(0xFFE00E0E);
   static const Color error600 = Color(0xFFC60000);
   static const Color error700 = Color(0xFFA20000);
@@ -60,8 +60,8 @@ class AppColors {
   // =========================
   // Vegetarian (Success)
   // =========================
-  static const Color success50 = Color(0xFFC9F7BC);
-  static const Color success100 = Color(0xFFA8F3A1);
+  static const Color success50 = Color(0xFFC9FFC0);
+  static const Color success100 = Color(0xFFAAF3A1);
   static const Color success200 = Color(0xFF85DE79);
   static const Color success300 = Color(0xFF5DC94F);
   static const Color success400 = Color(0xFF28B405);
@@ -70,19 +70,19 @@ class AppColors {
   static const Color success700 = Color(0xFF005F00);
   static const Color success800 = Color(0xFF004100);
   static const Color success900 = Color(0xFF002400);
-  static const Color success950 = Color(0xFF001A00);
+  static const Color success950 = Color(0xFF000A00);
 
   static const Color success = success500;
 
   // =========================
   // Maizena (Warning)
   // =========================
-  static const Color warning50 = Color(0xFFFFF8A7);
-  static const Color warning100 = Color(0xFFFFEB61);
-  static const Color warning200 = Color(0xFFEED200);
+  static const Color warning50 = Color(0xFFFFFA87);
+  static const Color warning100 = Color(0xFFF6EB61);
+  static const Color warning200 = Color(0xFFDCCC00);
   static const Color warning300 = Color(0xFFC3AE00);
-  static const Color warning400 = Color(0xFFA88F00);
-  static const Color warning500 = Color(0xFF956D00);
+  static const Color warning400 = Color(0xFFAB8F00);
+  static const Color warning500 = Color(0xFF956F00);
   static const Color warning600 = Color(0xFF7E5000);
   static const Color warning700 = Color(0xFF633400);
   static const Color warning800 = Color(0xFF471B00);
@@ -376,6 +376,15 @@ class AppColors {
   /// The "Completed" pill on those cards is outlined, not filled.
   static const Color completedSurface = Color(0xFFF0FDF4);
   static const Color completedInk = Color(0xFF16A34A);
+
+  /// The same pill on a cancelled booking. Green is what the eye reads as
+  /// "went well", so a cancellation cannot borrow it.
+  static const Color cancelledSurface = Color(0xFFFEF2F2);
+  static const Color cancelledInk = logoutFill;
+
+  /// And on one still waiting to happen.
+  static const Color freshSurface = tagInfoSurface;
+  static const Color freshInk = primary700;
 
   /// Earning Withdraw's balance card runs this gradient corner to corner.
   static const List<Color> earningsGradient = [authInk, primary700];

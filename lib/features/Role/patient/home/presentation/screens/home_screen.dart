@@ -64,6 +64,7 @@ class HomeScreen extends GetView<HomeController> {
             AppSpacing.gapV(AppSpacing.xl),
             HomeHeader(
               name: controller.patientName,
+              photoUrl: controller.patientPhotoUrl,
               location: controller.location,
               onProfileTap: controller.openProfile,
               onLocationTap: controller.changeLocation,

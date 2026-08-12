@@ -10,6 +10,7 @@ class HomeFeed {
   const HomeFeed({
     required this.patientName,
     required this.location,
+    this.patientPhotoUrl,
     this.labRequests = const [],
     this.upcomingAppointments = const [],
     this.nearbyDoctors = const [],
@@ -21,6 +22,9 @@ class HomeFeed {
   const HomeFeed.empty() : this(patientName: '', location: '');
 
   final String patientName;
+
+  /// The signed-in patient's own picture, when the server has one.
+  final String? patientPhotoUrl;
 
   /// Human-readable place, e.g. `Los Angels, USA`.
   final String location;

@@ -1,3 +1,4 @@
+import '../constants/api_constants.dart';
 import '../../features/Role/doctor_role/domain/entities/doctor_practice.dart';
 import '../../features/Role/patient/appointments/domain/entities/appointment.dart';
 import '../../features/Role/patient/cash_payment_process/domain/entities/cash_payment.dart';
@@ -71,12 +72,20 @@ class Api {
     return str(profile['name'], str(user['name'], fallback));
   }
 
+  /// The photo out of a populated user reference, as something `Image.network`
+  /// can fetch.
+  ///
+  /// The server stores a path (`/static/avatars/patient.png`) rather than an
+  /// absolute URL, because the host it is reachable at differs by client — a
+  /// phone on the emulator talks to 10.0.2.2, a browser to localhost. So a
+  /// path is resolved against the base this client already uses.
   static String? avatarOf(dynamic userRef) {
     final profile = map(map(userRef)['profile']);
     final url =
         profile['avatarUrl'] ?? profile['photoUrl'] ?? profile['avatar'];
     final s = url?.toString();
-    return (s == null || s.isEmpty) ? null : s;
+    if (s == null || s.isEmpty) return null;
+    return s.startsWith('/') ? '${ApiConstants.baseUrl}$s' : s;
   }
 
   /// Money crosses the wire in minor units (integer cents) so no arithmetic
@@ -196,6 +205,9 @@ LabRequest labRequestFrom(Map<String, dynamic> json) {
 /// `GET /home/feed` — the whole patient home screen in one payload.
 HomeFeed homeFeedFrom(Map<String, dynamic> json) => HomeFeed(
   patientName: Api.str(json['patientName']),
+  patientPhotoUrl: Api.avatarOf({
+    'profile': {'avatarUrl': json['patientAvatarUrl']},
+  }),
   location: Api.str(json['location']),
   labRequests: Api.rows(json['labRequests']).map(labRequestFrom).toList(),
   upcomingAppointments: Api.rows(

@@ -119,6 +119,11 @@ void main() {
       'Out for delivery',
       'Delivered',
     ],
+    'patient appointments': [
+      'Upcoming Appointments',
+      'Past Appointments',
+      'Cancelled Appointments',
+    ],
     'order history': ['All', 'Delivered', 'Pending', 'Cancelled'],
     'results to review': ['Patients', 'Lab Orders', 'Radiology Orders'],
   };

@@ -3,6 +3,28 @@ import 'app_colors.dart';
 
 /// The complete Bienify type scale.
 ///
+/// Every style carries the design-system token it comes from, read off
+/// `Design System Color ,Font and BG/Text Styles.svg`. The names here are
+/// Material's because that is what `TextTheme` wants; the metrics are the
+/// design system's:
+///
+/// | here            | token             | size / line-height |
+/// |-----------------|-------------------|--------------------|
+/// | displayLarge    | Heading/H1        | 56 / 68            |
+/// | displayMedium   | Heading/H2        | 48 / 58            |
+/// | displaySmall    | Heading/H3        | 40 / 48            |
+/// | headlineLarge   | Heading/H4        | 32 / 38            |
+/// | headlineSmall   | Heading/H5        | 24 / 30            |
+/// | titleLarge      | Heading/H6        | 20 / 24            |
+/// | titleMedium     | Body/Body-1       | 18 / 28            |
+/// | titleSmall      | Body/Body-2       | 16 / 24            |
+/// | bodyLarge       | Body/Body-2       | 16 / 24            |
+/// | bodyMedium      | Body/Body-3       | 14 / 20            |
+/// | bodySmall       | Body/Body-4       | 12 / 16            |
+/// | labelLarge      | Body/Body-3       | 14 / 20            |
+/// | labelMedium     | Body/Body-4       | 12 / 16            |
+/// | labelSmall      | Caption/Caption-1 | 10 / 12            |
+///
 /// Sizes are declared in logical pixels at the 390×876 design size; screens
 /// scale them at build time with `.sp` (see `AppTextStylesX.r`), so a style is
 /// never redefined per-screen. If a screen needs a one-off tweak prefer
@@ -18,25 +40,31 @@ class AppTextStyles {
 
   static const TextStyle displayLarge = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 57,
+    // Heading/H1
+    fontSize: 56,
     fontWeight: FontWeight.w700,
-    height: 64 / 57,
+    height: 68 / 56,
+    letterSpacing: -0.5,
     color: AppColors.textPrimary,
   );
 
   static const TextStyle displayMedium = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 45,
+    // Heading/H2
+    fontSize: 48,
     fontWeight: FontWeight.w700,
-    height: 52 / 45,
+    height: 58 / 48,
+    letterSpacing: -0.4,
     color: AppColors.textPrimary,
   );
 
   static const TextStyle displaySmall = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 36,
+    // Heading/H3
+    fontSize: 40,
     fontWeight: FontWeight.w700,
-    height: 44 / 36,
+    height: 48 / 40,
+    letterSpacing: -0.3,
     color: AppColors.textPrimary,
   );
 
@@ -46,25 +74,36 @@ class AppTextStyles {
 
   static const TextStyle headlineLarge = TextStyle(
     fontFamily: fontFamily,
+    // Heading/H4
     fontSize: 32,
     fontWeight: FontWeight.w700,
-    height: 40 / 32,
+    height: 38 / 32,
+    letterSpacing: -0.2,
     color: AppColors.textPrimary,
   );
 
+  /// The one step with no design token behind it.
+  ///
+  /// The system jumps H4 (32) straight to H5 (24); this sits between them and
+  /// ten screens use it. Its metrics follow the ratio the neighbours set —
+  /// 1.19 at H4, 1.25 at H5 — rather than being invented, but a designer
+  /// should rule on whether it stays or the ten sites move to H4 or H5.
   static const TextStyle headlineMedium = TextStyle(
     fontFamily: fontFamily,
     fontSize: 28,
     fontWeight: FontWeight.w700,
-    height: 36 / 28,
+    height: 34 / 28,
+    letterSpacing: -0.18,
     color: AppColors.textPrimary,
   );
 
   static const TextStyle headlineSmall = TextStyle(
     fontFamily: fontFamily,
+    // Heading/H5
     fontSize: 24,
     fontWeight: FontWeight.w700,
-    height: 32 / 24,
+    height: 30 / 24,
+    letterSpacing: -0.15,
     color: AppColors.textPrimary,
   );
 
@@ -74,25 +113,28 @@ class AppTextStyles {
 
   static const TextStyle titleLarge = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 22,
+    // Heading/H6
+    fontSize: 20,
     fontWeight: FontWeight.w600,
-    height: 28 / 22,
+    height: 24 / 20,
     color: AppColors.textPrimary,
   );
 
   static const TextStyle titleMedium = TextStyle(
     fontFamily: fontFamily,
+    // Body/Body-1
     fontSize: 18,
     fontWeight: FontWeight.w600,
-    height: 24 / 18,
+    height: 28 / 18,
     color: AppColors.textPrimary,
   );
 
   static const TextStyle titleSmall = TextStyle(
     fontFamily: fontFamily,
+    // Body/Body-2
     fontSize: 16,
     fontWeight: FontWeight.w600,
-    height: 22 / 16,
+    height: 24 / 16,
     color: AppColors.textPrimary,
   );
 
@@ -102,6 +144,7 @@ class AppTextStyles {
 
   static const TextStyle bodyLarge = TextStyle(
     fontFamily: fontFamily,
+    // Body/Body-2
     fontSize: 16,
     fontWeight: FontWeight.w400,
     height: 24 / 16,
@@ -110,6 +153,7 @@ class AppTextStyles {
 
   static const TextStyle bodyMedium = TextStyle(
     fontFamily: fontFamily,
+    // Body/Body-3
     fontSize: 14,
     fontWeight: FontWeight.w400,
     height: 20 / 14,
@@ -118,9 +162,10 @@ class AppTextStyles {
 
   static const TextStyle bodySmall = TextStyle(
     fontFamily: fontFamily,
+    // Body/Body-4
     fontSize: 12,
     fontWeight: FontWeight.w400,
-    height: 18 / 12,
+    height: 16 / 12,
     color: AppColors.textSecondary,
   );
 
@@ -130,6 +175,7 @@ class AppTextStyles {
 
   static const TextStyle labelLarge = TextStyle(
     fontFamily: fontFamily,
+    // Body/Body-3
     fontSize: 14,
     fontWeight: FontWeight.w600,
     height: 20 / 14,
@@ -138,6 +184,7 @@ class AppTextStyles {
 
   static const TextStyle labelMedium = TextStyle(
     fontFamily: fontFamily,
+    // Body/Body-4
     fontSize: 12,
     fontWeight: FontWeight.w600,
     height: 16 / 12,
@@ -146,9 +193,10 @@ class AppTextStyles {
 
   static const TextStyle labelSmall = TextStyle(
     fontFamily: fontFamily,
+    // Caption/Caption-1
     fontSize: 10,
     fontWeight: FontWeight.w600,
-    height: 14 / 10,
+    height: 12 / 10,
     color: AppColors.textSecondary,
   );
 
