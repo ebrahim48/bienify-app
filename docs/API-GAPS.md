@@ -131,3 +131,18 @@ which does populate the patient, and takes the name from there — one extra
 request per load of that tab.
 
 **Fix:** `.populate('counterpartId', 'profile.name profile.avatarUrl')`.
+
+## A patient has no stored delivery address
+
+`POST /medicine-orders` takes a `deliveryAddress` string, but nothing stores
+one against the user, and there is no address book to read back. The design's
+Add Location dialog has no address input either — it presents the address as
+read-only text, as though a map picker had supplied it.
+
+**Where it shows:** the payment screen says "No delivery address yet" until
+one is saved, rather than pre-filling the design's "123 Main Street"; saving
+keeps it for the session only, and the dialog still shows the sample address
+because there is nothing to type into and nothing to read.
+
+**Fix:** an address on the user (or an addresses collection), plus a picker
+that can actually set one.

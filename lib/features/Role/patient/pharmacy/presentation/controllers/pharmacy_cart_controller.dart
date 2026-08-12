@@ -1,10 +1,13 @@
 import 'package:get/get.dart';
 
 import '../../../../../../core/exceptions/app_exceptions.dart';
+import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/routes/app_routes.dart';
+import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../../wallet/domain/repositories/wallet_repository.dart';
 import '../../data/static/pharmacy_mock_data.dart';
 import '../../domain/entities/pharmacy.dart';
+import '../../domain/repositories/pharmacy_repository.dart';
 
 /// Spans medicine selection, the cart, payment and the placed order.
 ///
@@ -12,10 +15,12 @@ import '../../domain/entities/pharmacy.dart';
 /// address all follow the patient across those screens. UI-only: totals are
 /// computed locally and no payment is taken.
 class PharmacyCartController extends GetxController {
-  PharmacyCartController({WalletRepository? wallet})
-    : _wallet = wallet ?? Get.find<WalletRepository>();
+  PharmacyCartController({WalletRepository? wallet, PharmacyRepository? pharmacy})
+    : _wallet = wallet ?? Get.find<WalletRepository>(),
+      _pharmacy = pharmacy ?? Get.find<PharmacyRepository>();
 
   final WalletRepository _wallet;
+  final PharmacyRepository _pharmacy;
 
   /// Which store is filling the script; drives which lines are available.
   final Rxn<PharmacyStore> store = Rxn<PharmacyStore>();
@@ -83,6 +88,7 @@ class PharmacyCartController extends GetxController {
       oldPrice: medicine.oldPrice,
       discountPercent: medicine.discountPercent,
       isAvailable: isAvailable,
+      pharmacyId: medicine.pharmacyId,
     );
   }
 
@@ -203,5 +209,54 @@ class PharmacyCartController extends GetxController {
 
   void proceedToPayment() => Get.toNamed<void>(AppRoutes.pharmacyPayment);
 
-  void placeOrder() => Get.offNamed<void>(AppRoutes.pharmacyOrder);
+  /// Files the order with the server, then shows its tracking screen.
+  ///
+  /// This used to navigate and nothing else: the patient saw "order placed"
+  /// over a server that had never heard of it, and the Orders list stayed
+  /// empty. `POST /medicine-orders` existed the whole time.
+  Future<void> placeOrder() async {
+    if (isPlacingOrder.value) return;
+
+    if (lines.isEmpty) {
+      AppSnackbar.info(AppStrings.cartIsEmpty.tr);
+      return;
+    }
+    if (!hasSavedAddress.value) {
+      AppSnackbar.info(AppStrings.addDeliveryAddressFirst.tr);
+      return;
+    }
+
+    // An order names one pharmacy. The chosen store wins when the basket came
+    // through Best Matches; otherwise it is the one stocking what is in it.
+    final pharmacyId =
+        store.value?.id ??
+        lines
+            .map((line) => line.medicine.pharmacyId)
+            .firstWhere((id) => id.isNotEmpty, orElse: () => '');
+    if (pharmacyId.isEmpty) {
+      AppSnackbar.error(AppStrings.somethingWentWrong.tr);
+      return;
+    }
+
+    isPlacingOrder.value = true;
+    try {
+      await _pharmacy.placeOrder(
+        pharmacyId: pharmacyId,
+        quantitiesByMedicineId: {
+          for (final line in lines) line.medicine.id: line.quantity,
+        },
+        deliveryAddress: '${address.value.line1}, ${address.value.line2}',
+      );
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    } finally {
+      isPlacingOrder.value = false;
+    }
+
+    Get.offNamed<void>(AppRoutes.pharmacyOrder);
+  }
+
+  /// Guards the button: an order that has been sent must not be sent twice.
+  final RxBool isPlacingOrder = false.obs;
 }

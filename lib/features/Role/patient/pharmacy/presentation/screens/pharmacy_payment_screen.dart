@@ -71,6 +71,7 @@ class PharmacyPaymentScreen extends GetView<PharmacyCartController> {
               label: AppStrings.placeOrder.trParams({
                 'amount': controller.totalLabel,
               }),
+              isEnabled: !controller.isPlacingOrder.value,
               onPressed: controller.placeOrder,
             ),
             AppSpacing.gapV(AppSpacing.xs),
@@ -111,11 +112,17 @@ class _OrderHeader extends StatelessWidget {
             child: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
+              // Without a pharmacy the line ended on a dangling "·" — a
+              // basket filled from the catalogue has not chosen one.
               child: Text(
-                AppStrings.orderHeadline.trParams({
-                  'count': '${controller.itemCount}',
-                  'store': controller.store.value?.name ?? '',
-                }),
+                controller.store.value == null
+                    ? AppStrings.medicinesInOrder.trParams({
+                        'count': '${controller.itemCount}',
+                      })
+                    : AppStrings.orderHeadline.trParams({
+                        'count': '${controller.itemCount}',
+                        'store': controller.store.value!.name,
+                      }),
                 maxLines: 1,
                 style: AppTextStyles.bodyLarge.rc(AppColors.gray900),
               ),
@@ -161,20 +168,32 @@ class _AddressCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  address.line1,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.titleSmall.rc(AppColors.gray900),
-                ),
-                Text(
-                  address.line2,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.bodyMedium.rc(AppColors.gray400),
-                ),
-              ],
+              // Until one has been saved there is no address to print: the
+              // card used to show the design's "123 Main Street" beside an
+              // "Add" link, which reads as an address the order will go to.
+              children: isEditing
+                  ? [
+                      Text(
+                        address.line1,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.titleSmall.rc(AppColors.gray900),
+                      ),
+                      Text(
+                        address.line2,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.bodyMedium.rc(AppColors.gray400),
+                      ),
+                    ]
+                  : [
+                      Text(
+                        AppStrings.noDeliveryAddress.tr,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.bodyLarge.rc(AppColors.gray500),
+                      ),
+                    ],
             ),
           ),
           AppSpacing.gapH(AppSpacing.xs),

@@ -332,6 +332,11 @@ class AppTranslations extends Translations {
 
     AppStrings.payment: 'Payment',
     AppStrings.orderHeadline: '@count medicines · @store',
+    AppStrings.medicinesInOrder: '@count medicines',
+    AppStrings.noDeliveryAddress: 'No delivery address yet',
+    AppStrings.addDeliveryAddressFirst: 'Add a delivery address first',
+    AppStrings.cartIsEmpty: 'Your basket is empty',
+    AppStrings.orderConfirmedRef: 'Confirmed @ref',
     AppStrings.deliveryAddress: 'DELIVERY ADDRESS',
     AppStrings.addLocation: 'Add Location',
     AppStrings.changeLocation: 'Change Location',
@@ -1261,6 +1266,11 @@ class AppTranslations extends Translations {
 
     AppStrings.payment: 'Pago',
     AppStrings.orderHeadline: '@count medicamentos · @store',
+    AppStrings.medicinesInOrder: '@count medicamentos',
+    AppStrings.noDeliveryAddress: 'Aún no hay dirección de entrega',
+    AppStrings.addDeliveryAddressFirst: 'Primero añade una dirección de entrega',
+    AppStrings.cartIsEmpty: 'Tu cesta está vacía',
+    AppStrings.orderConfirmedRef: 'Confirmado @ref',
     AppStrings.deliveryAddress: 'DIRECCIÓN DE ENTREGA',
     AppStrings.addLocation: 'Añadir dirección',
     AppStrings.changeLocation: 'Cambiar dirección',

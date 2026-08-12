@@ -36,6 +36,11 @@ class OrderStatusScreen extends GetView<OrderTrackingController> {
             _StagePanel(
               progress: controller.progress,
               currentIndex: controller.currentIndex,
+              // The heading names the stage the order is actually at. It was
+              // pinned to "Being Prepared", so an order still awaiting payment
+              // announced a pharmacist packing it.
+              title: controller.currentStep.title,
+              subtitle: controller.currentStep.subtitle,
               storeName: cart.store.value?.name ?? '',
               itemCount: cart.itemCount,
             ),
@@ -79,12 +84,16 @@ class _StagePanel extends StatelessWidget {
   const _StagePanel({
     required this.progress,
     required this.currentIndex,
+    required this.title,
+    required this.subtitle,
     required this.storeName,
     required this.itemCount,
   });
 
   final double progress;
   final int currentIndex;
+  final String title;
+  final String subtitle;
   final String storeName;
   final int itemCount;
 
@@ -119,16 +128,20 @@ class _StagePanel extends StatelessWidget {
           ),
           AppSpacing.gapV(AppSpacing.sm),
           Text(
-            AppStrings.beingPrepared.tr,
+            title,
             textAlign: TextAlign.center,
             style: AppTextStyles.headlineSmall.rc(AppColors.black),
           ),
           AppSpacing.gapV(AppSpacing.xs2),
           Text(
-            AppStrings.beingPreparedBody.trParams({
-              'store': storeName,
-              'count': '$itemCount',
-            }),
+            // The packing line only makes sense while it is being packed;
+            // every other stage says what that stage means.
+            currentIndex == 3
+                ? AppStrings.beingPreparedBody.trParams({
+                    'store': storeName,
+                    'count': '$itemCount',
+                  })
+                : subtitle,
             textAlign: TextAlign.center,
             style: AppTextStyles.bodyLarge.rc(AppColors.gray600),
           ),

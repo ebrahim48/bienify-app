@@ -286,6 +286,14 @@ void main() {
         // A zero price would put a free medicine in the basket and fail at the
         // till.
         expect(medicines.map((m) => m.price), everyElement(greaterThan(0)));
+        // An order names one pharmacy, and a basket built from the catalogue
+        // has not chosen a store — so each medicine has to say where it is
+        // stocked or the order cannot be addressed.
+        expect(
+          medicines.map((m) => m.pharmacyId),
+          everyElement(isNotEmpty),
+          reason: 'a catalogue basket is addressed from the medicine',
+        );
       });
     });
 

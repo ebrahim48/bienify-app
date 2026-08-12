@@ -17,10 +17,15 @@ class Medicine {
     this.packSize,
     this.discountPercent = 0,
     this.isAvailable = true,
+    this.pharmacyId = '',
   });
 
   final String id;
   final String name;
+
+  /// Which dispensary stocks it. An order names one pharmacy, so this is what
+  /// says where a basket built from the catalogue should be sent.
+  final String pharmacyId;
 
   /// e.g. `25mg`.
   final String dosage;

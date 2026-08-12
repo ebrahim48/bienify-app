@@ -276,6 +276,7 @@ Medicine medicineFrom(Map<String, dynamic> json) => Medicine(
   packSize: json['packSize'] == null ? null : Api.str(json['packSize']),
   // Out of stock is not the same as delisted; both make the row unbuyable.
   isAvailable: json['isActive'] != false && Api.integer(json['stock']) > 0,
+  pharmacyId: Api.id(json['pharmacyId']),
 );
 
 /// `GET /pharmacies`.

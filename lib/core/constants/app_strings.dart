@@ -328,6 +328,11 @@ class AppStrings {
 
   static const String payment = 'payment';
   static const String orderHeadline = 'order_headline';
+  static const String medicinesInOrder = 'medicines_in_order';
+  static const String noDeliveryAddress = 'no_delivery_address';
+  static const String addDeliveryAddressFirst = 'add_delivery_address_first';
+  static const String cartIsEmpty = 'cart_is_empty';
+  static const String orderConfirmedRef = 'order_confirmed_ref';
   static const String deliveryAddress = 'delivery_address';
   static const String addLocation = 'add_location';
   static const String changeLocation = 'change_location';
