@@ -16,13 +16,17 @@ class Practitioner {
     required this.initials,
     required this.availableBalance,
     this.currency = 'USD',
+    this.photoUrl,
     this.hasUnreadNotification = true,
   });
 
   final String name;
 
-  /// `AH` — drawn in the masthead disc.
+  /// `AH` — drawn in the masthead disc when there is no picture.
   final String initials;
+
+  /// The practitioner's own picture, when the server has one.
+  final String? photoUrl;
 
   final double availableBalance;
 
@@ -424,6 +428,14 @@ class TimeSlot {
   final int startMinute;
   final int endMinute;
 
+  /// `02-03 PM` for a whole hour, `12:00-12:30 AM` when either end is not on
+  /// one.
+  ///
+  /// Printing only the hour is what the design shows, and it reads correctly
+  /// for the hour-long slots it was drawn with. A practice on 30-minute slots
+  /// gets "12-12 AM" for 00:00–00:30 and "12-01 AM" for 00:30–01:00 — two
+  /// different half-hours that look like the same hour, and neither says which
+  /// half. So minutes appear as soon as they matter.
   static String _slotLabel(int start, int end) {
     String hh(int minutes) {
       final hour = (minutes ~/ 60) % 24;
@@ -431,8 +443,15 @@ class TimeSlot {
       return hour12.toString().padLeft(2, '0');
     }
 
+    String hhmm(int minutes) =>
+        '${hh(minutes)}:${(minutes % 60).toString().padLeft(2, '0')}';
+
     final period = (end ~/ 60) % 24 < 12 ? 'AM' : 'PM';
-    return '${hh(start)}-${hh(end)} $period';
+    final onTheHour = start % 60 == 0 && end % 60 == 0;
+
+    return onTheHour
+        ? '${hh(start)}-${hh(end)} $period'
+        : '${hhmm(start)}-${hhmm(end)} $period';
   }
 }
 

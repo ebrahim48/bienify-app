@@ -43,6 +43,7 @@ class ApiPharmacyShopRepository implements PharmacyShopRepository {
       country: city,
       address: address,
       licenceNumber: Api.str(pharmacy['licenseNumber']),
+      photoUrl: Api.avatarOf(user),
     );
   }
 

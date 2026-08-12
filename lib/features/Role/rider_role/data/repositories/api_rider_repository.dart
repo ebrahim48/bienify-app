@@ -43,6 +43,7 @@ class ApiRiderRepository implements RiderRepository {
       address: city,
       vehicleType: Api.str(profile['vehicleType'], 'motorbike'),
       licenceNumber: Api.str(profile['licenseNumber']),
+      photoUrl: Api.avatarOf(user),
     );
   }
 

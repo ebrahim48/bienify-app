@@ -29,6 +29,7 @@ class Rider {
     required this.address,
     this.vehicleType = 'motorbike',
     this.licenceNumber = '',
+    this.photoUrl,
   });
 
   final String name;
@@ -53,6 +54,9 @@ class Rider {
 
   final String licenceNumber;
 
+  /// The courier's own picture, when the server has one.
+  final String? photoUrl;
+
   /// `$21.75`.
   String get earningsLabel => '\$${todaysEarnings.toStringAsFixed(2)}';
 
@@ -72,6 +76,7 @@ class Rider {
     address: address,
     vehicleType: vehicleType,
     licenceNumber: licenceNumber,
+    photoUrl: photoUrl,
   );
 }
 

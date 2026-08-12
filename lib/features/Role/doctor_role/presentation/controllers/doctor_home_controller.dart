@@ -101,7 +101,8 @@ class DoctorHomeController extends GetxController {
       consultationFee.value = dashboard.consultationFee == 0
           ? ''
           : dashboard.consultationFee.toStringAsFixed(0);
-      currency.value = DoctorPracticeData.currencies.contains(dashboard.currency)
+      currency.value =
+          DoctorPracticeData.currencies.contains(dashboard.currency)
           ? dashboard.currency
           : DoctorPracticeData.currencies.first;
       feeGeneration.value++;

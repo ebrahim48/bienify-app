@@ -9,6 +9,7 @@ import 'package:bienify_app/core/network/api_client.dart';
 import 'package:bienify_app/core/network/token_store.dart';
 import 'package:bienify_app/core/network/mappers.dart';
 import 'package:bienify_app/features/Role/doctor_role/data/repositories/api_doctor_practice_repository.dart';
+import 'package:bienify_app/features/Role/patient/doctors/data/repositories/api_doctor_repository.dart';
 import 'package:bienify_app/features/Role/patient/chat/data/repositories/api_conversation_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -24,6 +25,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   late ApiDoctorPracticeRepository repository;
   late ApiConversationRepository conversations;
+  late ApiClient client;
   var up = false;
 
   setUpAll(() async {
@@ -42,7 +44,7 @@ void main() {
     if (!up) return;
 
     final store = MemoryTokenStore();
-    final client = ApiClient(tokens: store);
+    client = ApiClient(tokens: store);
     try {
       final data = await client.postMap(
         ApiConstants.postAuthLogin,
@@ -207,6 +209,41 @@ void main() {
       });
     });
 
+    test('saving the form keeps the practice searchable', () async {
+      if (!up) return;
+      await live(() async {
+        final before = await repository.profileDetails();
+
+        await repository.saveProfileDetails(
+          specialty: before.specialty,
+          experience: before.experience,
+          biography: 'Live check — searchability',
+          licenceNumber: before.licenceNumber,
+          language: before.language,
+        );
+
+        // The form shows one specialty and the practice holds a list. Sending
+        // only the chosen one deleted the rest, which the server reads as a
+        // credential change — so it reset the practice to `pending` and the
+        // doctor vanished from public search. Saving a biography must not do
+        // that.
+        final listed = await ApiDoctorRepository(client).search();
+        expect(
+          listed.map((d) => d.name),
+          contains(before.fullName),
+          reason: 'the practice dropped out of search after a profile save',
+        );
+
+        await repository.saveProfileDetails(
+          specialty: before.specialty,
+          experience: before.experience,
+          biography: before.biography,
+          licenceNumber: before.licenceNumber,
+          language: before.language,
+        );
+      });
+    });
+
     test('a changed biography leaves the fee alone', () async {
       if (!up) return;
       await live(() async {
@@ -242,7 +279,10 @@ void main() {
         final days = await repository.availability(DateTime.now());
 
         expect(days, hasLength(7));
-        expect(days.first.name, 'Monday');
+        // Seven days from the anchor, each named for the date it is — not
+        // rewound to a Monday, which is what put the wrong dates under the
+        // week the picker names.
+        expect(days.first.dayOfMonth, DateTime.now().day);
         // The seeded doctor is open every day, so an all-closed week means the
         // dayOfWeek convention was read the wrong way round.
         expect(days.where((d) => d.isOpen), isNotEmpty);
@@ -252,6 +292,49 @@ void main() {
         expect(
           open.slots.first.endMinute,
           greaterThan(open.slots.first.startMinute),
+        );
+      });
+    });
+
+    test('the strip runs from the day the picker names', () async {
+      if (!up) return;
+      await live(() async {
+        // The picker above names a range and the anchor is its first day. A
+        // rewind to that day's Monday put 6-12 under a strip labelled 12-18
+        // whenever the first day was not itself a Monday.
+        final sunday = DateTime(2026, 7, 12);
+        expect(sunday.weekday, DateTime.sunday);
+
+        final days = await repository.availability(sunday);
+        expect(days.first.dayOfMonth, 12);
+        expect(days.last.dayOfMonth, 18);
+        expect(days.first.name, 'Sunday');
+      });
+    });
+
+    test('a half-hour slot says which half', () async {
+      if (!up) return;
+      await live(() async {
+        final days = await repository.availability(DateTime.now());
+        final open = days.firstWhere((d) => d.isOpen);
+
+        // The seeded practice runs 30-minute slots. Printing only the hour
+        // gave 00:00-00:30 and 00:30-01:00 the labels "12-12 AM" and
+        // "12-01 AM" — indistinguishable, and neither says which half.
+        final half = open.slots.where(
+          (s) => s.startMinute % 60 != 0 || s.endMinute % 60 != 0,
+        );
+        for (final slot in half) {
+          expect(
+            slot.label,
+            contains(':'),
+            reason: 'a slot off the hour has to print its minutes',
+          );
+        }
+        expect(
+          open.slots.map((s) => s.label).toSet(),
+          hasLength(open.slots.length),
+          reason: 'two slots must never carry the same label',
         );
       });
     });

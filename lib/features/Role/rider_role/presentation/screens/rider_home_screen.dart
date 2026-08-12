@@ -11,7 +11,6 @@ import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/utils/responsive.dart';
 import '../../../../../core/widgets/app_card.dart';
 import '../../../../../core/widgets/app_scaffold.dart';
-import '../../data/static/rider_data.dart';
 import '../../domain/entities/rider.dart';
 import '../controllers/rider_home_controller.dart';
 import '../widgets/rider_widgets.dart';
@@ -28,10 +27,15 @@ class RiderHomeScreen extends GetView<RiderHomeController> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AppSpacing.gapV(AppSpacing.sm),
-          RiderMasthead(
-            name: RiderData.dashboardName,
-            location: RiderData.rider.location,
-            onNotifications: controller.openNotifications,
+          // The signed-in courier, not the design's sample one — this read
+          // `RiderData` long after the rest of the screen moved to the API.
+          Obx(
+            () => RiderMasthead(
+              name: controller.rider.value.name,
+              location: controller.rider.value.location,
+              photoUrl: controller.rider.value.photoUrl,
+              onNotifications: controller.openNotifications,
+            ),
           ),
           AppSpacing.gapV(AppSpacing.sm),
           Obx(() => _EarningsCard(rider: controller.rider.value)),

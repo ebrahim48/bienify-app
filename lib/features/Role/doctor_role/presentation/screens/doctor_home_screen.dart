@@ -10,6 +10,7 @@ import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/utils/responsive.dart';
 import '../../../../../core/widgets/app_card.dart';
+import '../../../../../core/widgets/app_avatar.dart';
 import '../../domain/entities/doctor_practice.dart';
 import '../controllers/doctor_home_controller.dart';
 import '../widgets/appointments_chart.dart';
@@ -119,19 +120,31 @@ class _Masthead extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Container(
-                    width: _avatar.w,
-                    height: _avatar.w,
-                    decoration: BoxDecoration(
-                      color: AppColors.doctorHeaderPanel,
-                      shape: BoxShape.circle,
+                  // The practitioner's own picture when the server has one;
+                  // their initials on the header's own tint when it does not.
+                  if (practitioner.photoUrl != null)
+                    AppAvatar(
+                      imageUrl: practitioner.photoUrl,
+                      name: practitioner.name,
+                      size: _avatar,
+                      fallbackAsset: null,
+                      backgroundColor: AppColors.doctorHeaderPanel,
+                      foregroundColor: AppColors.white,
+                    )
+                  else
+                    Container(
+                      width: _avatar.w,
+                      height: _avatar.w,
+                      decoration: BoxDecoration(
+                        color: AppColors.doctorHeaderPanel,
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        practitioner.initials,
+                        style: AppTextStyles.titleSmall.rc(AppColors.white),
+                      ),
                     ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      practitioner.initials,
-                      style: AppTextStyles.titleSmall.rc(AppColors.white),
-                    ),
-                  ),
                   AppSpacing.gapH(AppSpacing.sm),
                   Expanded(
                     child: Column(

@@ -10,6 +10,7 @@ import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/utils/responsive.dart';
 import '../../../../../core/widgets/app_card.dart';
+import '../../../../../core/widgets/app_avatar.dart';
 import '../../domain/entities/rider.dart';
 
 /// The pieces the courier's screens are assembled from.
@@ -22,10 +23,15 @@ class RiderMasthead extends StatelessWidget {
     required this.name,
     required this.location,
     required this.onNotifications,
+    this.photoUrl,
   });
 
   final String name;
   final String location;
+
+  /// The courier's own picture, when the server has one.
+  final String? photoUrl;
+
   final VoidCallback onNotifications;
 
   static const double _avatar = 40;
@@ -34,20 +40,30 @@ class RiderMasthead extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
-          width: _avatar.w,
-          height: _avatar.w,
-          decoration: const BoxDecoration(
-            color: AppColors.authInk,
-            shape: BoxShape.circle,
+        if (photoUrl != null)
+          AppAvatar(
+            imageUrl: photoUrl,
+            name: name,
+            size: _avatar,
+            fallbackAsset: null,
+            backgroundColor: AppColors.authInk,
+            foregroundColor: AppColors.white,
+          )
+        else
+          Container(
+            width: _avatar.w,
+            height: _avatar.w,
+            decoration: const BoxDecoration(
+              color: AppColors.authInk,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.person_rounded,
+              size: AppSizes.xl2.w,
+              color: AppColors.white,
+            ),
           ),
-          alignment: Alignment.center,
-          child: Icon(
-            Icons.person_rounded,
-            size: AppSizes.xl2.w,
-            color: AppColors.white,
-          ),
-        ),
         AppSpacing.gapH(AppSpacing.xs),
         Expanded(
           child: Column(

@@ -55,6 +55,7 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
         initials: initialsOf(name),
         availableBalance: Api.majorUnits(wallet['balanceMinor']),
         currency: currency,
+        photoUrl: Api.avatarOf(user),
       ),
       pendingRequests: '${Api.integer(appointments['upcoming'])}',
       todaysPatients: '${Api.rows(stats['todayVisits']).length}',
@@ -241,14 +242,50 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
     required String biography,
     required String licenceNumber,
     required String language,
-  }) => _upsertPractice({
-    if (specialty.isNotEmpty) 'specialties': [specialty],
-    if (language.isNotEmpty) 'languages': [language],
-    if (experience.isNotEmpty)
-      'yearsOfExperience': int.tryParse(experience.trim()) ?? 0,
-    if (biography.isNotEmpty) 'bio': biography,
-    if (licenceNumber.isNotEmpty) 'licenseNumber': licenceNumber,
-  });
+  }) async {
+    final current = await _api.getMap(ApiConstants.doctorsMe);
+
+    await _upsertPractice({
+      if (specialty.isNotEmpty)
+        'specialties': _withLeadingSpecialty(current, specialty),
+      if (language.isNotEmpty)
+        'languages': _withLeadingLanguage(current, language),
+      if (experience.isNotEmpty)
+        'yearsOfExperience': int.tryParse(experience.trim()) ?? 0,
+      if (biography.isNotEmpty) 'bio': biography,
+      if (licenceNumber.isNotEmpty) 'licenseNumber': licenceNumber,
+    }, current: current);
+  }
+
+  /// The chosen specialty at the head, with any others the practice already
+  /// holds kept behind it.
+  ///
+  /// The form shows one specialty and the server stores a list — the seeded
+  /// practice has two. Sending just the chosen one deletes the rest, and
+  /// because the server treats a changed specialty list as a credential
+  /// change, it also resets the practice to `pending` and drops it out of
+  /// public search. Saving a biography should not do that.
+  static List<String> _withLeadingSpecialty(
+    Map<String, dynamic> current,
+    String specialty,
+  ) {
+    final existing = current['specialties'];
+    final rest = existing is List
+        ? existing.map(Api.str).where((s) => s != specialty)
+        : const <String>[];
+    return [specialty, ...rest];
+  }
+
+  static List<String> _withLeadingLanguage(
+    Map<String, dynamic> current,
+    String language,
+  ) {
+    final existing = current['languages'];
+    final rest = existing is List
+        ? existing.map(Api.str).where((s) => s != language)
+        : const <String>[];
+    return [language, ...rest];
+  }
 
   @override
   Future<void> saveConsultationFee({
@@ -266,8 +303,11 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
   /// is given. Sending only the changed field is refused outright — which is
   /// what "Validation failed" on Set Fees was — and sending it without the
   /// rest would erase the rest.
-  Future<void> _upsertPractice(Map<String, dynamic> changes) async {
-    final current = await _api.getMap(ApiConstants.doctorsMe);
+  Future<void> _upsertPractice(
+    Map<String, dynamic> changes, {
+    Map<String, dynamic>? current,
+  }) async {
+    current ??= await _api.getMap(ApiConstants.doctorsMe);
 
     final specialties = current['specialties'];
     final languages = current['languages'];
@@ -302,11 +342,14 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
 
     // The server stores a weekly pattern, not dated days: one entry per
     // weekday it is open. The editor shows a specific week, so the pattern is
-    // laid over the seven dates around [anchor].
-    final monday = anchor.subtract(Duration(days: anchor.weekday - 1));
-
+    // laid over the seven dates from [anchor].
+    //
+    // Counted forward from the anchor rather than back to its Monday: the
+    // picker above names a range ("12-18") and the anchor is its first day, so
+    // rewinding to a Monday put 6-12 under a strip labelled 12-18 whenever
+    // that first day was not itself a Monday.
     return List.generate(7, (offset) {
-      final date = monday.add(Duration(days: offset));
+      final date = anchor.add(Duration(days: offset));
       // `DateTime.weekday` runs Monday 1..Sunday 7; the server runs Sunday 0.
       final dayOfWeek = date.weekday % 7;
       final open = windows
@@ -314,7 +357,9 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
           .toList();
 
       return ScheduleDay(
-        name: _weekdayNames[offset],
+        // Named for the date it actually is, not for its position in the
+        // strip — the week no longer necessarily starts on a Monday.
+        name: _weekdayNames[date.weekday - 1],
         dayOfMonth: date.day,
         dayOfWeek: dayOfWeek,
         isOpen: open.isNotEmpty,
@@ -404,9 +449,7 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
       _api.getList(ApiConstants.appointments, query: _asDoctor),
     ]);
 
-    final byAppointment = {
-      for (final row in results[1]) Api.id(row): row,
-    };
+    final byAppointment = {for (final row in results[1]) Api.id(row): row};
 
     return results[0].map((thread) {
       final appointmentId = Api.id(thread['appointmentId']);

@@ -30,6 +30,7 @@ class Shop {
     required this.country,
     required this.address,
     this.licenceNumber = '',
+    this.photoUrl,
   });
 
   /// `Aid Plus+`.
@@ -53,6 +54,9 @@ class Shop {
 
   /// `PH-DEMO-0001` — what the shop is licensed under.
   final String licenceNumber;
+
+  /// The owner's own picture, when the server has one.
+  final String? photoUrl;
 
   /// `$160`, whole units as the design prints it.
   String get balanceLabel => '\$${availableBalance.toStringAsFixed(0)}';

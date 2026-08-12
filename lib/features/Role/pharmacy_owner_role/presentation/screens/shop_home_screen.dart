@@ -10,6 +10,7 @@ import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/utils/responsive.dart';
 import '../../../../../core/widgets/app_scaffold.dart';
+import '../../../../../core/widgets/app_avatar.dart';
 import '../../data/static/pharmacy_shop_data.dart';
 import '../../domain/entities/pharmacy_shop.dart';
 import '../controllers/shop_home_controller.dart';
@@ -61,20 +62,32 @@ class _Masthead extends GetView<ShopHomeController> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
-          width: _avatar.w,
-          height: _avatar.w,
-          decoration: const BoxDecoration(
-            color: AppColors.authInk,
-            shape: BoxShape.circle,
+        // The owner's own picture when the server has one; the design's
+        // figure on its navy disc when it does not.
+        if (shop.photoUrl != null)
+          AppAvatar(
+            imageUrl: shop.photoUrl,
+            name: shop.ownerName,
+            size: _avatar,
+            fallbackAsset: null,
+            backgroundColor: AppColors.authInk,
+            foregroundColor: AppColors.white,
+          )
+        else
+          Container(
+            width: _avatar.w,
+            height: _avatar.w,
+            decoration: const BoxDecoration(
+              color: AppColors.authInk,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.person_rounded,
+              size: AppSizes.xl2.w,
+              color: AppColors.white,
+            ),
           ),
-          alignment: Alignment.center,
-          child: Icon(
-            Icons.person_rounded,
-            size: AppSizes.xl2.w,
-            color: AppColors.white,
-          ),
-        ),
         AppSpacing.gapH(AppSpacing.xs),
         Expanded(
           child: Column(
