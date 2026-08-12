@@ -6,6 +6,7 @@ import '../../features/Role/patient/home/domain/entities/lab_request.dart';
 import '../../features/Role/patient/medical_vault/domain/entities/medical_record.dart';
 import '../../features/Role/patient/pharmacy/domain/entities/pharmacy.dart';
 import '../../features/Role/pharmacy_owner_role/domain/entities/pharmacy_shop.dart';
+import '../../features/Role/rider_role/domain/entities/rider.dart';
 
 /// Turns backend documents into the entities the screens already render.
 ///
@@ -434,6 +435,85 @@ String relativeAge(DateTime at) {
     return '${gap.inHours} ${gap.inHours == 1 ? 'hour' : 'hours'} ago';
   }
   return '${gap.inDays} ${gap.inDays == 1 ? 'day' : 'days'} ago';
+}
+
+// ─── Rider ─────────────────────────────────────────────────────────────────
+
+/// `GET /deliveries/available` and `/riders/me/deliveries` — a job.
+///
+/// A delivery document carries an order id, two addresses and a status.
+/// It carries no fee, no line items, no distance and no customer, and neither
+/// list populates its references — so those fields come back empty and the
+/// card drops them. See `docs/API-GAPS.md`.
+DeliveryRequest deliveryRequestFrom(Map<String, dynamic> json) {
+  final orderId = Api.id(json['orderId']);
+  final status = Api.str(json['status']);
+
+  return DeliveryRequest(
+    id: Api.id(json),
+    code: 'ORD-${orderId.length >= 4 ? orderId.substring(orderId.length - 4) : orderId}'
+        .toUpperCase(),
+    fee: 0,
+    pickupName: Api.str(json['pickupAddress']),
+    customerName: Api.nameOf(json['patientId']),
+    customerAddress: Api.str(json['dropoffAddress']),
+    minutes: 0,
+    distanceKm: 0,
+    items: '',
+    tab: requestTabFrom(status),
+  );
+}
+
+/// The server's delivery states, collapsed to the three chips above the list.
+///
+/// A job the courier is carrying and one they have finished both sit under
+/// Accepted: the chips separate work they could take from work they took, not
+/// how far along it is.
+RequestTab requestTabFrom(String raw) => switch (raw) {
+  'assigned' || 'picked_up' || 'in_transit' || 'delivered' =>
+    RequestTab.accepted,
+  'failed' => RequestTab.cancelled,
+  _ => RequestTab.fresh,
+};
+
+/// A credited wallet transaction, as the courier's history lists it.
+DeliveryRecord deliveryRecordFrom(Map<String, dynamic> json) {
+  final at = Api.date(json['createdAt']);
+  final name = Api.str(json['description'], 'Delivery');
+  final reference = Api.id(json['referenceId']);
+
+  return DeliveryRecord(
+    customerName: name,
+    initials: initialsOf(name),
+    whenLabel: _whenLabel(at),
+    fee: Api.majorUnits(json['amountMinor']),
+    orderCode:
+        'ORD-${reference.length >= 4 ? reference.substring(reference.length - 4) : reference}'
+            .toUpperCase(),
+  );
+}
+
+/// `Today, 10:42 AM` for today, `12 Aug, 10:42 AM` otherwise.
+String _whenLabel(DateTime at) {
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  final now = DateTime.now();
+  final isToday =
+      at.year == now.year && at.month == now.month && at.day == now.day;
+  final day = isToday ? 'Today' : '${at.day} ${months[at.month - 1]}';
+  return '$day, ${_clockLabel(at)}';
 }
 
 /// `GET /vault` — a stored document.

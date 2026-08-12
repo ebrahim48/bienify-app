@@ -3,10 +3,12 @@ import 'dart:io';
 import 'package:get/get.dart';
 
 import '../../../../../core/constants/app_strings.dart';
+import '../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../core/widgets/app_snackbar.dart';
 import '../../data/static/rider_data.dart';
 import '../../domain/entities/rider.dart';
+import '../../domain/repositories/rider_repository.dart';
 
 /// Backs the five-step application behind Apply Now.
 ///
@@ -14,7 +16,18 @@ import '../../domain/entities/rider.dart';
 /// page with a different body and the same progress bar, so the step decides
 /// what is on it.
 class RiderApplicationController extends GetxController {
+  RiderApplicationController({RiderRepository? repository})
+    : _repository = repository ?? Get.find<RiderRepository>();
+
+  final RiderRepository _repository;
+
   static const int stepCount = 5;
+
+  final RxBool isSubmitting = false.obs;
+
+  /// The licence number the courier rides under. Plain string so the input
+  /// owns its text controller.
+  final RxString licenceNumber = ''.obs;
 
   final RxInt step = 0.obs;
 
@@ -104,5 +117,35 @@ class RiderApplicationController extends GetxController {
     return true;
   }
 
-  void submit() => Get.offNamed<void>(AppRoutes.riderReady);
+  /// Files the application.
+  ///
+  /// The photos are captured but not uploaded: `POST /riders/me/documents`
+  /// takes an S3 key, and the app has no route to the bucket yet. What the
+  /// profile can hold — the vehicle, the licence and the city — is sent, and
+  /// the courier is told the application is in.
+  Future<void> submit() async {
+    if (isSubmitting.value) return;
+    isSubmitting.value = true;
+    try {
+      await _repository.apply(
+        vehicleType: serverVehicleType(vehicle.value),
+        licenceNumber: licenceNumber.value.trim(),
+        city: city.value,
+      );
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    } finally {
+      isSubmitting.value = false;
+    }
+    Get.offNamed<void>(AppRoutes.riderReady);
+  }
+
+  /// The picker offers three vehicles and the server names four; `bike` is
+  /// its `motorbike`.
+  static String serverVehicleType(VehicleType value) => switch (value) {
+    VehicleType.bicycle => 'bicycle',
+    VehicleType.bike => 'motorbike',
+    VehicleType.car => 'car',
+  };
 }

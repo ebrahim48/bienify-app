@@ -155,16 +155,22 @@ class RiderData {
 
   // ─── The live job ────────────────────────────────────────────────────────
 
-  static ActiveDelivery activeDelivery() => ActiveDelivery(
-    roadName: 'Los Angels road',
-    arrivingAtLabel: '2:52 PM',
-    latestArrivalLabel: '3:15 PM',
-    stepsLeft: 3,
-    minutesAway: 15,
-    request: requests().first,
-    note: AppStrings.customerNote.tr,
-    unreadMessages: 1,
-  );
+  static ActiveDelivery activeDelivery() => activeDeliveryFor(requests().first);
+
+  /// The map's own figures — the road, the arrival window, how many turns are
+  /// left — come from a routing service the app does not have, so they stay
+  /// the design's. [request] is the real job they are wrapped around.
+  static ActiveDelivery activeDeliveryFor(DeliveryRequest request) =>
+      ActiveDelivery(
+        roadName: 'Los Angels road',
+        arrivingAtLabel: '2:52 PM',
+        latestArrivalLabel: '3:15 PM',
+        stepsLeft: 3,
+        minutesAway: 15,
+        request: request,
+        note: AppStrings.customerNote.tr,
+        unreadMessages: 1,
+      );
 
   static const DeliveryReceipt receipt = DeliveryReceipt(
     orderId: '#45892',

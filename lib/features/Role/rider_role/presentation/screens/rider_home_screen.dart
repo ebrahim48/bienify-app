@@ -45,13 +45,18 @@ class RiderHomeScreen extends GetView<RiderHomeController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: _QuickAction(
-                  emoji: '📦',
-                  label: AppStrings.viewOrders.tr,
-                  note: AppStrings.ordersAvailable.trParams({
-                    'count': '${controller.openRequests}',
-                  }),
-                  onTap: controller.openOrders,
+                // The count comes off the Orders tab's board, which loads on
+                // its own clock — so this repaints when the board lands rather
+                // than being fixed at whatever it was on first paint.
+                child: Obx(
+                  () => _QuickAction(
+                    emoji: '📦',
+                    label: AppStrings.viewOrders.tr,
+                    note: AppStrings.ordersAvailable.trParams({
+                      'count': '${controller.openRequests}',
+                    }),
+                    onTap: controller.openOrders,
+                  ),
                 ),
               ),
               AppSpacing.gapH(AppSpacing.sm),

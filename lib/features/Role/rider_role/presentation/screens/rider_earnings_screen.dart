@@ -22,8 +22,19 @@ class RiderEarningsScreen extends GetView<RiderProfileController> {
 
   @override
   Widget build(BuildContext context) {
-    final earnings = controller.earnings;
+    // Read inside the closure so the whole page repaints when the figures
+    // land; everything below gets plain values.
+    return Obx(() => _Body(earnings: controller.earnings.value));
+  }
+}
 
+class _Body extends StatelessWidget {
+  const _Body({required this.earnings});
+
+  final RiderEarnings earnings;
+
+  @override
+  Widget build(BuildContext context) {
     return AppScaffold(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

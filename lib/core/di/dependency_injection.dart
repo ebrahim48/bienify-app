@@ -36,6 +36,9 @@ import '../../features/Role/patient/home/domain/usecases/home_usecases.dart';
 import '../../features/Role/pharmacy_owner_role/data/repositories/api_pharmacy_shop_repository.dart';
 import '../../features/Role/pharmacy_owner_role/data/repositories/static_pharmacy_shop_repository.dart';
 import '../../features/Role/pharmacy_owner_role/domain/repositories/pharmacy_shop_repository.dart';
+import '../../features/Role/rider_role/data/repositories/api_rider_repository.dart';
+import '../../features/Role/rider_role/data/repositories/static_rider_repository.dart';
+import '../../features/Role/rider_role/domain/repositories/rider_repository.dart';
 import '../localization/localization_controller.dart';
 import '../network/api_client.dart';
 import '../network/bienify_api.dart';
@@ -120,6 +123,16 @@ class DependencyInjection {
     _registerVault(mock);
     _registerDoctorRole(mock);
     _registerShopRole(mock);
+    _registerRiderRole(mock);
+  }
+
+  static void _registerRiderRole(bool mock) {
+    Get.put<RiderRepository>(
+      mock
+          ? const StaticRiderRepository()
+          : ApiRiderRepository(Get.find<ApiClient>()),
+      permanent: true,
+    );
   }
 
   static void _registerDoctorRole(bool mock) {

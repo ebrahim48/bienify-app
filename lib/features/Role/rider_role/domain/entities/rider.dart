@@ -1,7 +1,8 @@
 /// Shapes behind the courier's section.
 ///
-/// **Names only, by design.** Like the other two roles this is UI-first: no
-/// repository, use case or data source sits under it and nothing calls an API.
+/// Served by `RiderRepository` — the API implementation reads them off
+/// `riders/me`, `deliveries` and `wallet`; the static one keeps the design's
+/// sample data for tests and for walking the app without a server.
 library;
 
 /// Which tab of the rider shell is showing.
@@ -26,6 +27,8 @@ class Rider {
     required this.country,
     required this.city,
     required this.address,
+    this.vehicleType = 'motorbike',
+    this.licenceNumber = '',
   });
 
   final String name;
@@ -45,11 +48,16 @@ class Rider {
   final String city;
   final String address;
 
+  /// `motorbike` — what the courier delivers on, as the server stores it.
+  final String vehicleType;
+
+  final String licenceNumber;
+
   /// `$21.75`.
   String get earningsLabel => '\$${todaysEarnings.toStringAsFixed(2)}';
 
-  /// `4.9`.
-  String get ratingLabel => rating.toStringAsFixed(1);
+  /// `4.9`, or a dash when nobody has rated the courier yet.
+  String get ratingLabel => rating <= 0 ? '—' : rating.toStringAsFixed(1);
 
   Rider copyWith({bool? isOnline}) => Rider(
     name: name,
@@ -62,6 +70,8 @@ class Rider {
     country: country,
     city: city,
     address: address,
+    vehicleType: vehicleType,
+    licenceNumber: licenceNumber,
   );
 }
 

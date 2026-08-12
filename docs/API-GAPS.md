@@ -46,3 +46,39 @@ a bug.
 
 **Fix:** an owner-scoped `GET /pharmacies/me/medicines` that returns both, or
 an `includeInactive` flag honoured only for the owning shop.
+
+## A delivery job carries almost nothing the courier needs
+
+A delivery document holds an order id, two addresses and a status. It holds no
+fee, no line items and no distance — and neither `GET /deliveries/available`
+nor `GET /riders/me/deliveries` populates its references, so there is no
+customer name either.
+
+**Where it shows:** every job card on the courier's board. The fee, the items
+and the distance come back empty and the card drops them; the pickup and
+dropoff addresses are the only real content on it.
+
+**Fix:** populate `patientId` and `orderId` on both lists, and carry a
+`feeMinor` on the delivery — the courier's pay is decided when the job is
+created, not when it is claimed.
+
+## The courier has no rating
+
+`IRiderProfile` keeps no rating, and `POST /reviews` accepts `subjectKind:
+'rider'` but nothing reads it back onto the profile. The dashboard prints a
+dash where the design has a score.
+
+**Fix:** the same `rating: { average, count }` shape the doctor profile
+already carries.
+
+## `requiresPrescription=false` returns exactly what it excludes
+
+`listMedicinesQuerySchema` coerces that filter with `z.coerce.boolean()`, and
+in JavaScript `Boolean("false")` is `true` — so the query string `false`
+becomes the filter `true`. `inStockOnly=false` has the same fault.
+
+**Where it shows:** nowhere in the app, which narrows those lists client-side.
+`test/live/live_rider_test.dart` does the same, and says why.
+
+**Fix:** a string-to-boolean preprocessor on both flags, e.g.
+`z.preprocess((v) => v === 'true' || v === true, z.boolean())`.

@@ -26,84 +26,99 @@ class RiderEditProfileScreen extends GetView<RiderProfileController> {
   Widget build(BuildContext context) {
     return AppScaffold(
       topBar: AppTopBar(title: AppStrings.editProfile.tr),
-      child: AutofillGroup(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AppSpacing.gapV(AppSpacing.xs),
-            RiderFieldLabel(AppStrings.fullName.tr),
-            AppTextField(
-              initialText: controller.fullName.value,
-              hint: AppStrings.fullName.tr,
-              textInputAction: TextInputAction.next,
-              onChanged: (value) => controller.fullName.value = value,
+      // Rebuilt when a load lands: the prefilled fields own their text
+      // controllers and seed them from [initialText] once, so a value that
+      // arrives after the first build only reaches them through a new key.
+      child: Obx(() => _Form(key: ValueKey(controller.formGeneration.value))),
+    );
+  }
+}
+
+class _Form extends GetView<RiderProfileController> {
+  const _Form({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AutofillGroup(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppSpacing.gapV(AppSpacing.xs),
+          RiderFieldLabel(AppStrings.fullName.tr),
+          AppTextField(
+            initialText: controller.fullName.value,
+            hint: AppStrings.fullName.tr,
+            textInputAction: TextInputAction.next,
+            onChanged: (value) => controller.fullName.value = value,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          RiderFieldLabel(AppStrings.email.tr),
+          AppTextField(
+            initialText: controller.email.value,
+            hint: AppStrings.emailHint.tr,
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.done,
+            autofillHints: const [AutofillHints.email],
+            onChanged: (value) => controller.email.value = value,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          RiderFieldLabel(AppStrings.country.tr),
+          Obx(
+            () => AppDropdownField(
+              value: controller.country.value,
+              options: RiderData.countries,
+              onChanged: controller.selectCountry,
             ),
-            AppSpacing.gapV(AppSpacing.sm),
-            RiderFieldLabel(AppStrings.email.tr),
-            AppTextField(
-              initialText: controller.email.value,
-              hint: AppStrings.emailHint.tr,
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.done,
-              autofillHints: const [AutofillHints.email],
-              onChanged: (value) => controller.email.value = value,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          RiderFieldLabel(AppStrings.city.tr),
+          Obx(
+            () => AppDropdownField(
+              value: controller.city.value,
+              options: RiderData.cities,
+              onChanged: controller.selectCity,
             ),
-            AppSpacing.gapV(AppSpacing.sm),
-            RiderFieldLabel(AppStrings.country.tr),
-            Obx(
-              () => AppDropdownField(
-                value: controller.country.value,
-                options: RiderData.countries,
-                onChanged: controller.selectCountry,
-              ),
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          RiderFieldLabel(AppStrings.locationLabel.tr),
+          _AddressBox(
+            initialText: controller.address.value,
+            onChanged: (value) => controller.address.value = value,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          RiderFieldLabel(AppStrings.preferredDeliveryZone.tr),
+          Obx(
+            () => AppDropdownField(
+              value: controller.zone.value,
+              options: RiderData.zones,
+              onChanged: controller.selectZone,
             ),
-            AppSpacing.gapV(AppSpacing.sm),
-            RiderFieldLabel(AppStrings.city.tr),
-            Obx(
-              () => AppDropdownField(
-                value: controller.city.value,
-                options: RiderData.cities,
-                onChanged: controller.selectCity,
-              ),
+          ),
+          AppSpacing.gapV(AppSpacing.xs),
+          Obx(
+            () => ZoneChips(
+              zones: controller.zones.toList(),
+              onRemove: controller.removeZone,
             ),
-            AppSpacing.gapV(AppSpacing.sm),
-            RiderFieldLabel(AppStrings.locationLabel.tr),
-            _AddressBox(
-              initialText: controller.address.value,
-              onChanged: (value) => controller.address.value = value,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          Obx(
+            () => RiderToggleRow(
+              label: AppStrings.liveLocationPermission.tr,
+              value: controller.gpsEnabled.value,
+              onChanged: controller.toggleGps,
             ),
-            AppSpacing.gapV(AppSpacing.sm),
-            RiderFieldLabel(AppStrings.preferredDeliveryZone.tr),
-            Obx(
-              () => AppDropdownField(
-                value: controller.zone.value,
-                options: RiderData.zones,
-                onChanged: controller.selectZone,
-              ),
-            ),
-            AppSpacing.gapV(AppSpacing.xs),
-            Obx(
-              () => ZoneChips(
-                zones: controller.zones.toList(),
-                onRemove: controller.removeZone,
-              ),
-            ),
-            AppSpacing.gapV(AppSpacing.sm),
-            Obx(
-              () => RiderToggleRow(
-                label: AppStrings.liveLocationPermission.tr,
-                value: controller.gpsEnabled.value,
-                onChanged: controller.toggleGps,
-              ),
-            ),
-            AppSpacing.gapV(AppSpacing.base),
-            AppButton(
+          ),
+          AppSpacing.gapV(AppSpacing.base),
+          Obx(
+            () => AppButton(
               label: AppStrings.updateShopInformation.tr,
+              isLoading: controller.isSubmitting.value,
               onPressed: controller.submit,
             ),
-            AppSpacing.gapV(AppSpacing.md),
-          ],
-        ),
+          ),
+          AppSpacing.gapV(AppSpacing.md),
+        ],
       ),
     );
   }

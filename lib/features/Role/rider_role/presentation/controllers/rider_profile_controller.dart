@@ -1,11 +1,14 @@
 import 'package:get/get.dart';
 
 import '../../../../../core/constants/app_strings.dart';
+import '../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../core/utils/app_navigator.dart';
 import '../../../../../core/widgets/app_snackbar.dart';
+import '../../../patient/auth/domain/usecases/email_auth_usecases.dart';
 import '../../data/static/rider_data.dart';
 import '../../domain/entities/rider.dart';
+import '../../domain/repositories/rider_repository.dart';
 
 /// Backs the courier's Profile tab, its edit form and the Earnings tab.
 ///
@@ -13,9 +16,70 @@ import '../../domain/entities/rider.dart';
 /// their money in the same wallet and reads the same legal pages, so they are
 /// navigated to rather than rebuilt.
 class RiderProfileController extends GetxController {
-  final Rx<Rider> rider = RiderData.rider.obs;
+  RiderProfileController({RiderRepository? repository, Logout? logout})
+    : _repository = repository ?? Get.find<RiderRepository>(),
+      _logout = logout ?? Get.find<Logout>();
 
-  RiderEarnings get earnings => RiderData.earnings;
+  final RiderRepository _repository;
+  final Logout _logout;
+
+  final Rx<Rider> rider = const Rider(
+    name: '',
+    location: '',
+    todaysEarnings: 0,
+    deliveriesToday: 0,
+    rating: 0,
+    isOnline: false,
+    email: '',
+    country: '',
+    city: '',
+    address: '',
+  ).obs;
+
+  /// Empty until the first load lands, so the Earnings tab does not print a
+  /// week the courier has not worked.
+  final Rx<RiderEarnings> earnings = const RiderEarnings(
+    today: 0,
+    todayCount: 0,
+    thisWeek: 0,
+    weekCount: 0,
+    payoutDay: 'Friday',
+    payoutMinimum: 0,
+    history: [],
+  ).obs;
+
+  final RxBool isLoading = true.obs;
+  final RxBool isSubmitting = false.obs;
+  final RxnString error = RxnString();
+
+  /// Bumped when a load lands, so the edit form's prefilled fields are rebuilt.
+  final RxInt formGeneration = 0.obs;
+
+  Future<void> load() async {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      final loaded = await _repository.rider();
+      rider.value = loaded;
+      earnings.value = await _repository.earnings();
+      fullName.value = loaded.name;
+      email.value = loaded.email;
+      // The pickers hold fixed lists and the server stores a free-text city,
+      // so a value they do not hold would break the dropdown.
+      country.value = RiderData.countries.contains(loaded.country)
+          ? loaded.country
+          : RiderData.countries.first;
+      city.value = RiderData.cities.contains(loaded.city)
+          ? loaded.city
+          : RiderData.cities.first;
+      address.value = loaded.address;
+      formGeneration.value++;
+    } on AppException catch (e) {
+      error.value = e.message;
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
   void openWallet() => Get.toNamed<void>(AppRoutes.wallet);
 
@@ -25,8 +89,15 @@ class RiderProfileController extends GetxController {
 
   void changePhoto() => edit();
 
-  void logOut() {
-    AppSnackbar.info(AppStrings.logOut.tr);
+  /// Clears the session before leaving, so the next sign-in does not inherit
+  /// this courier's tokens.
+  Future<void> logOut() async {
+    try {
+      await _logout();
+    } on AppException {
+      // A server that refuses the sign-out still has to let the courier leave;
+      // the local tokens are dropped either way.
+    }
     AppNavigator.resetTo(AppRoutes.onboarding);
   }
 
@@ -34,11 +105,11 @@ class RiderProfileController extends GetxController {
   //
   // Held as plain strings so the inputs own their text controllers.
 
-  final RxString fullName = RiderData.dashboardName.obs;
-  final RxString email = RiderData.rider.email.obs;
-  final RxString country = RiderData.rider.country.obs;
-  final RxString city = RiderData.rider.city.obs;
-  final RxString address = RiderData.rider.address.obs;
+  final RxString fullName = ''.obs;
+  final RxString email = ''.obs;
+  final RxString country = RiderData.countries.first.obs;
+  final RxString city = RiderData.cities.first.obs;
+  final RxString address = ''.obs;
   final RxString zone = RiderData.zones.first.obs;
   final RxList<String> zones = <String>[].obs;
   final RxBool gpsEnabled = true.obs;
@@ -47,6 +118,7 @@ class RiderProfileController extends GetxController {
   void onInit() {
     super.onInit();
     zones.value = List.of(RiderData.pickedZones);
+    load();
   }
 
   void selectCountry(String value) => country.value = value;
@@ -62,8 +134,23 @@ class RiderProfileController extends GetxController {
 
   void toggleGps(bool value) => gpsEnabled.value = value;
 
-  void submit() {
+  Future<void> submit() async {
+    if (isSubmitting.value) return;
+    isSubmitting.value = true;
+    try {
+      await _repository.saveProfile(
+        vehicleType: rider.value.vehicleType,
+        licenceNumber: rider.value.licenceNumber,
+        city: city.value,
+      );
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    } finally {
+      isSubmitting.value = false;
+    }
     AppSnackbar.success(AppStrings.shopUpdated.tr);
+    await load();
     Get.back<void>();
   }
 }
