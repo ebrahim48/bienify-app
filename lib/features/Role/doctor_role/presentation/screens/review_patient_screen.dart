@@ -50,6 +50,7 @@ class ReviewPatientScreen extends GetView<ResultsToReviewController> {
               subtitle: patient?.complaint ?? '',
               dateLabel: patient?.seenOnLabel ?? '',
               photoAsset: patient?.photoAsset,
+              photoUrl: patient?.photoUrl,
             );
           }),
           AppSpacing.gapV(AppSpacing.sm),

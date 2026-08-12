@@ -155,8 +155,8 @@ class DoctorProfileController extends GetxController {
     } finally {
       isSubmitting.value = false;
     }
-    AppSnackbar.success(AppStrings.profileSubmitted.tr);
     await load();
     Get.back<void>();
+    AppSnackbar.success(AppStrings.profileSubmitted.tr);
   }
 }

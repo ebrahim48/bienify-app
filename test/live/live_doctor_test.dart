@@ -162,6 +162,32 @@ void main() {
         expect(await repository.payoutAccounts(), isA<List<Object>>());
       });
     });
+
+    test('files a payout account and lists it back with its name', () async {
+      if (!up) return;
+      await live(() async {
+        // Nothing in the app created one before this, so Request Payout was a
+        // dead end: a withdrawal must name an account the server holds.
+        await repository.addPayoutAccount(
+          kind: 'bank',
+          displayName: 'Live Test Account',
+          accountNumber: '12345678',
+          bankName: 'Test Bank',
+        );
+
+        final accounts = await repository.payoutAccounts();
+        final filed = accounts.where(
+          (a) => a.label.startsWith('Live Test Account'),
+        );
+
+        expect(filed, isNotEmpty, reason: 'the account just filed comes back');
+        // The label used to read a bare "bank": the server sends
+        // `displayName`/`maskedNumber`, never the `last4` this once read.
+        expect(filed.first.label, 'Live Test Account ••••5678');
+        // One set of dots, not two — `maskedNumber` arrives already masked.
+        expect(filed.first.label, isNot(contains('•••• ••••')));
+      });
+    });
   });
 
   group('profile', () {

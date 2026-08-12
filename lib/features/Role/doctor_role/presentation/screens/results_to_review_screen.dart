@@ -100,6 +100,7 @@ class _PatientsPane extends GetView<ResultsToReviewController> {
                   subtitle: patient.code,
                   dateLabel: patient.seenOnLabel,
                   photoAsset: patient.photoAsset,
+                  photoUrl: patient.photoUrl,
                   onTap: () => controller.openPatient(patient),
                 ),
                 AppSpacing.gapV(AppSpacing.xs),

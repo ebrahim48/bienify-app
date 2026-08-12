@@ -30,6 +30,7 @@ class Rider {
     this.vehicleType = 'motorbike',
     this.licenceNumber = '',
     this.photoUrl,
+    this.phone = '',
   });
 
   final String name;
@@ -57,6 +58,9 @@ class Rider {
   /// The courier's own picture, when the server has one.
   final String? photoUrl;
 
+  /// `+15550000004` — what the Profile tab prints under the name.
+  final String phone;
+
   /// `$21.75`.
   String get earningsLabel => '\$${todaysEarnings.toStringAsFixed(2)}';
 
@@ -77,6 +81,7 @@ class Rider {
     vehicleType: vehicleType,
     licenceNumber: licenceNumber,
     photoUrl: photoUrl,
+    phone: phone,
   );
 }
 

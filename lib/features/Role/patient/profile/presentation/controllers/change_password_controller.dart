@@ -42,7 +42,7 @@ class ChangePasswordController extends GetxController
     });
 
     if (!ok) return;
-    AppSnackbar.success(AppStrings.passwordChanged.tr);
     Get.back<void>();
+    AppSnackbar.success(AppStrings.passwordChanged.tr);
   }
 }

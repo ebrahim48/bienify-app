@@ -270,7 +270,9 @@ void main() {
     Get.find<RiderShellController>().select(RiderTab.profile);
     await tester.pumpAndSettle();
 
-    expect(find.text('Mohammod Jakuan'), findsOneWidget);
+    // The signed-in courier, not the design's sample name — the card used to
+    // print `RiderData.profileName` whoever was logged in.
+    expect(find.text('Rider Arif'), findsOneWidget);
     expect(find.text('My Wallet'), findsOneWidget);
 
     await settleImages(tester);

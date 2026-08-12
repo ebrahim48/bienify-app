@@ -178,7 +178,7 @@ class DoctorScheduleController extends GetxController {
     } finally {
       isSaving.value = false;
     }
-    AppSnackbar.success(AppStrings.scheduleSaved.tr);
     Get.back<void>();
+    AppSnackbar.success(AppStrings.scheduleSaved.tr);
   }
 }

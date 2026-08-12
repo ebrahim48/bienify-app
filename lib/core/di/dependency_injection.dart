@@ -190,7 +190,7 @@ class DependencyInjection {
   static void _registerDoctorRole(bool mock) {
     Get.put<DoctorPracticeRepository>(
       mock
-          ? const StaticDoctorPracticeRepository()
+          ? StaticDoctorPracticeRepository()
           : ApiDoctorPracticeRepository(Get.find<ApiClient>()),
       permanent: true,
     );

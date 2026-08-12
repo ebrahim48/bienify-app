@@ -89,6 +89,7 @@ class _ThreadRow extends StatelessWidget {
       child: Row(
         children: [
           AppAvatar(
+            imageUrl: thread.photoUrl,
             name: thread.patientName,
             size: _avatar,
             fallbackAsset: thread.photoAsset,

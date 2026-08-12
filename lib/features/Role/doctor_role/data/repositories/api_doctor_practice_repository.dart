@@ -178,14 +178,40 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
   Future<List<PayoutAccount>> payoutAccounts() async {
     final rows = await _api.getList(ApiConstants.walletPayoutAccounts);
     return rows.map((json) {
-      final last4 = Api.str(json['last4']);
+      // The server stores `displayName` and `maskedNumber`; it has never sent
+      // a `last4`, which is what this read before — so every account listed as
+      // a bare "bank".
+      final name = Api.str(json['displayName']);
+      final masked = Api.str(json['maskedNumber']);
       final kind = Api.str(json['kind'], 'Account').replaceAll('_', ' ');
+      final title = name.isEmpty ? kind : name;
+      // `maskedNumber` arrives already masked (`••••5678`), so prefixing dots
+      // here would print two sets of them and ellipsize the name off the row.
       return PayoutAccount(
         id: Api.id(json),
-        label: last4.isEmpty ? kind : '$kind •••• $last4',
+        label: masked.isEmpty ? title : '$title $masked',
         isDefault: json['isDefault'] == true,
       );
     }).toList();
+  }
+
+  @override
+  Future<void> addPayoutAccount({
+    required String kind,
+    required String displayName,
+    required String accountNumber,
+    String? bankName,
+  }) async {
+    await _api.post(
+      ApiConstants.postWalletPayoutAccounts,
+      body: {
+        'kind': kind,
+        'displayName': displayName,
+        // The server keeps only the last four and discards the rest.
+        'accountNumber': accountNumber,
+        if (bankName != null && bankName.isNotEmpty) 'bankName': bankName,
+      },
+    );
   }
 
   @override
@@ -506,6 +532,7 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
         gender: '',
         complaint: Api.str(row['reason'], 'Consultation'),
         seenOn: seenOn,
+        photoUrl: Api.avatarOf(row['patientId']),
       );
     }
 

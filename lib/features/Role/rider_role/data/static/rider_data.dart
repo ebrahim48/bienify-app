@@ -30,7 +30,8 @@ class RiderData {
   /// The name the application form greets, which is the courier's first.
   static const String firstName = 'Arif';
 
-  /// Shown on the Profile tab.
+  /// What the Profile tab falls back to before the courier has loaded. The
+  /// card prints the signed-in courier once it has.
   static const String profileName = 'Mohammod Jakuan';
   static const String profilePhone = '+880 189* ****';
 

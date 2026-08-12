@@ -24,6 +24,18 @@ abstract class DoctorPracticeRepository {
 
   Future<List<PayoutAccount>> payoutAccounts();
 
+  /// Files the account a withdrawal can be paid into.
+  ///
+  /// Without this the payout flow is a dead end: a withdrawal must name an
+  /// account the server holds, and nothing else in the app creates one.
+  /// [kind] is `bank` or `mobile_money`, as the server names them.
+  Future<void> addPayoutAccount({
+    required String kind,
+    required String displayName,
+    required String accountNumber,
+    String? bankName,
+  });
+
   /// [amount] is in major units; the server is told minor units.
   Future<void> requestWithdrawal({
     required double amount,

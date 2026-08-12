@@ -12,7 +12,9 @@ import '../static/doctor_practice_data.dart';
 /// happens to be in its database that day. Writes are accepted and dropped —
 /// the screens already show their own confirmation.
 class StaticDoctorPracticeRepository implements DoctorPracticeRepository {
-  const StaticDoctorPracticeRepository();
+  // Not `const`: payout accounts filed offline are held here, so the payout
+  // dialog can be walked end to end without a server.
+  StaticDoctorPracticeRepository();
 
   @override
   Future<DoctorDashboard> dashboard() async => DoctorDashboard(
@@ -50,7 +52,30 @@ class StaticDoctorPracticeRepository implements DoctorPracticeRepository {
   );
 
   @override
-  Future<List<PayoutAccount>> payoutAccounts() async => const [];
+  Future<List<PayoutAccount>> payoutAccounts() async => _accounts;
+
+  /// Grows as the offline app files accounts, so the payout dialog can be
+  /// walked end to end without a server.
+  final List<PayoutAccount> _accounts = [];
+
+  @override
+  Future<void> addPayoutAccount({
+    required String kind,
+    required String displayName,
+    required String accountNumber,
+    String? bankName,
+  }) async {
+    final masked = accountNumber.length <= 4
+        ? accountNumber
+        : accountNumber.substring(accountNumber.length - 4);
+    _accounts.add(
+      PayoutAccount(
+        id: 'payout-${_accounts.length + 1}',
+        label: '$displayName •••• $masked',
+        isDefault: _accounts.isEmpty,
+      ),
+    );
+  }
 
   @override
   Future<void> requestWithdrawal({

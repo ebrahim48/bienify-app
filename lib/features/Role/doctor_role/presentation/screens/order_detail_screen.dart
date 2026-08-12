@@ -15,6 +15,7 @@ import '../../../../../core/widgets/app_scaffold.dart';
 import '../../domain/entities/test_request.dart';
 import '../controllers/results_to_review_controller.dart';
 import '../widgets/order_tracker.dart';
+import '../widgets/patient_row_card.dart';
 
 /// One order, from what was asked for to what came back.
 ///
@@ -152,33 +153,17 @@ class _PatientCard extends StatelessWidget {
 
   final TestRequest request;
 
-  static const double _photo = 46;
-
   @override
   Widget build(BuildContext context) {
-    final photo = request.patient.photoAsset;
-
     return AppCard(
       hasShadow: false,
       borderColor: AppColors.transparent,
       padding: EdgeInsets.all(AppSpacing.sm.w),
       child: Row(
         children: [
-          Container(
-            width: _photo.w,
-            height: _photo.w,
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              color: AppColors.chipSurface,
-              borderRadius: AppRadius.rXl,
-            ),
-            child: photo == null
-                ? Icon(
-                    Icons.person_rounded,
-                    size: _photo.w * 0.55,
-                    color: AppColors.gray500,
-                  )
-                : Image.asset(photo, fit: BoxFit.cover),
+          PatientPhoto(
+            asset: request.patient.photoAsset,
+            url: request.patient.photoUrl,
           ),
           AppSpacing.gapH(AppSpacing.sm),
           Expanded(

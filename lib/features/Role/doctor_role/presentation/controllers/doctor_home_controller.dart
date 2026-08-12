@@ -153,8 +153,8 @@ class DoctorHomeController extends GetxController {
       AppSnackbar.error(e.message);
       return;
     }
-    AppSnackbar.success(AppStrings.consultationFeeSaved.tr);
     Get.back<void>();
+    AppSnackbar.success(AppStrings.consultationFeeSaved.tr);
   }
 
   /// Leaving the practitioner role returns to the patient app.

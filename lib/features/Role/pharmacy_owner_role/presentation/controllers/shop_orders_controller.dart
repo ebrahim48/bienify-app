@@ -106,7 +106,7 @@ class ShopOrdersController extends GetxController {
     final index = orders.indexWhere((o) => o.id == order.id);
     if (index != -1) orders[index] = moved;
 
-    AppSnackbar.success(message.tr);
     Get.back<void>();
+    AppSnackbar.success(message.tr);
   }
 }

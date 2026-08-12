@@ -34,12 +34,18 @@ class RiderProfileScreen extends GetView<RiderProfileController> {
             style: AppTextStyles.headlineLarge.rc(AppColors.authInk),
           ),
           AppSpacing.gapV(AppSpacing.sm),
-          RoleProfileCard(
-            name: RiderData.profileName,
-            phone: RiderData.profilePhone,
-            onEdit: controller.edit,
-            onChangePhoto: controller.changePhoto,
-          ),
+          // The signed-in courier, not the design's sample one — this read
+          // `RiderData` long after the rest of the tab moved to the API.
+          Obx(() {
+            final rider = controller.rider.value;
+            return RoleProfileCard(
+              name: rider.name.isEmpty ? RiderData.profileName : rider.name,
+              phone: rider.phone.isEmpty ? RiderData.profilePhone : rider.phone,
+              photoUrl: rider.photoUrl,
+              onEdit: controller.edit,
+              onChangePhoto: controller.changePhoto,
+            );
+          }),
           AppSpacing.gapV(AppSpacing.sm),
           // My Wallet and Settings are the patient app's own screens — a
           // courier keeps their money in the same wallet and reads the same

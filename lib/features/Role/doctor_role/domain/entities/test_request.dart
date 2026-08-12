@@ -45,6 +45,7 @@ class ReviewPatient {
     required this.complaint,
     required this.seenOn,
     this.photoAsset,
+    this.photoUrl,
   });
 
   final String id;
@@ -64,8 +65,19 @@ class ReviewPatient {
   final DateTime seenOn;
   final String? photoAsset;
 
-  /// `34 • Female`.
-  String get ageGenderLine => '$age • $gender';
+  /// The patient's own picture off the server, when there is one. It wins over
+  /// [photoAsset], which is only the bundled stand-in.
+  final String? photoUrl;
+
+  /// `34 • Female`, dropping whichever half the server has not got.
+  ///
+  /// An appointment carries the patient's name and picture but neither their
+  /// age nor their sex, so a line that always printed both read "0 • " on real
+  /// data. See docs/API-GAPS.md.
+  String get ageGenderLine => [
+    if (age > 0) '$age',
+    if (gender.isNotEmpty) gender,
+  ].join(' • ');
 
   /// `Jul 12, 2026`, hand-formatted like every other date in the app.
   String get seenOnLabel {

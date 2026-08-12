@@ -203,7 +203,10 @@ void main() {
     controller.next();
     await tester.pumpAndSettle();
     expect(controller.step.value, 2);
-    expect(find.text('Submit imaging Order'), findsOneWidget);
+    // A lab order says lab: one screen serves both kinds, and the submit
+    // label used to read "Submit imaging Order" whichever was being ordered.
+    expect(find.text('Submit lab Order'), findsOneWidget);
+    expect(find.text('Submit imaging Order'), findsNothing);
 
     await settleImages(tester);
     await expectLater(
@@ -304,6 +307,8 @@ void main() {
     controller.next();
     await tester.pumpAndSettle();
     expect(find.text('Review and Submit'), findsOneWidget);
+    // The other half of the pair: imaging keeps the imaging wording.
+    expect(find.text('Submit imaging Order'), findsOneWidget);
 
     await settleImages(tester);
     await expectLater(

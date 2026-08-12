@@ -17,6 +17,7 @@ import '../../../../../core/widgets/app_text_field.dart';
 import '../../../../../core/widgets/blurred_dialog.dart';
 import '../../domain/entities/doctor_practice.dart';
 import '../controllers/earnings_controller.dart';
+import 'add_payout_account_dialog.dart';
 
 /// "Request Payout" over a blurred Earning Withdraw.
 ///
@@ -83,15 +84,14 @@ class RequestPayoutDialog extends GetView<EarningsController> {
             child: SingleChildScrollView(
               child: Obx(() {
                 final accounts = controller.accounts.toList();
-                if (accounts.isEmpty) {
-                  return Text(
-                    AppStrings.noPayoutAccount.tr,
-                    style: AppTextStyles.bodyLarge.rc(AppColors.gray500),
-                  );
-                }
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (accounts.isEmpty)
+                      Text(
+                        AppStrings.noPayoutAccount.tr,
+                        style: AppTextStyles.bodyLarge.rc(AppColors.gray500),
+                      ),
                     for (var index = 0; index < accounts.length; index++) ...[
                       _AccountTile(
                         account: accounts[index],
@@ -101,6 +101,16 @@ class RequestPayoutDialog extends GetView<EarningsController> {
                       ),
                       AppSpacing.gapV(AppSpacing.xs),
                     ],
+                    AppSpacing.gapV(AppSpacing.xs),
+                    // Without this the dialog is a dead end for a doctor who
+                    // has never been paid: the wallet's Add Account files a
+                    // card to pay with, not an account to be paid into.
+                    AppButton(
+                      label: AppStrings.addPayoutAccount.tr,
+                      variant: AppButtonVariant.outlined,
+                      radius: AppRadius.lg,
+                      onPressed: () => AddPayoutAccountDialog.show(context),
+                    ),
                   ],
                 );
               }),
@@ -123,10 +133,13 @@ class RequestPayoutDialog extends GetView<EarningsController> {
               AppSpacing.gapH(AppSpacing.sm),
               Expanded(
                 flex: 3,
-                child: AppButton(
-                  label: AppStrings.requestPayout.tr,
-                  radius: AppRadius.lg,
-                  onPressed: controller.requestPayout,
+                child: Obx(
+                  () => AppButton(
+                    label: AppStrings.requestPayout.tr,
+                    radius: AppRadius.lg,
+                    isEnabled: !controller.isRequestingPayout.value,
+                    onPressed: controller.requestPayout,
+                  ),
                 ),
               ),
             ],

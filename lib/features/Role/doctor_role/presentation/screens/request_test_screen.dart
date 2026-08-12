@@ -60,8 +60,12 @@ class RequestTestScreen extends GetView<TestRequestController> {
             ..._step(context),
             AppSpacing.gapV(AppSpacing.base),
             AppButton(
+              // One screen serves both kinds, so the submit label has to follow
+              // the kind — a lab order used to end on "Submit imaging Order".
               label: controller.isLastStep
-                  ? AppStrings.submitImagingOrder.tr
+                  ? (controller.isRadiology
+                        ? AppStrings.submitImagingOrder.tr
+                        : AppStrings.submitLabOrder.tr)
                   : AppStrings.next.tr,
               radius: AppRadius.xl,
               isEnabled: controller.canContinue,

@@ -13,6 +13,16 @@ import '../theme/app_text_styles.dart';
 /// AppSnackbar.success(AppStrings.otpResent.tr);
 /// AppSnackbar.error(AppStrings.somethingWentWrong.tr);
 /// ```
+///
+/// **Leave the screen first, then report.** GetX shows a snackbar as a route,
+/// and `Get.back()` with one open closes the snackbar rather than the screen
+/// — which left the payout dialog up over a withdrawal the server had already
+/// taken, inviting a second tap that would file it twice. Write:
+///
+/// ```dart
+/// Get.back<void>();
+/// AppSnackbar.success(AppStrings.saved.tr);
+/// ```
 class AppSnackbar {
   AppSnackbar._();
 

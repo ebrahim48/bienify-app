@@ -37,6 +37,7 @@ class ShopProfileScreen extends GetView<ShopProfileController> {
             () => RoleProfileCard(
               name: controller.shop.value.ownerName,
               phone: controller.shop.value.phone,
+              photoUrl: controller.shop.value.photoUrl,
               onEdit: controller.edit,
               onChangePhoto: controller.changePhoto,
             ),

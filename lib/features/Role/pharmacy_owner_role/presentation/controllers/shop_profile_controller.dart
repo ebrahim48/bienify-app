@@ -130,8 +130,8 @@ class ShopProfileController extends GetxController {
     } finally {
       isSubmitting.value = false;
     }
-    AppSnackbar.success(AppStrings.shopUpdated.tr);
     await load();
     Get.back<void>();
+    AppSnackbar.success(AppStrings.shopUpdated.tr);
   }
 }

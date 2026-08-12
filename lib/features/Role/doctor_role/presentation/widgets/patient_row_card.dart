@@ -1,5 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
@@ -20,6 +22,7 @@ class PatientRowCard extends StatelessWidget {
     required this.subtitle,
     required this.dateLabel,
     this.photoAsset,
+    this.photoUrl,
     this.onTap,
   });
 
@@ -30,11 +33,15 @@ class PatientRowCard extends StatelessWidget {
 
   final String dateLabel;
   final String? photoAsset;
+
+  /// The patient's picture off the server, preferred over [photoAsset].
+  final String? photoUrl;
+
   final VoidCallback? onTap;
 
-  /// A rounded square, not the circular [AppAvatar] the rest of the app uses —
+  /// A rounded square, not the circular `AppAvatar` the rest of the app uses —
   /// these designs crop the photo square.
-  static const double _photo = 46;
+  static const double photoSide = 46;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +55,7 @@ class PatientRowCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _Photo(asset: photoAsset),
+          PatientPhoto(asset: photoAsset, url: photoUrl),
           AppSpacing.gapH(AppSpacing.sm),
           Expanded(
             child: Column(
@@ -82,14 +89,21 @@ class PatientRowCard extends StatelessWidget {
   }
 }
 
-class _Photo extends StatelessWidget {
-  const _Photo({this.asset});
+/// The rounded-square patient photo, shared by the row card and the order
+/// detail's own patient panel.
+///
+/// Server picture → bundled [asset] → generic glyph, the same chain
+/// [AppAvatar] walks. Every seeded account carries a `profile.avatarUrl`, so
+/// on real data this reaches the first rung.
+class PatientPhoto extends StatelessWidget {
+  const PatientPhoto({super.key, this.asset, this.url});
 
   final String? asset;
+  final String? url;
 
   @override
   Widget build(BuildContext context) {
-    final side = PatientRowCard._photo.w;
+    final side = PatientRowCard.photoSide.w;
 
     return Container(
       width: side,
@@ -99,21 +113,45 @@ class _Photo extends StatelessWidget {
         color: AppColors.chipSurface,
         borderRadius: AppRadius.rXl,
       ),
-      child: asset == null
-          ? Icon(
-              Icons.person_rounded,
-              size: side * 0.55,
-              color: AppColors.gray500,
-            )
-          : Image.asset(
-              asset!,
-              fit: BoxFit.cover,
-              errorBuilder: (context, _, _) => Icon(
-                Icons.person_rounded,
-                size: side * 0.55,
-                color: AppColors.gray500,
-              ),
-            ),
+      child: _image(side),
     );
   }
+
+  Widget _image(double side) {
+    final photo = url;
+    if (photo != null && photo.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: photo,
+        fit: BoxFit.cover,
+        width: side,
+        height: side,
+        placeholder: (context, _) => Shimmer.fromColors(
+          baseColor: AppColors.gray100,
+          highlightColor: AppColors.gray50,
+          child: ColoredBox(color: AppColors.gray100),
+        ),
+        errorWidget: (context, _, _) => _fallback(side),
+      );
+    }
+    return _fallback(side);
+  }
+
+  Widget _fallback(double side) {
+    final bundled = asset;
+    if (bundled == null) return _glyph(side);
+
+    return Image.asset(
+      bundled,
+      fit: BoxFit.cover,
+      width: side,
+      height: side,
+      errorBuilder: (context, _, _) => _glyph(side),
+    );
+  }
+
+  Widget _glyph(double side) => Icon(
+    Icons.person_rounded,
+    size: side * 0.55,
+    color: AppColors.gray500,
+  );
 }

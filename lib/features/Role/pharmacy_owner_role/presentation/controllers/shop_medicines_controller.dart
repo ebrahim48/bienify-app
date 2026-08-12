@@ -188,7 +188,7 @@ class ShopMedicinesController extends GetxController {
       isSubmitting.value = false;
     }
 
-    AppSnackbar.success(AppStrings.medicineSaved.tr);
     Get.back<void>();
+    AppSnackbar.success(AppStrings.medicineSaved.tr);
   }
 }

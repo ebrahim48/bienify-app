@@ -565,6 +565,14 @@ class AppStrings {
   static const String testNeedsPatient = 'test_needs_patient';
   static const String selectPayoutMethod = 'select_payout_method';
   static const String payoutRequested = 'payout_requested';
+  static const String addPayoutAccount = 'add_payout_account';
+  static const String payoutAccountAdded = 'payout_account_added';
+  static const String payoutAccountNeedsDetails = 'payout_account_needs_details';
+  static const String payoutKindBank = 'payout_kind_bank';
+  static const String payoutKindMobileMoney = 'payout_kind_mobile_money';
+  static const String payoutAccountName = 'payout_account_name';
+  static const String payoutAccountNumber = 'payout_account_number';
+  static const String payoutBankName = 'payout_bank_name';
   static const String completed = 'completed';
   static const String editProfile = 'edit_profile';
   static const String fullName = 'full_name';
@@ -685,6 +693,7 @@ class AppStrings {
   static const String priorityUrgent = 'priority_urgent';
   static const String priorityStat = 'priority_stat';
   static const String submitImagingOrder = 'submit_imaging_order';
+  static const String submitLabOrder = 'submit_lab_order';
   static const String orderSubmitted = 'order_submitted';
   static const String pickATestFirst = 'pick_a_test_first';
   static const String signatureSaved = 'signature_saved';

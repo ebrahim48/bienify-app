@@ -25,10 +25,15 @@ class RoleProfileCard extends StatelessWidget {
     required this.phone,
     required this.onEdit,
     required this.onChangePhoto,
+    this.photoUrl,
   });
 
   final String name;
   final String phone;
+
+  /// The signed-in owner's or courier's own picture. Every seeded account has
+  /// one; the bundled placeholder is only for accounts that do not.
+  final String? photoUrl;
   final VoidCallback onEdit;
   final VoidCallback onChangePhoto;
 
@@ -70,7 +75,9 @@ class RoleProfileCard extends StatelessWidget {
           Stack(
             clipBehavior: Clip.none,
             children: [
-              const AppAvatar(
+              AppAvatar(
+                imageUrl: photoUrl,
+                name: name,
                 size: _avatar,
                 fallbackAsset: AppAssets.doctorPlaceholder,
               ),
