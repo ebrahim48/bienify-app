@@ -39,25 +39,32 @@ class WalletScreen extends GetView<AccountController> {
             ),
           ),
           AppSpacing.gapV(AppSpacing.sm),
+          // Both totals are summed from the ledger, which arrives after the
+          // first build — so they repaint rather than staying at the zeroes
+          // they were drawn with.
           Row(
             children: [
               Expanded(
-                child: _StatCard(
-                  label: AppStrings.totalSpent.tr,
-                  value: controller.totalSpentLabel,
-                  footnote: AppStrings.orderCount.trParams({
-                    'count': '${controller.spentOrderCount}',
-                  }),
+                child: Obx(
+                  () => _StatCard(
+                    label: AppStrings.totalSpent.tr,
+                    value: controller.totalSpentLabel,
+                    footnote: AppStrings.orderCount.trParams({
+                      'count': '${controller.spentOrderCount}',
+                    }),
+                  ),
                 ),
               ),
               AppSpacing.gapH(AppSpacing.sm),
               Expanded(
-                child: _StatCard(
-                  label: AppStrings.addedThisMonth.tr,
-                  value: controller.addedThisMonthLabel,
-                  footnote: AppStrings.activeSaver.tr,
-                  footnoteInk: AppColors.saverAccent,
-                  footnoteIcon: Icons.arrow_upward_rounded,
+                child: Obx(
+                  () => _StatCard(
+                    label: AppStrings.addedThisMonth.tr,
+                    value: controller.addedThisMonthLabel,
+                    footnote: AppStrings.activeSaver.tr,
+                    footnoteInk: AppColors.saverAccent,
+                    footnoteIcon: Icons.arrow_upward_rounded,
+                  ),
                 ),
               ),
             ],

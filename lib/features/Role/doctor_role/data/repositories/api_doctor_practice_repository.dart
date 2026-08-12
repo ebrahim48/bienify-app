@@ -141,7 +141,10 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
         .toList();
 
     return DoctorEarnings(
-      availableLabel: money(Api.majorUnits(summary['availableMinor']), currency),
+      availableLabel: money(
+        Api.majorUnits(summary['availableMinor']),
+        currency,
+      ),
       totalEarnedLabel: money(
         Api.majorUnits(summary['lifetimeMinor']),
         currency,

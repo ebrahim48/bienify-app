@@ -126,9 +126,9 @@ class DoctorScheduleController extends GetxController {
     final text = raw.trim().toUpperCase();
     if (text.isEmpty) return null;
 
-    final match = RegExp(r'^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$').firstMatch(
-      text,
-    );
+    final match = RegExp(
+      r'^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$',
+    ).firstMatch(text);
     if (match == null) return null;
 
     var hour = int.parse(match.group(1)!);

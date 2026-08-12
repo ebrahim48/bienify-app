@@ -97,10 +97,8 @@ class EarningsController extends GetxController {
       return;
     }
 
-    final account = accounts[selectedMethodIndex.value.clamp(
-      0,
-      accounts.length - 1,
-    )];
+    final account =
+        accounts[selectedMethodIndex.value.clamp(0, accounts.length - 1)];
 
     try {
       await _repository.requestWithdrawal(

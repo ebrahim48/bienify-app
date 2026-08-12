@@ -1,10 +1,13 @@
 import '../../features/Role/doctor_role/domain/entities/doctor_practice.dart';
 import '../../features/Role/patient/appointments/domain/entities/appointment.dart';
+import '../../features/Role/patient/cash_payment_process/domain/entities/cash_payment.dart';
+import '../../features/Role/patient/cash_payment_process/domain/repositories/cash_payment_repository.dart';
 import '../../features/Role/patient/doctors/domain/entities/doctor.dart';
 import '../../features/Role/patient/home/domain/entities/home_feed.dart';
 import '../../features/Role/patient/home/domain/entities/lab_request.dart';
 import '../../features/Role/patient/medical_vault/domain/entities/medical_record.dart';
 import '../../features/Role/patient/pharmacy/domain/entities/pharmacy.dart';
+import '../../features/Role/patient/profile/domain/entities/profile.dart';
 import '../../features/Role/pharmacy_owner_role/domain/entities/pharmacy_shop.dart';
 import '../../features/Role/rider_role/domain/entities/rider.dart';
 
@@ -451,8 +454,9 @@ DeliveryRequest deliveryRequestFrom(Map<String, dynamic> json) {
 
   return DeliveryRequest(
     id: Api.id(json),
-    code: 'ORD-${orderId.length >= 4 ? orderId.substring(orderId.length - 4) : orderId}'
-        .toUpperCase(),
+    code:
+        'ORD-${orderId.length >= 4 ? orderId.substring(orderId.length - 4) : orderId}'
+            .toUpperCase(),
     fee: 0,
     pickupName: Api.str(json['pickupAddress']),
     customerName: Api.nameOf(json['patientId']),
@@ -470,8 +474,10 @@ DeliveryRequest deliveryRequestFrom(Map<String, dynamic> json) {
 /// Accepted: the chips separate work they could take from work they took, not
 /// how far along it is.
 RequestTab requestTabFrom(String raw) => switch (raw) {
-  'assigned' || 'picked_up' || 'in_transit' || 'delivered' =>
-    RequestTab.accepted,
+  'assigned' ||
+  'picked_up' ||
+  'in_transit' ||
+  'delivered' => RequestTab.accepted,
   'failed' => RequestTab.cancelled,
   _ => RequestTab.fresh,
 };
@@ -515,6 +521,109 @@ String _whenLabel(DateTime at) {
   final day = isToday ? 'Today' : '${at.day} ${months[at.month - 1]}';
   return '$day, ${_clockLabel(at)}';
 }
+
+// ─── Wallet and order history ──────────────────────────────────────────────
+
+/// `GET /wallet/cards` — a saved card.
+WalletCard walletCardFrom(Map<String, dynamic> json) {
+  final month = Api.integer(json['expiryMonth']);
+  final year = Api.integer(json['expiryYear']);
+
+  return WalletCard(
+    id: Api.id(json),
+    brand: Api.str(json['brand'], 'Card'),
+    // Only the last four are stored, which is the whole point of tokenising.
+    maskedNumber: '•••• ${Api.str(json['last4'], '••••')}',
+    expiry:
+        '${month.toString().padLeft(2, '0')}/'
+        '${year.toString().padLeft(4, '0').substring(2)}',
+    isDefault: json['isDefault'] == true,
+  );
+}
+
+/// `GET /wallet/transactions` — one movement.
+WalletTransaction walletTransactionFrom(Map<String, dynamic> json) =>
+    WalletTransaction(
+      id: Api.id(json),
+      title: Api.str(json['description'], _transactionTitle(json)),
+      occurredOn: Api.date(json['createdAt']),
+      amount: Api.majorUnits(json['amountMinor']),
+      kind: Api.str(json['direction']) == 'debit'
+          ? TransactionKind.debit
+          : TransactionKind.credit,
+    );
+
+/// A readable name for a movement the server did not describe.
+String _transactionTitle(Map<String, dynamic> json) =>
+    Api.str(json['type']).replaceAll('_', ' ');
+
+/// The server's medicine-order states, collapsed to the three the history
+/// groups by.
+OrderState orderStateFrom(String raw) => switch (raw) {
+  'delivered' => OrderState.delivered,
+  'cancelled' || 'rejected' => OrderState.cancelled,
+  _ => OrderState.inProgress,
+};
+
+/// `GET /medicine-orders` — a row of My Order History.
+OrderHistoryEntry orderHistoryEntryFrom(Map<String, dynamic> json) {
+  final id = Api.id(json);
+  final items = Api.rows(json['items']);
+
+  return OrderHistoryEntry(
+    id: id,
+    reference: '#${id.length >= 6 ? id.substring(id.length - 6) : id}'
+        .toUpperCase(),
+    storeName: Api.str(Api.map(json['pharmacyId'])['name'], 'Pharmacy'),
+    placedOn: Api.date(json['createdAt']),
+    // Units ordered, not lines: two boxes of one medicine is two items.
+    itemCount: items.fold(0, (n, i) => n + Api.integer(i['quantity'], 1)),
+    total: Api.majorUnits(json['totalMinor']),
+    state: orderStateFrom(Api.str(json['status'])),
+  );
+}
+
+// ─── Cash payment ──────────────────────────────────────────────────────────
+
+/// `GET /payment-points` — a counter that accepts a cash code.
+///
+/// The server keeps no coordinates and no kind, so every point maps to an
+/// agent and the map has nothing to place it at. See `docs/API-GAPS.md`.
+PaymentPoint paymentPointFrom(Map<String, dynamic> json) => PaymentPoint(
+  id: Api.id(json),
+  name: Api.str(json['name'], 'Payment point'),
+  kind: PaymentPointKind.agent,
+  // Distance needs the patient's position and the point's; neither is here.
+  distanceLabel: Api.str(json['city']),
+  hoursLabel: Api.str(json['openingHours']),
+  isOpen: json['isActive'] != false,
+  latitude: Api.decimal(json['latitude']),
+  longitude: Api.decimal(json['longitude']),
+);
+
+/// `POST /cash-intents` — an issued code.
+PaymentCode paymentCodeFrom(Map<String, dynamic> json) {
+  final amount = Api.majorUnits(json['amountMinor']);
+  final expiresAt = Api.date(json['expiresAt']);
+  final label = '\$${amount.toStringAsFixed(2)}';
+
+  return PaymentCode(
+    code: '#${Api.str(json['reference'])}',
+    amountLabel: label,
+    itemsLabel: label,
+    // Read back from the expiry the server set rather than assumed: the two
+    // disagreeing is what makes a countdown outlive its code.
+    validFor: expiresAt.difference(Api.date(json['createdAt'])).inHours,
+    expiresAt: expiresAt,
+  );
+}
+
+CashIntentState cashIntentStateFrom(String raw) => switch (raw) {
+  'confirmed' => CashIntentState.confirmed,
+  'expired' => CashIntentState.expired,
+  'cancelled' => CashIntentState.cancelled,
+  _ => CashIntentState.pending,
+};
 
 /// `GET /vault` — a stored document.
 UploadedDocument vaultRecordFrom(Map<String, dynamic> json) => UploadedDocument(

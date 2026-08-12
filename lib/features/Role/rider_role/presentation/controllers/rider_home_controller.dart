@@ -67,8 +67,7 @@ class RiderHomeController extends GetxController {
   /// touches during its build, and a plain method call touches none.
   int get openRequests {
     if (!Get.isRegistered<RiderOrdersController>()) return 0;
-    return Get.find<RiderOrdersController>()
-        .requests
+    return Get.find<RiderOrdersController>().requests
         .where((r) => r.tab == RequestTab.fresh)
         .length;
   }

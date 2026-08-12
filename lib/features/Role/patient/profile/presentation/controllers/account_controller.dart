@@ -1,22 +1,35 @@
 import 'package:get/get.dart';
 
 import '../../../../../../core/constants/app_strings.dart';
+import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/routes/app_routes.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
-import '../../data/static/profile_mock_data.dart';
+import '../../../wallet/domain/repositories/wallet_repository.dart';
 import '../../domain/entities/profile.dart';
 
 /// Backs My Order History and My Wallet.
 ///
-/// One controller because both are read-only views of the same account and
-/// neither has enough state to justify its own; UI-only throughout.
+/// One controller because both are views of the same account and neither has
+/// enough state to justify its own.
 class AccountController extends GetxController {
+  AccountController({WalletRepository? repository})
+    : _repository = repository ?? Get.find<WalletRepository>();
+
+  final WalletRepository _repository;
+
   final RxList<OrderHistoryEntry> orders = <OrderHistoryEntry>[].obs;
   final RxList<WalletCard> cards = <WalletCard>[].obs;
 
-  final RxDouble balance = ProfileMockData.walletBalance.obs;
+  final RxDouble balance = 0.0.obs;
 
   final RxList<WalletTransaction> transactions = <WalletTransaction>[].obs;
+
+  final RxBool isLoading = true.obs;
+  final RxnString error = RxnString();
+
+  final RxDouble _totalSpent = 0.0.obs;
+  final RxDouble _addedThisMonth = 0.0.obs;
+  final RxInt _spentOrderCount = 0.obs;
 
   /// The eye toggle on the balance card.
   final RxBool isBalanceHidden = false.obs;
@@ -30,12 +43,28 @@ class AccountController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    orders.value = ProfileMockData.orders();
-    // `List.of` because the mock is `const`: assigning it straight to an
-    // `RxList` makes the backing list unmodifiable, and saving a card then
-    // throws "Cannot add to an unmodifiable list".
-    cards.value = List.of(ProfileMockData.cards);
-    transactions.value = ProfileMockData.transactions();
+    load();
+  }
+
+  Future<void> load() async {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      final summary = await _repository.summary();
+      balance.value = summary.balance;
+      // `List.of`: a repository may hand back a const list, and saving a card
+      // then throws "Cannot add to an unmodifiable list".
+      cards.value = List.of(summary.cards);
+      transactions.value = summary.transactions;
+      _totalSpent.value = summary.totalSpent;
+      _addedThisMonth.value = summary.addedThisMonth;
+      _spentOrderCount.value = summary.spentOrderCount;
+      orders.value = await _repository.orders();
+    } on AppException catch (e) {
+      error.value = e.message;
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   bool get hasCard => cards.isNotEmpty;
@@ -45,13 +74,12 @@ class AccountController extends GetxController {
   String get balanceLabel =>
       isBalanceHidden.value ? '••••' : '\$${balance.value.toStringAsFixed(2)}';
 
-  String get totalSpentLabel =>
-      '\$${ProfileMockData.totalSpent.toStringAsFixed(2)}';
+  String get totalSpentLabel => '\$${_totalSpent.value.toStringAsFixed(2)}';
 
   String get addedThisMonthLabel =>
-      '\$${ProfileMockData.addedThisMonth.toStringAsFixed(2)}';
+      '\$${_addedThisMonth.value.toStringAsFixed(2)}';
 
-  int get spentOrderCount => ProfileMockData.spentOrderCount;
+  int get spentOrderCount => _spentOrderCount.value;
 
   void toggleBalanceVisibility() =>
       isBalanceHidden.value = !isBalanceHidden.value;
@@ -174,13 +202,46 @@ class AccountController extends GetxController {
 
   void addPaymentMethod() => openPaymentOptions();
 
-  /// Adds [card] and nothing else. Navigation is the caller's decision — a
+  /// Saves a card and nothing else. Navigation is the caller's decision — a
   /// controller that popped its own route would break any screen that saved a
   /// card without one on the stack.
-  void saveCard(WalletCard card) {
+  ///
+  /// [gatewayToken] comes from the payment SDK: a raw card number must never
+  /// reach the API, and the form does not have one to give.
+  Future<void> saveCard({
+    required String gatewayToken,
+    required String brand,
+    required String last4,
+    required int expiryMonth,
+    required int expiryYear,
+  }) async {
+    final WalletCard saved;
+    try {
+      saved = await _repository.addCard(
+        gatewayToken: gatewayToken,
+        brand: brand,
+        last4: last4,
+        expiryMonth: expiryMonth,
+        expiryYear: expiryYear,
+      );
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    }
+
     // The first card saved becomes the default; there is nothing to compare
     // it against.
-    cards.add(cards.isEmpty ? _asDefault(card) : card);
+    if (cards.isEmpty) {
+      try {
+        await _repository.makeCardDefault(saved.id);
+      } on AppException {
+        // The card is stored either way; the server picks a default on its
+        // own if this does not land.
+      }
+      cards.add(_asDefault(saved));
+    } else {
+      cards.add(saved);
+    }
     AppSnackbar.success(AppStrings.cardSaved.tr);
   }
 
@@ -192,7 +253,16 @@ class AccountController extends GetxController {
     isDefault: true,
   );
 
-  void makeDefault(WalletCard card) {
+  Future<void> makeDefault(WalletCard card) async {
+    try {
+      await _repository.makeCardDefault(card.id);
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    }
+    // The server clears the other defaults as part of the same write, so the
+    // list is rebuilt rather than having one row flipped — two cards both
+    // marked default is a state the wallet can never be in.
     cards.value = [
       for (final existing in cards)
         WalletCard(
@@ -205,6 +275,13 @@ class AccountController extends GetxController {
     ];
   }
 
-  void removeCard(WalletCard card) =>
-      cards.removeWhere((existing) => existing.id == card.id);
+  Future<void> removeCard(WalletCard card) async {
+    try {
+      await _repository.removeCard(card.id);
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    }
+    cards.removeWhere((existing) => existing.id == card.id);
+  }
 }

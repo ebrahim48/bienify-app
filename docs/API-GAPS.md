@@ -82,3 +82,28 @@ becomes the filter `true`. `inStockOnly=false` has the same fault.
 
 **Fix:** a string-to-boolean preprocessor on both flags, e.g.
 `z.preprocess((v) => v === 'true' || v === true, z.boolean())`.
+
+## A payment point has no coordinates and no kind
+
+`IPaymentPoint` keeps a name, an address, a city, a phone and opening hours.
+The Nearby Payment Points screen draws a map with a pin per point and a
+distance on every row, and neither is derivable from that.
+
+**Where it shows:** every point maps to the `agent` icon, the distance column
+prints the city instead, and the map has nothing to place a pin at.
+
+**Fix:** `location: { lat, lng }` on the point, a `kind` enum matching the
+five the design draws, and a `near=lat,lng` query so the server can sort by
+distance rather than the app doing it with no coordinates to work from.
+
+## A patient has no lifetime spend
+
+`GET /wallet` returns a balance and nothing else, so My Wallet's "Total spent"
+and "Added this month" have no field behind them.
+
+**Where it shows:** both are summed from the transaction page the screen is
+already showing — which is right as far as that page goes, and wrong for a
+patient with more than 100 movements.
+
+**Fix:** the same shape `GET /wallet/earnings` gives a provider — a couple of
+aggregate totals on the patient's wallet.

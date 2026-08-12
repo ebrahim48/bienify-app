@@ -260,13 +260,12 @@ void main() {
 
     // Empty until an account is added, then one removable row.
     expect(find.text('Add Account'), findsOneWidget);
-    account.saveCard(
-      const WalletCard(
-        id: 'card-1',
-        brand: 'Debit card',
-        maskedNumber: '•••• 4242',
-        expiry: '8/27',
-      ),
+    await account.saveCard(
+      gatewayToken: 'tok_test',
+      brand: 'Debit card',
+      last4: '4242',
+      expiryMonth: 8,
+      expiryYear: 2027,
     );
     await tester.pumpAndSettle();
 

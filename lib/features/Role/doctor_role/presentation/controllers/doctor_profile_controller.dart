@@ -17,9 +17,11 @@ import '../../domain/repositories/doctor_practice_repository.dart';
 /// screens — the practitioner has the same wallet and the same legal pages, so
 /// they are navigated to rather than rebuilt.
 class DoctorProfileController extends GetxController {
-  DoctorProfileController({DoctorPracticeRepository? repository, Logout? logout})
-    : _repository = repository ?? Get.find<DoctorPracticeRepository>(),
-      _logout = logout ?? Get.find<Logout>();
+  DoctorProfileController({
+    DoctorPracticeRepository? repository,
+    Logout? logout,
+  }) : _repository = repository ?? Get.find<DoctorPracticeRepository>(),
+       _logout = logout ?? Get.find<Logout>();
 
   final DoctorPracticeRepository _repository;
   final Logout _logout;

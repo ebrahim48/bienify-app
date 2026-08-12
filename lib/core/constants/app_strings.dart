@@ -448,6 +448,9 @@ class AppStrings {
   static const String transactionHistory = 'transaction_history';
   static const String noTransactionsYet = 'no_transactions_yet';
   static const String noNotificationsYet = 'no_notifications_yet';
+  static const String noPaymentPointsNearby = 'no_payment_points_nearby';
+  static const String paymentNotReceivedYet = 'payment_not_received_yet';
+  static const String paymentCodeExpired = 'payment_code_expired';
   static const String nameOnCard = 'name_on_card';
   static const String addDebitCard = 'add_debit_card';
   static const String debitCard = 'debit_card';

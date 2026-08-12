@@ -54,7 +54,10 @@ class ApiPharmacyShopRepository implements PharmacyShopRepository {
     // because an empty shelf is the more urgent of the two.
     return [
       for (final row in Api.rows(data['outOfStock']))
-        StockAlert(medicineName: Api.str(row['name'], 'Medicine'), remaining: 0),
+        StockAlert(
+          medicineName: Api.str(row['name'], 'Medicine'),
+          remaining: 0,
+        ),
       for (final row in Api.rows(data['lowStock']))
         StockAlert(
           medicineName: Api.str(row['name'], 'Medicine'),

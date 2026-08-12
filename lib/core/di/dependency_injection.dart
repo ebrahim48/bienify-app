@@ -13,6 +13,9 @@ import '../../features/Role/patient/medical_vault/domain/repositories/vault_repo
 import '../../features/Role/patient/pharmacy/data/repositories/api_pharmacy_repository.dart';
 import '../../features/Role/patient/pharmacy/data/repositories/mock_pharmacy_repository.dart';
 import '../../features/Role/patient/pharmacy/domain/repositories/pharmacy_repository.dart';
+import '../../features/Role/patient/profile/data/repositories/api_account_repository.dart';
+import '../../features/Role/patient/profile/data/repositories/mock_account_repository.dart';
+import '../../features/Role/patient/profile/domain/repositories/account_repository.dart';
 import '../../features/Role/patient/wallet/data/repositories/api_wallet_repository.dart';
 import '../../features/Role/patient/wallet/data/repositories/mock_wallet_repository.dart';
 import '../../features/Role/patient/wallet/domain/repositories/wallet_repository.dart';
@@ -24,6 +27,9 @@ import '../../features/Role/patient/auth/domain/usecases/email_auth_usecases.dar
 import '../../features/Role/patient/auth/domain/usecases/password_recovery_usecases.dart';
 import '../../features/Role/patient/auth/domain/usecases/phone_auth_usecases.dart';
 import '../../features/Role/patient/auth/domain/usecases/registration_usecases.dart';
+import '../../features/Role/patient/cash_payment_process/data/repositories/api_cash_payment_repository.dart';
+import '../../features/Role/patient/cash_payment_process/data/repositories/mock_cash_payment_repository.dart';
+import '../../features/Role/patient/cash_payment_process/domain/repositories/cash_payment_repository.dart';
 import '../../features/Role/patient/doctors/data/repositories/api_doctor_repository.dart';
 import '../../features/Role/patient/doctors/data/repositories/doctor_repository_impl.dart';
 import '../../features/Role/patient/doctors/domain/repositories/doctor_repository.dart';
@@ -124,6 +130,26 @@ class DependencyInjection {
     _registerDoctorRole(mock);
     _registerShopRole(mock);
     _registerRiderRole(mock);
+    _registerAccount(mock);
+    _registerCashPayment(mock);
+  }
+
+  static void _registerCashPayment(bool mock) {
+    Get.put<CashPaymentRepository>(
+      mock
+          ? const MockCashPaymentRepository()
+          : ApiCashPaymentRepository(Get.find<ApiClient>()),
+      permanent: true,
+    );
+  }
+
+  static void _registerAccount(bool mock) {
+    Get.put<AccountRepository>(
+      mock
+          ? const MockAccountRepository()
+          : ApiAccountRepository(Get.find<ApiClient>()),
+      permanent: true,
+    );
   }
 
   static void _registerRiderRole(bool mock) {

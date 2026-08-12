@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import '../../../../../../core/base/base_controller.dart';
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/routes/app_routes.dart';
-import '../../domain/entities/profile.dart';
 import 'account_controller.dart';
 
 /// Backs Add Debit Card.
@@ -88,21 +87,24 @@ class AddCardController extends GetxController
     });
     if (!isValid) return;
 
+    // Tokenising the card is the gateway's job and the app has no SDK for it
+    // yet, so the token is stood in for here — the one remaining seam in this
+    // form. Everything after it is real: the API stores the token, the brand
+    // and the last four, and never sees the number typed above.
     final ok = await submit(() async {
-      // The gateway call replaces this delay; see "Known seams".
-      await Future<void>.delayed(const Duration(milliseconds: 500));
+      final match = RegExp(r'^(\d{2})/(\d{2})$').firstMatch(expiry.value)!;
+
+      await Get.find<AccountController>().saveCard(
+        gatewayToken: 'tok_${DateTime.now().microsecondsSinceEpoch}',
+        brand: AppStrings.debitCard.tr,
+        // Only the last four are sent — the full number never leaves the form.
+        last4: _digits.substring(12),
+        expiryMonth: int.parse(match.group(1)!),
+        // `MM/YY` on the card, four digits on the wire.
+        expiryYear: 2000 + int.parse(match.group(2)!),
+      );
     });
     if (!ok) return;
-
-    Get.find<AccountController>().saveCard(
-      WalletCard(
-        id: 'card-${DateTime.now().microsecondsSinceEpoch}',
-        brand: AppStrings.debitCard.tr,
-        // Only the last four are kept — the full number never leaves the form.
-        maskedNumber: '•••• ${_digits.substring(12)}',
-        expiry: expiry.value,
-      ),
-    );
 
     // Unwinds the two steps of adding an account — the method picker and this
     // form — then shows the accounts list. `Get.until` stops at the first
