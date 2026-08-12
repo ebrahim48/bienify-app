@@ -8,15 +8,17 @@ import '../theme/app_spacing.dart';
 import '../theme/app_text_styles.dart';
 import '../utils/responsive.dart';
 
-/// A horizontally scrolling row of pills, exactly one of which is filled.
+/// A row of pills, exactly one of which is filled.
 ///
 /// The designs use this shape in two sizes: a large two-option segmented
 /// control ("Lab Reports | Radiology Reports", "Your Prescriptions | Your
 /// Medical vault") and a smaller filter row ("all · Active Orders · …",
 /// "All · Delivered · Pending · Cancelled").
 ///
-/// Scrolling rather than wrapping because the designs keep every option on one
-/// line, and the widest sets do not fit at 320pt.
+/// Wraps rather than scrolls. The designs keep every option on one line and on
+/// a wide phone this still does — but the widest sets do not fit at 320pt, and
+/// scrolling put "Completed Appointment" half off the screen edge with nothing
+/// to say it was there. A wrapped row is readable at every width.
 ///
 /// ```dart
 /// Obx(() => AppPillSelector(
@@ -59,26 +61,22 @@ class AppPillSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const ClampingScrollPhysics(),
-      child: Row(
-        children: [
-          for (var index = 0; index < labels.length; index++) ...[
-            if (index > 0) AppSpacing.gapH(AppSpacing.xs),
-            _Pill(
-              label: labels[index],
-              isSelected: index == selectedIndex,
-              isLarge: isLarge,
-              horizontalPadding: horizontalPadding,
-              fill: unselectedFill,
-              ink: unselectedInk,
-              border: unselectedBorder,
-              onTap: () => onSelected(index),
-            ),
-          ],
-        ],
-      ),
+    return Wrap(
+      spacing: AppSpacing.xs.w,
+      runSpacing: AppSpacing.xs.h,
+      children: [
+        for (var index = 0; index < labels.length; index++)
+          _Pill(
+            label: labels[index],
+            isSelected: index == selectedIndex,
+            isLarge: isLarge,
+            horizontalPadding: horizontalPadding,
+            fill: unselectedFill,
+            ink: unselectedInk,
+            border: unselectedBorder,
+            onTap: () => onSelected(index),
+          ),
+      ],
     );
   }
 }
