@@ -1,35 +1,61 @@
 import 'package:get/get.dart';
 
+import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/routes/app_routes.dart';
-import '../../data/static/doctor_mock_data.dart';
 import '../../domain/entities/doctor.dart';
 import '../../domain/entities/doctor_category.dart';
+import '../../domain/usecases/doctor_usecases.dart';
 
 /// Backs "«Category» Doctor lists" and its filter sheet.
 ///
-/// UI-only: the roster is static and filtering happens in memory, which is
-/// exactly what a server-side query will replace later.
+/// The roster comes from the API, narrowed to this category. The price and
+/// rating filters are applied in memory: the server takes a specialty and a
+/// search term, and neither of the other two.
 class DoctorListController extends GetxController {
-  DoctorListController({required this.category});
+  DoctorListController({required this.category, SearchDoctors? search})
+    : _search = search ?? Get.find<SearchDoctors>();
 
   final DoctorCategory category;
+
+  final SearchDoctors _search;
+
+  /// The catch-all category, which is every doctor rather than a specialty.
+  static const String generalCategoryId = 'general';
 
   final RxList<Doctor> doctors = <Doctor>[].obs;
   final Rx<DoctorFilter> filter = const DoctorFilter().obs;
 
-  /// The roster the design shows: nine rows, so the list scrolls.
-  List<Doctor> get _roster => [
-    ...DoctorMockData.doctors,
-    ...DoctorMockData.doctors.skip(4),
-    ...DoctorMockData.doctors.skip(4),
-    ...DoctorMockData.doctors.skip(4),
-    ...DoctorMockData.doctors.skip(4),
-  ];
+  final RxBool isLoading = true.obs;
+  final RxnString error = RxnString();
+
+  /// Everything the category holds, before the sheet narrows it.
+  List<Doctor> _roster = const [];
 
   @override
   void onInit() {
     super.onInit();
-    _applyFilter(const DoctorFilter());
+    load();
+  }
+
+  Future<void> load() async {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      // The category's id is its server token (`cardiology`), not its label
+      // (`Cardiology`) — searching by the label matches nothing.
+      //
+      // `general` is the catch-all the design shows full-width above the
+      // specialty grid, so it narrows to nothing rather than to doctors whose
+      // specialty happens to be spelled that way.
+      _roster = await _search(
+        specialty: category.id == generalCategoryId ? null : category.id,
+      );
+      _applyFilter(filter.value);
+    } on AppException catch (e) {
+      error.value = e.message;
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   void applyFilter(DoctorFilter value) {
