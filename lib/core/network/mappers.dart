@@ -5,6 +5,7 @@ import '../../features/Role/patient/home/domain/entities/home_feed.dart';
 import '../../features/Role/patient/home/domain/entities/lab_request.dart';
 import '../../features/Role/patient/medical_vault/domain/entities/medical_record.dart';
 import '../../features/Role/patient/pharmacy/domain/entities/pharmacy.dart';
+import '../../features/Role/pharmacy_owner_role/domain/entities/pharmacy_shop.dart';
 
 /// Turns backend documents into the entities the screens already render.
 ///
@@ -330,6 +331,109 @@ TestingCentre testingCentreFrom(Map<String, dynamic> json) {
     // The server holds no coordinates for the caller to measure against.
     distanceLabel: '',
   );
+}
+
+// ─── Pharmacy owner ────────────────────────────────────────────────────────
+
+/// The server's order states, collapsed to the six chips the shop filters by.
+///
+/// `ready` sits under Preparing rather than getting a chip of its own: to the
+/// shop it is still an order it is working on, and the design draws six.
+ShopOrderStatus shopOrderStatusFrom(String raw) => switch (raw) {
+  'accepted' => ShopOrderStatus.accepted,
+  'rejected' => ShopOrderStatus.declined,
+  'preparing' || 'ready' => ShopOrderStatus.preparing,
+  'out_for_delivery' => ShopOrderStatus.outForDelivery,
+  'delivered' => ShopOrderStatus.delivered,
+  _ => ShopOrderStatus.fresh,
+};
+
+/// The state a chip means when the shop moves an order into it.
+String shopOrderStatusTo(ShopOrderStatus status) => switch (status) {
+  ShopOrderStatus.fresh => 'placed',
+  ShopOrderStatus.accepted => 'accepted',
+  ShopOrderStatus.declined => 'rejected',
+  ShopOrderStatus.preparing => 'preparing',
+  ShopOrderStatus.outForDelivery => 'out_for_delivery',
+  ShopOrderStatus.delivered => 'delivered',
+};
+
+/// `GET /pharmacies/me/orders` — a customer's order as the shop sees it.
+///
+/// The endpoint does not populate `patientId`, so there is no customer name to
+/// print. The card falls back to the order code rather than labelling every
+/// row "Customer", which would read as a name and be the same one on all of
+/// them. See the note in `docs/API-GAPS.md`.
+ShopOrder shopOrderFrom(Map<String, dynamic> json) {
+  final id = Api.id(json);
+  final code = 'ORD-${id.length >= 4 ? id.substring(id.length - 4) : id}'
+      .toUpperCase();
+  final name = Api.nameOf(json['patientId'], code);
+  final placedAt = Api.date(json['createdAt']);
+
+  return ShopOrder(
+    id: id,
+    // The server keeps no human-readable order number, so the row prints the
+    // tail of the id — short enough to read out over the phone, and unique.
+    code: code,
+    customerName: name,
+    initials: initialsOf(name),
+    phone: Api.str(Api.map(json['patientId'])['phone']),
+    address: Api.str(json['deliveryAddress']),
+    placedAtLabel: _clockLabel(placedAt),
+    status: shopOrderStatusFrom(Api.str(json['status'])),
+    lines: Api.rows(json['items']).map(shopOrderLineFrom).toList(),
+  );
+}
+
+OrderLine shopOrderLineFrom(Map<String, dynamic> json) => OrderLine(
+  name: Api.str(json['name'], 'Medicine'),
+  quantity: Api.integer(json['quantity'], 1),
+  unitPrice: Api.majorUnits(json['unitPriceMinor']),
+);
+
+/// `10:32 AM`.
+String _clockLabel(DateTime at) {
+  final hour12 = at.hour % 12 == 0 ? 12 : at.hour % 12;
+  return '${hour12.toString().padLeft(2, '0')}:'
+      '${at.minute.toString().padLeft(2, '0')} '
+      '${at.hour < 12 ? 'AM' : 'PM'}';
+}
+
+/// `GET /medicines` — a product on the owner's shelf.
+///
+/// The server keeps no expiry date and no category; `brand` is the nearest
+/// thing to the latter, and the row drops whichever it does not have.
+ShopMedicine shopMedicineFrom(Map<String, dynamic> json) => ShopMedicine(
+  id: Api.id(json),
+  name: Api.str(json['name'], 'Medicine'),
+  category: Api.str(json['brand']),
+  expiryLabel: '',
+  stock: Api.integer(json['stock']),
+  price: Api.majorUnits(json['priceMinor']),
+  isListed: json['isActive'] != false,
+);
+
+/// `GET /notifications` — a row of the shop's feed.
+ShopNotification shopNotificationFrom(Map<String, dynamic> json) {
+  final data = Api.map(json['data']);
+  return ShopNotification(
+    title: Api.str(json['title'], 'Notification'),
+    body: Api.str(json['body']),
+    reference: Api.str(data['reference'], Api.str(data['orderId'])),
+    ageLabel: relativeAge(Api.date(json['createdAt'])),
+  );
+}
+
+/// `1 day ago`, `3 hours ago`, `just now`.
+String relativeAge(DateTime at) {
+  final gap = DateTime.now().difference(at);
+  if (gap.inMinutes < 1) return 'just now';
+  if (gap.inHours < 1) return '${gap.inMinutes} minutes ago';
+  if (gap.inDays < 1) {
+    return '${gap.inHours} ${gap.inHours == 1 ? 'hour' : 'hours'} ago';
+  }
+  return '${gap.inDays} ${gap.inDays == 1 ? 'day' : 'days'} ago';
 }
 
 /// `GET /vault` — a stored document.

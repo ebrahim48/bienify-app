@@ -29,6 +29,7 @@ class Shop {
     required this.email,
     required this.country,
     required this.address,
+    this.licenceNumber = '',
   });
 
   /// `Aid Plus+`.
@@ -49,6 +50,9 @@ class Shop {
 
   /// `Limasol , cyprus` — the editable pharmacy address.
   final String address;
+
+  /// `PH-DEMO-0001` — what the shop is licensed under.
+  final String licenceNumber;
 
   /// `$160`, whole units as the design prints it.
   String get balanceLabel => '\$${availableBalance.toStringAsFixed(0)}';
@@ -166,8 +170,14 @@ class ShopMedicine {
 
   final String? imageAsset;
 
-  /// `Pain Relief • Exp 2028-03`.
-  String get subtitle => '$category • Exp $expiryLabel';
+  /// `Pain Relief • Exp 2028-03`, dropping whichever half is missing.
+  ///
+  /// A medicine on the server carries a brand but no expiry date, so a row
+  /// that always printed both would read "Pain Relief • Exp " on real stock.
+  String get subtitle => [
+    if (category.isNotEmpty) category,
+    if (expiryLabel.isNotEmpty) 'Exp $expiryLabel',
+  ].join(' • ');
 
   String get stockLabel => 'Stock: $stock';
 

@@ -541,6 +541,7 @@ abstract class AppPages {
     GetPage(
       name: AppRoutes.shopNotifications,
       page: () => const ShopNotificationsScreen(),
+      binding: ShopNotificationsBinding(),
       transition: _transition,
       transitionDuration: _transitionDuration,
     ),

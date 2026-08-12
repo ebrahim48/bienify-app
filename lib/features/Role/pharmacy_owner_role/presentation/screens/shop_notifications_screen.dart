@@ -11,11 +11,12 @@ import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/utils/responsive.dart';
 import '../../../../../core/widgets/app_card.dart';
 import '../../../../../core/widgets/app_scaffold.dart';
-import '../../data/static/pharmacy_shop_data.dart';
+import '../../../../../core/widgets/app_empty_state.dart';
 import '../../domain/entities/pharmacy_shop.dart';
+import '../controllers/shop_notifications_controller.dart';
 
 /// The shop's feed, reached from the dashboard's bell.
-class ShopNotificationsScreen extends StatelessWidget {
+class ShopNotificationsScreen extends GetView<ShopNotificationsController> {
   const ShopNotificationsScreen({super.key});
 
   @override
@@ -33,12 +34,27 @@ class ShopNotificationsScreen extends StatelessWidget {
             ),
           ),
           AppSpacing.gapV(AppSpacing.xs),
-          for (final item in PharmacyShopData.notifications) ...[
-            _NotificationCard(item: item),
-            AppSpacing.gapV(AppSpacing.xs),
-          ],
-          AppSpacing.gapV(AppSpacing.xs),
-          const _SeeMore(),
+          // Read here so the list repaints; the cards get plain values.
+          Obx(() {
+            final items = controller.notifications.toList();
+            if (items.isEmpty) {
+              return AppEmptyState(
+                icon: Icons.notifications_none_rounded,
+                title: AppStrings.noNotificationsYet.tr,
+              );
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final item in items) ...[
+                  _NotificationCard(item: item),
+                  AppSpacing.gapV(AppSpacing.xs),
+                ],
+                AppSpacing.gapV(AppSpacing.xs),
+                const _SeeMore(),
+              ],
+            );
+          }),
           AppSpacing.gapV(AppSpacing.md),
         ],
       ),

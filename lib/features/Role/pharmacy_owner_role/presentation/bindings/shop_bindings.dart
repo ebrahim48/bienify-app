@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../controllers/shop_home_controller.dart';
 import '../controllers/shop_medicines_controller.dart';
+import '../controllers/shop_notifications_controller.dart';
 import '../controllers/shop_orders_controller.dart';
 import '../controllers/shop_profile_controller.dart';
 import '../controllers/shop_shell_controller.dart';
@@ -46,5 +47,14 @@ class ShopProfileBinding extends Bindings {
   void dependencies() {
     if (Get.isRegistered<ShopProfileController>()) return;
     Get.put(ShopProfileController());
+  }
+}
+
+/// The feed is its own screen off the dashboard's bell, and its own read —
+/// the shell's tabs do not need it, so it is not created with them.
+class ShopNotificationsBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.put(ShopNotificationsController());
   }
 }

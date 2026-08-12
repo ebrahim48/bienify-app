@@ -447,6 +447,7 @@ class AppTranslations extends Translations {
     AppStrings.activeSaver: 'Active saver',
     AppStrings.transactionHistory: 'TRANSACTION HISTORY',
     AppStrings.noTransactionsYet: 'No transactions yet',
+    AppStrings.noNotificationsYet: 'No notifications yet',
     AppStrings.nameOnCard: 'Name on Card',
     AppStrings.addDebitCard: 'Add Debit Card',
     AppStrings.debitCard: 'Debit Card',
@@ -781,6 +782,9 @@ class AppTranslations extends Translations {
     AppStrings.expiryDateLabel: 'EXPIRY DATE',
     AppStrings.medicineSaved: 'Medicine saved',
     AppStrings.medicineRemoved: 'Medicine removed',
+    AppStrings.medicineDelisted: 'Taken off sale and removed from the shelf',
+    AppStrings.medicineNeedsFields:
+        'A medicine needs a name, a price and a stock count',
     AppStrings.deleteMedicineQuestion: 'Are you delete this medicine?',
     AppStrings.noMedicinesYet: 'No medicines on the shelf yet',
 
@@ -1354,6 +1358,7 @@ class AppTranslations extends Translations {
     AppStrings.activeSaver: 'Ahorrador activo',
     AppStrings.transactionHistory: 'HISTORIAL DE MOVIMIENTOS',
     AppStrings.noTransactionsYet: 'Aún no hay movimientos',
+    AppStrings.noNotificationsYet: 'Aún no hay notificaciones',
     AppStrings.nameOnCard: 'Nombre en la tarjeta',
     AppStrings.addDebitCard: 'Agregar tarjeta',
     AppStrings.debitCard: 'Tarjeta de débito',
@@ -1689,6 +1694,9 @@ class AppTranslations extends Translations {
     AppStrings.expiryDateLabel: 'FECHA DE CADUCIDAD',
     AppStrings.medicineSaved: 'Medicina guardada',
     AppStrings.medicineRemoved: 'Medicina eliminada',
+    AppStrings.medicineDelisted: 'Retirada de la venta y del estante',
+    AppStrings.medicineNeedsFields:
+        'Una medicina necesita nombre, precio y existencias',
     AppStrings.deleteMedicineQuestion: '¿Eliminar esta medicina?',
     AppStrings.noMedicinesYet: 'Todavía no hay medicinas',
 

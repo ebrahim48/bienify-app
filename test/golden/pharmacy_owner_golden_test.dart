@@ -160,7 +160,11 @@ void main() {
   });
 
   testWidgets('Notifications', (tester) async {
-    await pump(tester, const ShopNotificationsScreen());
+    await pump(
+      tester,
+      const ShopNotificationsScreen(),
+      binding: ShopNotificationsBinding(),
+    );
 
     await settleImages(tester);
     await expectLater(
@@ -183,21 +187,26 @@ void main() {
       matchesGoldenFile('shop_medicines.png'),
     );
 
-    // Taking a product off sale writes back into the list.
+    // Taking a product off sale takes it off the shelf: the list the owner
+    // sees is the listed stock, because `GET /medicines` filters on `isActive`
+    // and no owner-scoped list includes the rest.
+    final shelf = controller.medicines.length;
     final first = controller.medicines.first;
-    controller.toggleListed(first, false);
-    await tester.pump();
-    expect(controller.medicines.first.isListed, isFalse);
+    await controller.toggleListed(first, false);
+    await tester.pumpAndSettle(const Duration(seconds: 5));
+    expect(controller.medicines.map((m) => m.id), isNot(contains(first.id)));
+    expect(controller.medicines.length, shelf - 1);
 
     controller.query.value = 'aspirin';
     await tester.pump();
     expect(controller.visible.single.name, 'Aspirin 100mg');
 
-    // Removing one takes it off the shelf.
+    // Removing one does the same thing by the other route.
     controller.query.value = '';
-    controller.remove(first);
+    final second = controller.medicines.first;
+    await controller.remove(second);
     await tester.pumpAndSettle(const Duration(seconds: 5));
-    expect(controller.medicines.length, PharmacyShopData.medicines.length - 1);
+    expect(controller.medicines.length, shelf - 2);
   });
 
   testWidgets('Add Medicine and Edit Medicine are one screen', (tester) async {

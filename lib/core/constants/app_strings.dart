@@ -447,6 +447,7 @@ class AppStrings {
   static const String activeSaver = 'active_saver';
   static const String transactionHistory = 'transaction_history';
   static const String noTransactionsYet = 'no_transactions_yet';
+  static const String noNotificationsYet = 'no_notifications_yet';
   static const String nameOnCard = 'name_on_card';
   static const String addDebitCard = 'add_debit_card';
   static const String debitCard = 'debit_card';
@@ -765,6 +766,8 @@ class AppStrings {
   static const String expiryDateLabel = 'expiry_date_label';
   static const String medicineSaved = 'medicine_saved';
   static const String medicineRemoved = 'medicine_removed';
+  static const String medicineNeedsFields = 'medicine_needs_fields';
+  static const String medicineDelisted = 'medicine_delisted';
   static const String deleteMedicineQuestion = 'delete_medicine_question';
   static const String noMedicinesYet = 'no_medicines_yet';
 

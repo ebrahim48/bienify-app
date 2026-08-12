@@ -33,6 +33,9 @@ import '../../features/Role/patient/home/data/datasources/home_remote_data_sourc
 import '../../features/Role/patient/home/data/repositories/home_repository_impl.dart';
 import '../../features/Role/patient/home/domain/repositories/home_repository.dart';
 import '../../features/Role/patient/home/domain/usecases/home_usecases.dart';
+import '../../features/Role/pharmacy_owner_role/data/repositories/api_pharmacy_shop_repository.dart';
+import '../../features/Role/pharmacy_owner_role/data/repositories/static_pharmacy_shop_repository.dart';
+import '../../features/Role/pharmacy_owner_role/domain/repositories/pharmacy_shop_repository.dart';
 import '../localization/localization_controller.dart';
 import '../network/api_client.dart';
 import '../network/bienify_api.dart';
@@ -116,6 +119,7 @@ class DependencyInjection {
     _registerPharmacy(mock);
     _registerVault(mock);
     _registerDoctorRole(mock);
+    _registerShopRole(mock);
   }
 
   static void _registerDoctorRole(bool mock) {
@@ -123,6 +127,15 @@ class DependencyInjection {
       mock
           ? const StaticDoctorPracticeRepository()
           : ApiDoctorPracticeRepository(Get.find<ApiClient>()),
+      permanent: true,
+    );
+  }
+
+  static void _registerShopRole(bool mock) {
+    Get.put<PharmacyShopRepository>(
+      mock
+          ? const StaticPharmacyShopRepository()
+          : ApiPharmacyShopRepository(Get.find<ApiClient>()),
       permanent: true,
     );
   }

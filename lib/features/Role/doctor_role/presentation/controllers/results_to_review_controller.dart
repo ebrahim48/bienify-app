@@ -17,7 +17,7 @@ import '../../domain/repositories/doctor_practice_repository.dart';
 /// are not: `GET /lab-orders` filters by `patientId`, so it answers "the
 /// orders I am the subject of", and the backend has no route that answers
 /// "the orders I requested". Until it does, those two segments show
-/// [DoctorOrdersData] — see the note in `docs/LIVE-API-CHECK.md`.
+/// [DoctorOrdersData] — see the note in `docs/API-GAPS.md`.
 class ResultsToReviewController extends GetxController {
   ResultsToReviewController({DoctorPracticeRepository? repository})
     : _repository = repository ?? Get.find<DoctorPracticeRepository>();

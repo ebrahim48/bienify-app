@@ -1,31 +1,55 @@
 import 'package:get/get.dart';
 
 import '../../../../../core/constants/app_strings.dart';
+import '../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../core/widgets/app_snackbar.dart';
-import '../../data/static/pharmacy_shop_data.dart';
 import '../../domain/entities/pharmacy_shop.dart';
+import '../../domain/repositories/pharmacy_shop_repository.dart';
 
 /// Backs the Orders tab, the dashboard's Recent Orders and the detail behind
 /// both.
-///
-/// UI-only — the book comes from [PharmacyShopData], and accepting or
-/// declining only moves a row between chips.
 class ShopOrdersController extends GetxController {
+  ShopOrdersController({PharmacyShopRepository? repository})
+    : _repository = repository ?? Get.find<PharmacyShopRepository>();
+
+  final PharmacyShopRepository _repository;
+
   final RxList<ShopOrder> orders = <ShopOrder>[].obs;
-  final RxList<ShopOrder> recent = <ShopOrder>[].obs;
 
   final Rx<ShopOrderStatus> filter = ShopOrderStatus.fresh.obs;
+
+  final RxBool isLoading = true.obs;
+  final RxBool isSettling = false.obs;
+  final RxnString error = RxnString();
 
   /// The row tapped into.
   final Rxn<ShopOrder> selected = Rxn<ShopOrder>();
 
+  /// The dashboard lists the newest six rather than the whole book.
+  static const int _recentCount = 6;
+
   @override
   void onInit() {
     super.onInit();
-    orders.value = PharmacyShopData.orders();
-    recent.value = PharmacyShopData.recentOrders();
+    load();
   }
+
+  Future<void> load() async {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      orders.value = await _repository.orders();
+    } on AppException catch (e) {
+      error.value = e.message;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// The newest few, for the dashboard. Derived rather than fetched again —
+  /// it is the same book, shortened.
+  List<ShopOrder> get recent => orders.take(_recentCount).toList();
 
   /// The chip row narrows the book to one state at a time, which is what the
   /// design shows — there is no "all".
@@ -52,20 +76,35 @@ class ShopOrdersController extends GetxController {
   /// renders a document image today.
   void viewPrescription() => Get.toNamed<void>(AppRoutes.reportReview);
 
-  void accept() => _settle(ShopOrderStatus.accepted, AppStrings.orderAccepted);
+  Future<void> accept() =>
+      _settle(ShopOrderStatus.accepted, AppStrings.orderAccepted);
 
-  void decline() => _settle(ShopOrderStatus.declined, AppStrings.orderDeclined);
+  Future<void> decline() =>
+      _settle(ShopOrderStatus.declined, AppStrings.orderDeclined);
 
-  void _settle(ShopOrderStatus status, String message) {
+  /// Moves the open order, then the row under it.
+  ///
+  /// The list is only updated once the server agrees. The order book runs on a
+  /// transition table — an order already out for delivery cannot be accepted —
+  /// so moving the card first would show a state the shop is not in.
+  Future<void> _settle(ShopOrderStatus status, String message) async {
     final order = selected.value;
-    if (order == null) return;
+    if (order == null || isSettling.value) return;
+
+    isSettling.value = true;
+    try {
+      await _repository.setOrderStatus(order.id, status);
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    } finally {
+      isSettling.value = false;
+    }
+
     final moved = order.copyWith(status: status);
     selected.value = moved;
-
     final index = orders.indexWhere((o) => o.id == order.id);
     if (index != -1) orders[index] = moved;
-    final recentIndex = recent.indexWhere((o) => o.id == order.id);
-    if (recentIndex != -1) recent[recentIndex] = moved;
 
     AppSnackbar.success(message.tr);
     Get.back<void>();

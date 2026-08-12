@@ -26,91 +26,107 @@ class ShopEditProfileScreen extends GetView<ShopProfileController> {
   Widget build(BuildContext context) {
     return AppScaffold(
       topBar: AppTopBar(title: AppStrings.editProfile.tr),
-      child: AutofillGroup(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AppSpacing.gapV(AppSpacing.xs),
-            _Label(AppStrings.fullName.tr),
-            AppTextField(
-              initialText: controller.fullName.value,
-              hint: AppStrings.fullName.tr,
-              textInputAction: TextInputAction.next,
-              onChanged: (value) => controller.fullName.value = value,
+      // Rebuilt when a load lands: the prefilled fields own their text
+      // controllers and seed them from [initialText] once, so a value that
+      // arrives after the first build only reaches them through a new key.
+      child: Obx(() => _Form(key: ValueKey(controller.formGeneration.value))),
+    );
+  }
+}
+
+class _Form extends GetView<ShopProfileController> {
+  const _Form({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AutofillGroup(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppSpacing.gapV(AppSpacing.xs),
+          _Label(AppStrings.fullName.tr),
+          AppTextField(
+            initialText: controller.fullName.value,
+            hint: AppStrings.fullName.tr,
+            textInputAction: TextInputAction.next,
+            onChanged: (value) => controller.fullName.value = value,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          _Label(AppStrings.businessEmail.tr),
+          AppTextField(
+            initialText: controller.email.value,
+            hint: AppStrings.emailHint.tr,
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.next,
+            autofillHints: const [AutofillHints.email],
+            onChanged: (value) => controller.email.value = value,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          _Label(AppStrings.password.tr),
+          AppTextField(
+            hint: AppStrings.passwordHint.tr,
+            obscureText: true,
+            showPasswordToggle: true,
+            textInputAction: TextInputAction.next,
+            onChanged: (value) => controller.password.value = value,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          _Label(AppStrings.countryOfPharmacy.tr),
+          Obx(
+            () => AppDropdownField(
+              value: controller.country.value,
+              options: PharmacyShopData.countries,
+              onChanged: controller.selectCountry,
             ),
-            AppSpacing.gapV(AppSpacing.sm),
-            _Label(AppStrings.businessEmail.tr),
-            AppTextField(
-              initialText: controller.email.value,
-              hint: AppStrings.emailHint.tr,
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              autofillHints: const [AutofillHints.email],
-              onChanged: (value) => controller.email.value = value,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          _Label(AppStrings.pharmacyLocation.tr),
+          _AddressBox(
+            initialText: controller.address.value,
+            onChanged: (value) => controller.address.value = value,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          _Label(AppStrings.businessLicenseNumber.tr),
+          AppTextField(
+            initialText: controller.licenceNumber.value,
+            hint: AppStrings.businessLicenseHint.tr,
+            textInputAction: TextInputAction.done,
+            onChanged: (value) => controller.licenceNumber.value = value,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          _Label(AppStrings.uploadLicenseDocument.tr),
+          Obx(
+            () => DashedDropZone(
+              hasFile: controller.hasLicence.value,
+              onTap: controller.attachLicence,
             ),
-            AppSpacing.gapV(AppSpacing.sm),
-            _Label(AppStrings.password.tr),
-            AppTextField(
-              hint: AppStrings.passwordHint.tr,
-              obscureText: true,
-              showPasswordToggle: true,
-              textInputAction: TextInputAction.next,
-              onChanged: (value) => controller.password.value = value,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          _Label(AppStrings.uploadShopLogo.tr),
+          Obx(
+            () => DashedDropZone(
+              hasFile: controller.hasLogo.value,
+              onTap: controller.attachLogo,
             ),
-            AppSpacing.gapV(AppSpacing.sm),
-            _Label(AppStrings.countryOfPharmacy.tr),
-            Obx(
-              () => AppDropdownField(
-                value: controller.country.value,
-                options: PharmacyShopData.countries,
-                onChanged: controller.selectCountry,
-              ),
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          _Label(AppStrings.uploadShopBanner.tr),
+          Obx(
+            () => DashedDropZone(
+              hasFile: controller.hasBanner.value,
+              onTap: controller.attachBanner,
             ),
-            AppSpacing.gapV(AppSpacing.sm),
-            _Label(AppStrings.pharmacyLocation.tr),
-            _AddressBox(
-              initialText: controller.address.value,
-              onChanged: (value) => controller.address.value = value,
-            ),
-            AppSpacing.gapV(AppSpacing.sm),
-            _Label(AppStrings.businessLicenseNumber.tr),
-            AppTextField(
-              hint: AppStrings.businessLicenseHint.tr,
-              textInputAction: TextInputAction.done,
-              onChanged: (value) => controller.licenceNumber.value = value,
-            ),
-            AppSpacing.gapV(AppSpacing.sm),
-            _Label(AppStrings.uploadLicenseDocument.tr),
-            Obx(
-              () => DashedDropZone(
-                hasFile: controller.hasLicence.value,
-                onTap: controller.attachLicence,
-              ),
-            ),
-            AppSpacing.gapV(AppSpacing.sm),
-            _Label(AppStrings.uploadShopLogo.tr),
-            Obx(
-              () => DashedDropZone(
-                hasFile: controller.hasLogo.value,
-                onTap: controller.attachLogo,
-              ),
-            ),
-            AppSpacing.gapV(AppSpacing.sm),
-            _Label(AppStrings.uploadShopBanner.tr),
-            Obx(
-              () => DashedDropZone(
-                hasFile: controller.hasBanner.value,
-                onTap: controller.attachBanner,
-              ),
-            ),
-            AppSpacing.gapV(AppSpacing.base),
-            AppButton(
+          ),
+          AppSpacing.gapV(AppSpacing.base),
+          Obx(
+            () => AppButton(
               label: AppStrings.updateShopInformation.tr,
+              isLoading: controller.isSubmitting.value,
               onPressed: controller.submit,
             ),
-            AppSpacing.gapV(AppSpacing.md),
-          ],
-        ),
+          ),
+          AppSpacing.gapV(AppSpacing.md),
+        ],
       ),
     );
   }
