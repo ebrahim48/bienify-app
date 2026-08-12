@@ -1,20 +1,29 @@
 import 'package:get/get.dart';
 
 import '../../../../../core/constants/app_strings.dart';
+import '../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../core/widgets/app_snackbar.dart';
 import '../../../patient/medical_vault/domain/entities/medical_record.dart';
-import '../../data/static/doctor_practice_data.dart';
 import '../../domain/entities/doctor_practice.dart';
+import '../../domain/repositories/doctor_practice_repository.dart';
 
 /// Backs the doctor's Appointments tab and the detail behind it.
-///
-/// UI-only — the roster comes from [DoctorPracticeData] and cancelling only
-/// moves a row between chips.
 class DoctorAppointmentsController extends GetxController {
+  DoctorAppointmentsController({DoctorPracticeRepository? repository})
+    : _repository = repository ?? Get.find<DoctorPracticeRepository>();
+
+  final DoctorPracticeRepository _repository;
+
   final RxList<DoctorAppointment> appointments = <DoctorAppointment>[].obs;
 
   final Rx<DoctorApptFilter> filter = DoctorApptFilter.fresh.obs;
+
+  final RxBool isLoading = true.obs;
+
+  /// Set when a load fails, so an empty list is never mistaken for an empty
+  /// calendar.
+  final RxnString error = RxnString();
 
   /// Live query from the search field.
   final RxString query = ''.obs;
@@ -27,8 +36,19 @@ class DoctorAppointmentsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    appointments.value = DoctorPracticeData.appointments();
-    patientDocuments.value = DoctorPracticeData.patientDocuments();
+    load();
+  }
+
+  Future<void> load() async {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      appointments.value = await _repository.appointments();
+    } on AppException catch (e) {
+      error.value = e.message;
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   // ─── List ────────────────────────────────────────────────────────────────
@@ -65,9 +85,37 @@ class DoctorAppointmentsController extends GetxController {
 
   // ─── Actions ─────────────────────────────────────────────────────────────
 
+  /// Opening a booking also fetches what the patient shared for it — the list
+  /// endpoint does not carry attachments, and loading every patient's
+  /// documents to render a list would be a request per row.
   void openDetails(DoctorAppointment appointment) {
-    selected.value = appointment;
+    select(appointment);
     Get.toNamed<void>(AppRoutes.doctorAppointmentDetails);
+  }
+
+  /// Makes [appointment] the one every screen behind the list reads back.
+  ///
+  /// Separate from [openDetails] so the detail screen can be reached without
+  /// going through the list — the navigation and the selection are two things,
+  /// and a screen restored onto a booking still needs its attachments.
+  void select(DoctorAppointment appointment) {
+    selected.value = appointment;
+    patientDocuments.clear();
+    // Not awaited: the screen opens on the booking it already has, and the
+    // attachment list fills in underneath it.
+    _loadDocuments(appointment.id);
+  }
+
+  Future<void> _loadDocuments(String appointmentId) async {
+    try {
+      patientDocuments.value = await _repository.patientDocuments(
+        appointmentId,
+      );
+    } on AppException {
+      // The detail screen still shows the booking; an attachment list that
+      // could not be read is left empty rather than blocking the screen.
+      patientDocuments.clear();
+    }
   }
 
   /// Only the visit whose room is open can be joined; the others show a muted
@@ -81,19 +129,33 @@ class DoctorAppointmentsController extends GetxController {
     Get.toNamed<void>(AppRoutes.doctorVideoCall);
   }
 
-  /// Moves a booking under the Cancelled chip. The reason comes from the
-  /// appointments feature's own `CancelReasonDialog`.
-  void cancel(DoctorAppointment appointment, String reason) {
+  /// Cancels a booking, then moves it under the Cancelled chip.
+  ///
+  /// The row only moves once the server agrees — cancelling can be refused,
+  /// and moving the card first would tell the doctor a consultation was off
+  /// when it is still on the patient's calendar.
+  Future<void> cancel(DoctorAppointment appointment, String reason) async {
+    try {
+      await _repository.cancelAppointment(appointment.id, reason: reason);
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    }
+
     final index = appointments.indexWhere((a) => a.id == appointment.id);
-    if (index == -1) return;
-    appointments[index] = DoctorAppointment(
-      id: appointment.id,
-      patientName: appointment.patientName,
-      complaint: appointment.complaint,
-      scheduledAt: appointment.scheduledAt,
-      filter: DoctorApptFilter.cancelled,
-      photoAsset: appointment.photoAsset,
-    );
+    if (index != -1) {
+      appointments[index] = DoctorAppointment(
+        id: appointment.id,
+        patientName: appointment.patientName,
+        initials: appointment.initials,
+        complaint: appointment.complaint,
+        scheduledAt: appointment.scheduledAt,
+        filter: DoctorApptFilter.cancelled,
+        photoAsset: appointment.photoAsset,
+        photoUrl: appointment.photoUrl,
+        fee: appointment.fee,
+      );
+    }
     AppSnackbar.success(AppStrings.appointmentCancelled.tr);
   }
 

@@ -1,5 +1,19 @@
 # Live API check (Flutter client)
 
+## Known backend gap: a doctor cannot list the orders they requested
+
+`GET /api/v1/lab-orders` filters on `patientId === req.user.id`, so it answers
+"the orders I am the subject of". A doctor can *create* an order
+(`requestedByDoctorId` is stamped on it) and *review* one by id, but there is
+no route that answers "the orders I requested".
+
+The practitioner's **Results to Review** screen needs exactly that. Its
+Patients segment is served from the appointment list; its Lab and Radiology
+segments still render `DoctorOrdersData` until the backend grows a
+`role=doctor` filter on that endpoint, matching the one `GET /appointments`
+already has.
+
+
 Ran against `http://localhost:3500` through `ApiClient`.
 
 | Metric | Result |
@@ -55,7 +69,7 @@ Ran against `http://localhost:3500` through `ApiClient`.
 | PASS | anon | GET | `/api/v1/appointments/slots` | ok |
 | PASS | anon | GET | `/api/v1/reviews/doctors/6a7aaebd9edac194dd587765` | ok |
 | PASS | patient | GET | `/api/v1/appointments/6a7aaebb68ba3172df927840` | ok |
-| PASS | patient | GET | `/api/v1/medicine-orders/6a7b014c06b849db15077f0f` | ok |
+| PASS | patient | GET | `/api/v1/medicine-orders/6a7bdc3ed831277af223b4ee` | ok |
 | PASS | patient | GET | `/api/v1/prescriptions/6a7aaebc68ba3172df927843` | ok |
 | PASS | - | WRITE | `patient updates their profile` | ok |
 | PASS | - | WRITE | `patient asks for an avatar upload URL` | ok |

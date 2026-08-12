@@ -181,6 +181,36 @@ class DoctorPracticeData {
     '🇫🇷  French',
   ];
 
+  /// The picker's rows are decorated with a flag and the server stores an ISO
+  /// code, so the two cannot be compared directly — and a dropdown handed a
+  /// value that is not one of its items throws rather than falling back.
+  static const Map<String, String> languageByCode = {
+    'en': '🇬🇧  English',
+    'es': '🇪🇸  Spanish',
+    'fr': '🇫🇷  French',
+  };
+
+  static String languageCodeOf(String option) => languageByCode.entries
+      .firstWhere(
+        (entry) => entry.value == option,
+        orElse: () => const MapEntry('en', ''),
+      )
+      .key;
+
+  /// `cardiology` → `Cardiology`; an unlisted specialty keeps the first row
+  /// rather than crashing the picker.
+  static String specialtyOptionOf(String code) {
+    final wanted = code.trim().toLowerCase();
+    return specialties.firstWhere(
+      (option) => option.toLowerCase().split(' ').first == wanted,
+      orElse: () => specialties.first,
+    );
+  }
+
+  /// `General Practice` → `general`, which is what the server stores.
+  static String specialtyCodeOf(String option) =>
+      option.trim().toLowerCase().split(' ').first;
+
   // ─── Prescribing ─────────────────────────────────────────────────────────
 
   /// The two lines already on the script when Write Prescriptions opens.
@@ -274,14 +304,15 @@ class DoctorPracticeData {
 
   static const List<String> weeks = ['5-11', '12-18', '19-25', '26-31'];
 
-  /// The six slots every open day starts with in the design.
+  /// The six slots every open day starts with in the design, in the order it
+  /// draws them.
   static const List<TimeSlot> defaultSlots = [
-    TimeSlot(label: '02-03 PM'),
-    TimeSlot(label: '03-04 PM'),
-    TimeSlot(label: '04-05 PM'),
-    TimeSlot(label: '09-10 AM'),
-    TimeSlot(label: '10-11 AM'),
-    TimeSlot(label: '12-01 PM'),
+    TimeSlot(label: '02-03 PM', startMinute: 840, endMinute: 900),
+    TimeSlot(label: '03-04 PM', startMinute: 900, endMinute: 960),
+    TimeSlot(label: '04-05 PM', startMinute: 960, endMinute: 1020),
+    TimeSlot(label: '09-10 AM', startMinute: 540, endMinute: 600),
+    TimeSlot(label: '10-11 AM', startMinute: 600, endMinute: 660),
+    TimeSlot(label: '12-01 PM', startMinute: 720, endMinute: 780),
   ];
 
   /// Monday to Sunday for the `12-18` week, with the weekend closed — which
@@ -290,37 +321,49 @@ class DoctorPracticeData {
     ScheduleDay(
       name: 'Monday',
       dayOfMonth: 12,
+      dayOfWeek: 1,
       isOpen: true,
       slots: List.of(defaultSlots),
     ),
     ScheduleDay(
       name: 'Tuesday',
       dayOfMonth: 13,
+      dayOfWeek: 2,
       isOpen: true,
       slots: List.of(defaultSlots),
     ),
     ScheduleDay(
       name: 'Wednesday',
       dayOfMonth: 14,
+      dayOfWeek: 3,
       isOpen: true,
       slots: List.of(defaultSlots),
     ),
     ScheduleDay(
       name: 'Thursday',
       dayOfMonth: 15,
+      dayOfWeek: 4,
       isOpen: true,
       slots: List.of(defaultSlots),
     ),
-    const ScheduleDay(name: 'Friday', dayOfMonth: 16, isOpen: false, slots: []),
+    const ScheduleDay(
+      name: 'Friday',
+      dayOfMonth: 16,
+      dayOfWeek: 5,
+      isOpen: false,
+      slots: [],
+    ),
     const ScheduleDay(
       name: 'Saturday',
       dayOfMonth: 17,
+      dayOfWeek: 6,
       isOpen: false,
       slots: [],
     ),
     ScheduleDay(
       name: 'Sunday',
       dayOfMonth: 18,
+      dayOfWeek: 0,
       isOpen: true,
       slots: List.of(defaultSlots),
     ),

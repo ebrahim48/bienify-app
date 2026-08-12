@@ -1,3 +1,4 @@
+import '../../features/Role/doctor_role/domain/entities/doctor_practice.dart';
 import '../../features/Role/patient/appointments/domain/entities/appointment.dart';
 import '../../features/Role/patient/doctors/domain/entities/doctor.dart';
 import '../../features/Role/patient/home/domain/entities/home_feed.dart';
@@ -123,6 +124,46 @@ Appointment appointmentFrom(Map<String, dynamic> json) {
     consultationFee: Api.majorUnits(json['feeMinor']),
   );
 }
+
+/// The same booking as [appointmentFrom], seen from the other chair.
+///
+/// The patient's card names the doctor and the doctor's card names the
+/// patient, and the two lists group by different things — the doctor's chips
+/// are New / Completed / Cancelled, so a booking awaiting payment is still
+/// "new" to them.
+DoctorAppointment doctorAppointmentFrom(Map<String, dynamic> json) {
+  final patientRef = json['patientId'];
+  final name = Api.nameOf(patientRef, 'Patient');
+  final status = Api.str(json['status']);
+  final scheduledAt = Api.date(json['slotStart']);
+  final fee = Api.majorUnits(json['feeMinor']);
+
+  return DoctorAppointment(
+    id: Api.id(json),
+    patientName: name,
+    initials: initialsOf(name),
+    complaint: Api.str(json['reason'], 'Consultation'),
+    scheduledAt: scheduledAt,
+    filter: doctorApptFilterFrom(status),
+    // The room opens on the hour and the server closes it at `slotEnd`; a
+    // muted Join outside that window is what the design shows.
+    isJoinable:
+        status == 'confirmed' &&
+        DateTime.now().isAfter(
+          scheduledAt.subtract(const Duration(minutes: 10)),
+        ) &&
+        DateTime.now().isBefore(Api.date(json['slotEnd'])),
+    photoUrl: Api.avatarOf(patientRef),
+    fee: fee == 0 ? null : fee,
+  );
+}
+
+/// The server's appointment states, collapsed to the doctor's three chips.
+DoctorApptFilter doctorApptFilterFrom(String raw) => switch (raw) {
+  'completed' => DoctorApptFilter.completed,
+  'cancelled' || 'no_show' || 'refunded' => DoctorApptFilter.cancelled,
+  _ => DoctorApptFilter.fresh,
+};
 
 LabRequestStatus labStatusFrom(String raw) => switch (raw) {
   'in_progress' || 'collected' || 'processing' => LabRequestStatus.inProgress,

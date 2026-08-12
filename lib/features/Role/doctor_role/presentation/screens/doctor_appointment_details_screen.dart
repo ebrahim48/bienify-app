@@ -94,6 +94,7 @@ class _PatientCard extends StatelessWidget {
           AppAvatar(
             name: appointment.patientName,
             size: _avatar,
+            imageUrl: appointment.photoUrl,
             fallbackAsset: appointment.photoAsset,
           ),
           AppSpacing.gapH(AppSpacing.sm),

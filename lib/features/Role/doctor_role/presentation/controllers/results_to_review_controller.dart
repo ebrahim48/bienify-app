@@ -1,9 +1,11 @@
 import 'package:get/get.dart';
 
 import '../../../../../core/constants/app_strings.dart';
+import '../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../data/static/doctor_orders_data.dart';
 import '../../domain/entities/test_request.dart';
+import '../../domain/repositories/doctor_practice_repository.dart';
 
 /// Backs Results to Review and everything reached from it.
 ///
@@ -11,11 +13,22 @@ import '../../domain/entities/test_request.dart';
 /// same patient and the same order — the list picks them, and the detail,
 /// review options and their four destinations all read them back.
 ///
-/// UI-only: the roster comes from [DoctorOrdersData] and reviewing a result
-/// only moves a row's pill.
+/// The Patients segment is served by the API. The Lab and Radiology segments
+/// are not: `GET /lab-orders` filters by `patientId`, so it answers "the
+/// orders I am the subject of", and the backend has no route that answers
+/// "the orders I requested". Until it does, those two segments show
+/// [DoctorOrdersData] — see the note in `docs/LIVE-API-CHECK.md`.
 class ResultsToReviewController extends GetxController {
+  ResultsToReviewController({DoctorPracticeRepository? repository})
+    : _repository = repository ?? Get.find<DoctorPracticeRepository>();
+
+  final DoctorPracticeRepository _repository;
+
   final RxList<ReviewPatient> patients = <ReviewPatient>[].obs;
   final RxList<TestRequest> requests = <TestRequest>[].obs;
+
+  final RxBool isLoading = true.obs;
+  final RxnString error = RxnString();
 
   final Rx<ResultsTab> tab = ResultsTab.patients.obs;
   final Rx<RequestFilter> filter = RequestFilter.all.obs;
@@ -38,8 +51,20 @@ class ResultsToReviewController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    patients.value = List.of(DoctorOrdersData.patients);
     requests.value = List.of(DoctorOrdersData.requests);
+    load();
+  }
+
+  Future<void> load() async {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      patients.value = await _repository.reviewPatients();
+    } on AppException catch (e) {
+      error.value = e.message;
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   // ─── List ────────────────────────────────────────────────────────────────

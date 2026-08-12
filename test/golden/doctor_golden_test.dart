@@ -276,8 +276,11 @@ void main() {
       binding: DoctorAppointmentsBinding(),
       size: const Size(390, 1000),
     );
+    // `select` rather than assigning `selected`: the attachments are fetched
+    // for the booking, so setting the field alone leaves the list empty.
     final controller = Get.find<DoctorAppointmentsController>()
-      ..selected.value = DoctorPracticeData.appointments().first;
+      ..select(DoctorPracticeData.appointments().first);
+    await tester.pump();
     await tester.pump();
 
     expect(controller.patientDocuments.length, 2);
@@ -299,7 +302,9 @@ void main() {
       size: const Size(390, 1300),
     );
     final controller = Get.find<WritePrescriptionController>();
-    expect(controller.medicines.length, 2);
+    // A new script starts empty. The two lines in the design are a filled-in
+    // example, not a default every patient would be prescribed.
+    expect(controller.medicines, isEmpty);
     expect(controller.hasSaved.value, isFalse);
 
     await settleImages(tester);
@@ -313,7 +318,7 @@ void main() {
       ..setName('Ibuprofen 400 mg')
       ..save();
     await tester.pumpAndSettle(const Duration(seconds: 5));
-    expect(controller.medicines.length, 2);
+    expect(controller.medicines, isEmpty);
 
     controller
       ..setDuration('5')
@@ -322,7 +327,7 @@ void main() {
       ..save();
     await tester.pumpAndSettle(const Duration(seconds: 5));
 
-    expect(controller.medicines.length, 3);
+    expect(controller.medicines.length, 1);
     expect(controller.hasSaved.value, isTrue);
     // Saving reveals the submit action, as the design's second screen shows.
     expect(find.text('Submit Your patients'), findsOneWidget);
@@ -387,7 +392,10 @@ void main() {
 
     // The mock week opens five days; Friday and Saturday start closed.
     expect(controller.activeDays, 5);
-    expect(controller.totalHoursLabel, '40h');
+    // Six one-hour slots on each of the five open days. The summary counts the
+    // hours actually on the calendar rather than a fixed working day, so a
+    // doctor who opens two slots is not credited with eight hours.
+    expect(controller.totalHoursLabel, '30h');
 
     controller.toggleDay(0, false);
     await tester.pump();
@@ -425,7 +433,11 @@ void main() {
       ..addSlot(0);
     await tester.pump();
     expect(controller.days.first.slots.length, before + 1);
-    expect(controller.days.first.slots.last.label, '08:00 AM-09:00 AM');
+    // The typed times are normalised to the chip format the rest of the day
+    // uses, rather than pasted together as they were entered.
+    expect(controller.days.first.slots.last.label, '08-09 AM');
+    expect(controller.days.first.slots.last.startMinute, 8 * 60);
+    expect(controller.days.first.slots.last.endMinute, 9 * 60);
   });
 
   testWidgets('Set Fees sheet', (tester) async {

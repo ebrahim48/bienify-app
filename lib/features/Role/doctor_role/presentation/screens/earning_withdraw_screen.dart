@@ -29,28 +29,34 @@ class EarningWithdrawScreen extends GetView<EarningsController> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AppSpacing.gapV(AppSpacing.base),
-          _BalanceCard(
-            amount: controller.availableBalance,
-            onRequest: () => RequestPayoutDialog.show(context),
+          Obx(
+            () => _BalanceCard(
+              amount: controller.availableBalance.value,
+              onRequest: () => RequestPayoutDialog.show(context),
+            ),
           ),
           AppSpacing.gapV(AppSpacing.sm),
           Row(
             children: [
               Expanded(
-                child: _StatCard(
-                  icon: Icons.trending_up_rounded,
-                  ink: AppColors.payoutInk,
-                  label: AppStrings.totalEarned.tr,
-                  value: controller.totalEarned,
+                child: Obx(
+                  () => _StatCard(
+                    icon: Icons.trending_up_rounded,
+                    ink: AppColors.payoutInk,
+                    label: AppStrings.totalEarned.tr,
+                    value: controller.totalEarned.value,
+                  ),
                 ),
               ),
               AppSpacing.gapH(AppSpacing.sm),
               Expanded(
-                child: _StatCard(
-                  icon: Icons.download_rounded,
-                  ink: AppColors.paidOutInk,
-                  label: AppStrings.paidOut.tr,
-                  value: controller.paidOut,
+                child: Obx(
+                  () => _StatCard(
+                    icon: Icons.download_rounded,
+                    ink: AppColors.paidOutInk,
+                    label: AppStrings.paidOut.tr,
+                    value: controller.paidOut.value,
+                  ),
                 ),
               ),
             ],

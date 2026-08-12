@@ -1,10 +1,12 @@
 import 'package:get/get.dart';
 
 import '../../../../../core/constants/app_strings.dart';
+import '../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../core/widgets/app_snackbar.dart';
 import '../../data/static/doctor_orders_data.dart';
 import '../../domain/entities/test_request.dart';
+import '../../domain/repositories/doctor_practice_repository.dart';
 
 /// Backs the three-step request wizard.
 ///
@@ -13,14 +15,22 @@ import '../../domain/entities/test_request.dart';
 /// request takes its notes on step two, an imaging request picks a subtest
 /// there and reviews everything on step three.
 class TestRequestController extends GetxController {
-  TestRequestController({required this.kind, required this.patient});
+  TestRequestController({
+    required this.kind,
+    required this.patient,
+    DoctorPracticeRepository? repository,
+  }) : _repository = repository ?? Get.find<DoctorPracticeRepository>();
 
   final OrderKind kind;
   final ReviewPatient patient;
 
+  final DoctorPracticeRepository _repository;
+
   static const int stepCount = 3;
 
   final RxInt step = 0.obs;
+
+  final RxBool isSubmitting = false.obs;
 
   /// Live query from the search field above the catalogue.
   final RxString query = ''.obs;
@@ -124,7 +134,46 @@ class TestRequestController extends GetxController {
     return true;
   }
 
-  void submit() {
+  /// Files the order against the patient the wizard was opened for.
+  ///
+  /// The imaging flow's subtest is the more specific of the two selections, so
+  /// it is what goes on the order; the study it sits under is the heading, not
+  /// the test being run.
+  Future<void> submit() async {
+    if (isSubmitting.value) return;
+
+    if (patient.id.isEmpty) {
+      AppSnackbar.info(AppStrings.testNeedsPatient.tr);
+      return;
+    }
+    final test = selectedSubtest.value ?? selectedTest.value;
+    if (test == null) {
+      AppSnackbar.info(AppStrings.pickATestFirst.tr);
+      return;
+    }
+
+    // Priority and the signature have nowhere to go on a lab order, so they
+    // ride along in the note rather than being dropped without trace.
+    final note = [
+      priorityLabel(priority.value),
+      if (clinicalNotes.value.trim().isNotEmpty) clinicalNotes.value.trim(),
+      if (instructions.value.trim().isNotEmpty) instructions.value.trim(),
+    ].join(' — ');
+
+    isSubmitting.value = true;
+    try {
+      await _repository.orderTest(
+        patientId: patient.id,
+        tests: [test],
+        notes: note,
+      );
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    } finally {
+      isSubmitting.value = false;
+    }
+
     AppSnackbar.success(AppStrings.orderSubmitted.tr);
     // Back to Results to Review, where the new order now sits, rather than
     // unwinding one screen at a time through the wizard. `isFirst` is the

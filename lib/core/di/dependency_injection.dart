@@ -1,5 +1,8 @@
 import 'package:get/get.dart';
 
+import '../../features/Role/doctor_role/data/repositories/api_doctor_practice_repository.dart';
+import '../../features/Role/doctor_role/data/repositories/static_doctor_practice_repository.dart';
+import '../../features/Role/doctor_role/domain/repositories/doctor_practice_repository.dart';
 import '../../features/Role/patient/appointments/data/repositories/api_appointment_repository.dart';
 import '../../features/Role/patient/appointments/data/repositories/mock_appointment_repository.dart';
 import '../../features/Role/patient/appointments/domain/repositories/appointment_repository.dart';
@@ -112,6 +115,16 @@ class DependencyInjection {
     _registerAppointments(mock, clock);
     _registerPharmacy(mock);
     _registerVault(mock);
+    _registerDoctorRole(mock);
+  }
+
+  static void _registerDoctorRole(bool mock) {
+    Get.put<DoctorPracticeRepository>(
+      mock
+          ? const StaticDoctorPracticeRepository()
+          : ApiDoctorPracticeRepository(Get.find<ApiClient>()),
+      permanent: true,
+    );
   }
 
   /// [clock] only reaches the mock: its fixtures are generated relative to

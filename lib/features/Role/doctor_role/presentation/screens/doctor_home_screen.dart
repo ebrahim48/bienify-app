@@ -41,7 +41,7 @@ class DoctorHomeScreen extends GetView<DoctorHomeController> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 AppSpacing.gapV(AppSpacing.base),
-                _StatGrid(stats: controller.stats),
+                Obx(() => _StatGrid(stats: controller.stats.toList())),
                 AppSpacing.gapV(AppSpacing.md),
                 Text(
                   AppStrings.quickActions.tr,
@@ -63,7 +63,11 @@ class DoctorHomeScreen extends GetView<DoctorHomeController> {
                   hasShadow: false,
                   padding: EdgeInsets.all(AppSpacing.sm.w),
                   child: Obx(
-                    () => AppointmentsChart(load: controller.load.toList()),
+                    () => AppointmentsChart(
+                      load: controller.chartLoad.toList(),
+                      maxValue: controller.chartMax.value,
+                      divisions: controller.chartDivisions,
+                    ),
                   ),
                 ),
                 AppSpacing.gapV(AppSpacing.md),

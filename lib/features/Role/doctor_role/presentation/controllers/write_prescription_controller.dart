@@ -1,19 +1,32 @@
 import 'package:get/get.dart';
 
 import '../../../../../core/constants/app_strings.dart';
+import '../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../core/utils/app_navigator.dart';
 import '../../../../../core/widgets/app_snackbar.dart';
 import '../../data/static/doctor_practice_data.dart';
 import '../../domain/entities/doctor_practice.dart';
+import '../../domain/repositories/doctor_practice_repository.dart';
+import 'doctor_appointments_controller.dart';
 
 /// Backs Write Prescriptions: the lines already written, and the form that
 /// adds another.
 ///
-/// UI-only — nothing is sent anywhere. Field values are plain strings so the
-/// inputs own their text controllers.
+/// The script is filed against the consultation the doctor came in from, which
+/// is the appointment selected on the Appointments tab — `POST
+/// /consultations/:id/prescriptions` is keyed by it.
+///
+/// Field values are plain strings so the inputs own their text controllers.
 class WritePrescriptionController extends GetxController {
+  WritePrescriptionController({DoctorPracticeRepository? repository})
+    : _repository = repository ?? Get.find<DoctorPracticeRepository>();
+
+  final DoctorPracticeRepository _repository;
+
   final RxList<PrescribedMedicine> medicines = <PrescribedMedicine>[].obs;
+
+  final RxBool isSubmitting = false.obs;
 
   /// Whether the form under "Add New Medicine" is showing.
   final RxBool isFormOpen = true.obs;
@@ -31,10 +44,11 @@ class WritePrescriptionController extends GetxController {
   /// reveals "Submit Your patients" in the design.
   final RxBool hasSaved = false.obs;
 
+  /// A new script starts empty — the lines in the design are a filled-in
+  /// example, not a default every patient is prescribed.
   @override
   void onInit() {
     super.onInit();
-    medicines.value = DoctorPracticeData.prescribed();
   }
 
   void openForm() => isFormOpen.value = true;
@@ -87,7 +101,39 @@ class WritePrescriptionController extends GetxController {
       medicines.remove(medicine);
 
   /// Sending the script to the patient ends the consultation for the doctor.
-  void submit() {
+  ///
+  /// Refuses an empty script and a missing consultation rather than posting
+  /// either — the server would reject both, and its validation message would
+  /// not say which of the two the doctor has to fix.
+  Future<void> submit() async {
+    if (isSubmitting.value) return;
+
+    if (medicines.isEmpty) {
+      AppSnackbar.info(AppStrings.prescriptionNeedsFields.tr);
+      return;
+    }
+
+    final appointmentId = Get.isRegistered<DoctorAppointmentsController>()
+        ? Get.find<DoctorAppointmentsController>().selected.value?.id
+        : null;
+    if (appointmentId == null || appointmentId.isEmpty) {
+      AppSnackbar.info(AppStrings.prescriptionNeedsAppointment.tr);
+      return;
+    }
+
+    isSubmitting.value = true;
+    try {
+      await _repository.prescribe(
+        appointmentId: appointmentId,
+        medicines: medicines.toList(),
+      );
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    } finally {
+      isSubmitting.value = false;
+    }
+
     AppSnackbar.success(AppStrings.prescriptionSent.tr);
     AppNavigator.resetTo(AppRoutes.doctorHome);
   }

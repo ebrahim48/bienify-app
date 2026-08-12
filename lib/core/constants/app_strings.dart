@@ -554,6 +554,11 @@ class AppStrings {
   static const String paidOut = 'paid_out';
   static const String recentConsultations = 'recent_consultations';
   static const String amountToWithdraw = 'amount_to_withdraw';
+  static const String enterAValidAmount = 'enter_a_valid_amount';
+  static const String noPayoutAccount = 'no_payout_account';
+  static const String prescriptionNeedsAppointment =
+      'prescription_needs_appointment';
+  static const String testNeedsPatient = 'test_needs_patient';
   static const String selectPayoutMethod = 'select_payout_method';
   static const String payoutRequested = 'payout_requested';
   static const String completed = 'completed';

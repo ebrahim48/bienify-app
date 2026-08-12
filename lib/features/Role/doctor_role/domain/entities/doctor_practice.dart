@@ -1,8 +1,9 @@
 /// Shapes behind the practitioner section.
 ///
-/// **Names only, by design.** This feature is UI-first: no repository, use
-/// case or data source sits under it and nothing calls an API — the same
-/// arrangement as `pharmacy`, `profile` and `medical_vault`.
+/// Served by `DoctorPracticeRepository` — the API implementation reads them
+/// off `doctors/me`, `doctors/me/stats`, `appointments`, `wallet` and
+/// `lab-orders`; the static implementation keeps the design's sample data for
+/// tests and for walking the app without a server.
 library;
 
 /// Which tab of the doctor shell is showing.
@@ -14,6 +15,7 @@ class Practitioner {
     required this.name,
     required this.initials,
     required this.availableBalance,
+    this.currency = 'USD',
     this.hasUnreadNotification = true,
   });
 
@@ -23,10 +25,145 @@ class Practitioner {
   final String initials;
 
   final double availableBalance;
+
+  /// ISO code from the wallet. The design was drawn in dollars, so a dollar
+  /// wallet keeps its `$`; anything else prints its code rather than wearing
+  /// a symbol that belongs to another currency.
+  final String currency;
+
   final bool hasUnreadNotification;
 
   /// `$160` — whole currency units, as the design prints it.
-  String get balanceLabel => '\$${availableBalance.toStringAsFixed(0)}';
+  String get balanceLabel => money(availableBalance, currency);
+}
+
+/// `$160` in dollars, `160 XAF` in anything else.
+String money(double amount, String currency) => currency == 'USD'
+    ? '\$${amount.toStringAsFixed(0)}'
+    : '${amount.toStringAsFixed(0)} $currency';
+
+/// Initials for a monogram disc: `Dr Dana Okafor` → `DO`.
+///
+/// The honorific is dropped — every practitioner carries one, so keeping it
+/// would put `DR` on every disc in the app.
+String initialsOf(String name) {
+  const honorifics = {'dr', 'dr.', 'mr', 'mr.', 'mrs', 'mrs.', 'ms', 'ms.'};
+  final words = name
+      .split(RegExp(r'\s+'))
+      .where((w) => w.isNotEmpty && !honorifics.contains(w.toLowerCase()))
+      .toList();
+  if (words.isEmpty) return '?';
+  if (words.length == 1) return words.first[0].toUpperCase();
+  return (words.first[0] + words.last[0]).toUpperCase();
+}
+
+/// Everything the practitioner dashboard reads in one round trip.
+class DoctorDashboard {
+  const DoctorDashboard({
+    required this.practitioner,
+    required this.pendingRequests,
+    required this.todaysPatients,
+    required this.totalEarned,
+    required this.totalPatients,
+    required this.load,
+    required this.visits,
+  });
+
+  final Practitioner practitioner;
+
+  /// Already formatted, because `$660` is not derivable from a bare number
+  /// without knowing the wallet's currency.
+  final String pendingRequests;
+  final String todaysPatients;
+  final String totalEarned;
+  final String totalPatients;
+
+  final List<DayLoad> load;
+  final List<PatientVisit> visits;
+
+  /// The chart's y-axis top.
+  ///
+  /// Follows the busiest day, but lands on a readable gridline rather than the
+  /// raw peak: a week topping out at 55 gets an axis of 0/15/30/45/60, not
+  /// 0/14/28/42/56. Never zero — an empty week would otherwise divide by it.
+  int get chartMax {
+    final peak = load.fold(0, (max, day) => day.count > max ? day.count : max);
+    if (peak <= 0) return chartDivisions;
+
+    for (final step in _gridSteps) {
+      if (step * chartDivisions >= peak) return step * chartDivisions;
+    }
+    // Past the last named step, round up to the nearest whole multiple of it.
+    final step = _gridSteps.last;
+    final needed = (peak / chartDivisions).ceil();
+    return ((needed + step - 1) ~/ step) * step * chartDivisions;
+  }
+
+  static const int chartDivisions = 4;
+
+  /// Gaps a reader can add up in their head, smallest first.
+  static const List<int> _gridSteps = [1, 2, 5, 10, 15, 20, 25, 50, 100];
+}
+
+/// What Earning Withdraw prints above the consultation list.
+class DoctorEarnings {
+  const DoctorEarnings({
+    required this.availableLabel,
+    required this.totalEarnedLabel,
+    required this.paidOutLabel,
+    required this.consultations,
+  });
+
+  final String availableLabel;
+  final String totalEarnedLabel;
+  final String paidOutLabel;
+  final List<ConsultationEarning> consultations;
+}
+
+/// A destination the doctor can be paid into.
+class PayoutAccount {
+  const PayoutAccount({
+    required this.id,
+    required this.label,
+    required this.isDefault,
+  });
+
+  final String id;
+
+  /// `Mobile money •••• 4321` — what the dialog lists.
+  final String label;
+
+  final bool isDefault;
+}
+
+/// The practice details behind the doctor's profile and its edit form.
+class DoctorProfileDetails {
+  const DoctorProfileDetails({
+    required this.fullName,
+    required this.email,
+    required this.specialty,
+    required this.experience,
+    required this.biography,
+    required this.licenceNumber,
+    required this.language,
+    required this.consultationFee,
+    required this.currency,
+    this.photoUrl,
+  });
+
+  final String fullName;
+  final String email;
+  final String specialty;
+
+  /// Years, as the form's text field holds it.
+  final String experience;
+
+  final String biography;
+  final String licenceNumber;
+  final String language;
+  final double consultationFee;
+  final String currency;
+  final String? photoUrl;
 }
 
 /// One of the four dashboard statistics.
@@ -92,6 +229,7 @@ class DoctorAppointment {
     required this.filter,
     this.isJoinable = false,
     this.photoAsset,
+    this.photoUrl,
     this.initials,
     this.age,
     this.summary,
@@ -139,7 +277,11 @@ class DoctorAppointment {
   /// True only for the visit whose room is open; the rest show a muted Join.
   final bool isJoinable;
 
+  /// Bundled placeholder, used by the static data the goldens render.
   final String? photoAsset;
+
+  /// The patient's own photo, when the server has one.
+  final String? photoUrl;
 
   /// `Apr 2, 2026 at 11:00 AM`, hand-formatted like every other date label.
   String get scheduleLabel {
@@ -243,11 +385,42 @@ class PatientThread {
 // ─── Schedule ──────────────────────────────────────────────────────────────
 
 /// One bookable slot on a working day.
+///
+/// Carries minutes past midnight as well as its label: the label is what the
+/// chip prints, but `PUT /doctors/me/availability` wants a window, and reading
+/// one back out of `02-03 PM` would mean re-parsing text the app already had
+/// in numeric form.
 class TimeSlot {
-  const TimeSlot({required this.label});
+  const TimeSlot({
+    required this.label,
+    required this.startMinute,
+    required this.endMinute,
+  });
+
+  /// Builds the label from the window: `840, 900` → `02-03 PM`.
+  factory TimeSlot.fromMinutes(int startMinute, int endMinute) => TimeSlot(
+    label: _slotLabel(startMinute, endMinute),
+    startMinute: startMinute,
+    endMinute: endMinute,
+  );
 
   /// `02-03 PM`.
   final String label;
+
+  /// Minutes past midnight, `0..1440`.
+  final int startMinute;
+  final int endMinute;
+
+  static String _slotLabel(int start, int end) {
+    String hh(int minutes) {
+      final hour = (minutes ~/ 60) % 24;
+      final hour12 = hour % 12 == 0 ? 12 : hour % 12;
+      return hour12.toString().padLeft(2, '0');
+    }
+
+    final period = (end ~/ 60) % 24 < 12 ? 'AM' : 'PM';
+    return '${hh(start)}-${hh(end)} $period';
+  }
 }
 
 /// A weekday in the schedule editor.
@@ -257,6 +430,7 @@ class ScheduleDay {
     required this.dayOfMonth,
     required this.isOpen,
     required this.slots,
+    this.dayOfWeek = 0,
   });
 
   /// `Monday`.
@@ -264,6 +438,9 @@ class ScheduleDay {
 
   /// `12` — shown in the day circle.
   final int dayOfMonth;
+
+  /// Sunday is 0, matching the availability documents the server stores.
+  final int dayOfWeek;
 
   /// Whether the day's toggle is on.
   final bool isOpen;
@@ -273,6 +450,7 @@ class ScheduleDay {
   ScheduleDay copyWith({bool? isOpen, List<TimeSlot>? slots}) => ScheduleDay(
     name: name,
     dayOfMonth: dayOfMonth,
+    dayOfWeek: dayOfWeek,
     isOpen: isOpen ?? this.isOpen,
     slots: slots ?? this.slots,
   );

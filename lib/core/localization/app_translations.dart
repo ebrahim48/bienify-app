@@ -563,6 +563,11 @@ class AppTranslations extends Translations {
     AppStrings.paidOut: 'Paid Out',
     AppStrings.recentConsultations: 'Recent Consultations',
     AppStrings.amountToWithdraw: 'Amount to withdraw',
+    AppStrings.enterAValidAmount: 'Enter a valid amount',
+    AppStrings.noPayoutAccount: 'Add a payout account first',
+    AppStrings.prescriptionNeedsAppointment:
+        'Open a consultation before writing a prescription',
+    AppStrings.testNeedsPatient: 'Pick a patient before ordering a test',
     AppStrings.selectPayoutMethod: 'Select payout Method',
     AppStrings.payoutRequested: 'Payout requested',
     AppStrings.completed: 'Completed',
@@ -1465,6 +1470,11 @@ class AppTranslations extends Translations {
     AppStrings.paidOut: 'Pagado',
     AppStrings.recentConsultations: 'Consultas recientes',
     AppStrings.amountToWithdraw: 'Monto a retirar',
+    AppStrings.enterAValidAmount: 'Ingresa un monto válido',
+    AppStrings.noPayoutAccount: 'Primero añade una cuenta de pago',
+    AppStrings.prescriptionNeedsAppointment:
+        'Abre una consulta antes de escribir una receta',
+    AppStrings.testNeedsPatient: 'Elige un paciente antes de pedir un examen',
     AppStrings.selectPayoutMethod: 'Elige el método de pago',
     AppStrings.payoutRequested: 'Pago solicitado',
     AppStrings.completed: 'Completada',

@@ -2,22 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
+import '../../../../../core/constants/app_icons.dart';
 import '../../../../../core/constants/app_strings.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_sizes.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/utils/responsive.dart';
 import '../../../../../core/widgets/app_button.dart';
+import '../../../../../core/widgets/app_card.dart';
+import '../../../../../core/widgets/app_svg_icon.dart';
+import '../../../../../core/widgets/app_text_field.dart';
 import '../../../../../core/widgets/blurred_dialog.dart';
-import '../../../patient/booking/domain/entities/payment_method.dart';
-import '../../../patient/booking/presentation/widgets/payment_method_tile.dart';
+import '../../domain/entities/doctor_practice.dart';
 import '../controllers/earnings_controller.dart';
 
 /// "Request Payout" over a blurred Earning Withdraw.
 ///
-/// Reuses the booking flow's `PaymentMethodTile` and its method list, so the
-/// six rows are not written a fourth time.
+/// Lists the practitioner's own payout accounts rather than the booking
+/// flow's method catalogue: a withdrawal has to name an account the server
+/// already holds, and "Tpago" as an abstract method is not one.
 class RequestPayoutDialog extends GetView<EarningsController> {
   const RequestPayoutDialog({super.key});
 
@@ -52,9 +57,17 @@ class RequestPayoutDialog extends GetView<EarningsController> {
             AppStrings.amountToWithdraw.tr,
             style: AppTextStyles.bodyLarge.rc(AppColors.gray500),
           ),
-          Text(
-            controller.availableBalance,
-            style: AppTextStyles.headlineSmall.rc(AppColors.gray900),
+          Obx(
+            () => Text(
+              controller.availableBalance.value,
+              style: AppTextStyles.headlineSmall.rc(AppColors.gray900),
+            ),
+          ),
+          AppSpacing.gapV(AppSpacing.xs),
+          AppTextField(
+            hint: AppStrings.amountToWithdraw.tr,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onChanged: controller.setAmount,
           ),
           AppSpacing.gapV(AppSpacing.base),
           Text(
@@ -68,17 +81,20 @@ class RequestPayoutDialog extends GetView<EarningsController> {
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: _maxListHeight.h),
             child: SingleChildScrollView(
-              child: Obx(
-                () => Column(
+              child: Obx(() {
+                final accounts = controller.accounts.toList();
+                if (accounts.isEmpty) {
+                  return Text(
+                    AppStrings.noPayoutAccount.tr,
+                    style: AppTextStyles.bodyLarge.rc(AppColors.gray500),
+                  );
+                }
+                return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    for (
-                      var index = 0;
-                      index < PaymentMethod.values.length;
-                      index++
-                    ) ...[
-                      PaymentMethodTile(
-                        method: PaymentMethod.values[index],
+                    for (var index = 0; index < accounts.length; index++) ...[
+                      _AccountTile(
+                        account: accounts[index],
                         isSelected:
                             index == controller.selectedMethodIndex.value,
                         onTap: () => controller.selectMethod(index),
@@ -86,8 +102,8 @@ class RequestPayoutDialog extends GetView<EarningsController> {
                       AppSpacing.gapV(AppSpacing.xs),
                     ],
                   ],
-                ),
-              ),
+                );
+              }),
             ),
           ),
           AppSpacing.gapV(AppSpacing.base),
@@ -114,6 +130,78 @@ class RequestPayoutDialog extends GetView<EarningsController> {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A selectable payout account: tinted icon, label, and a check bubble that
+/// fills `primary500` when chosen — the booking flow's method row, over an
+/// account the server holds rather than a catalogue entry.
+class _AccountTile extends StatelessWidget {
+  const _AccountTile({
+    required this.account,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final PayoutAccount account;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  static const double _badge = 44;
+  static const double _radio = 24;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      onTap: onTap,
+      hasShadow: false,
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.base.w,
+        vertical: AppSpacing.xs.h,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: _badge.w,
+            height: _badge.w,
+            decoration: const BoxDecoration(
+              color: AppColors.accentSurface,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: AppSvgIcon(
+              AppIcons.wallet,
+              size: AppSizes.xl2,
+              color: AppColors.primary600,
+            ),
+          ),
+          AppSpacing.gapH(AppSpacing.sm),
+          Expanded(
+            child: Text(
+              account.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.titleSmall.rc(AppColors.black),
+            ),
+          ),
+          Container(
+            width: _radio.w,
+            height: _radio.w,
+            decoration: BoxDecoration(
+              color: isSelected ? AppColors.primary500 : AppColors.gray100,
+              shape: BoxShape.circle,
+            ),
+            child: isSelected
+                ? Icon(
+                    Icons.check_rounded,
+                    size: AppSizes.lg.w,
+                    color: AppColors.white,
+                  )
+                : null,
           ),
         ],
       ),

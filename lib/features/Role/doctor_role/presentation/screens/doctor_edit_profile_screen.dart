@@ -26,100 +26,120 @@ class DoctorEditProfileScreen extends GetView<DoctorProfileController> {
   Widget build(BuildContext context) {
     return AppScaffold(
       topBar: AppTopBar(title: AppStrings.editProfile.tr),
-      child: AutofillGroup(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AppSpacing.gapV(AppSpacing.base),
-            _Label(AppStrings.fullName.tr),
-            AppTextField(
-              initialText: controller.fullName.value,
-              hint: AppStrings.fullName.tr,
-              textInputAction: TextInputAction.next,
-              onChanged: (value) => controller.fullName.value = value,
+      // Rebuilt when a load lands: the prefilled fields own their text
+      // controllers and seed them from [initialText] once, so a value that
+      // arrives after the first build only reaches them through a new key.
+      child: Obx(() => _Form(key: ValueKey(controller.formGeneration.value))),
+    );
+  }
+}
+
+class _Form extends GetView<DoctorProfileController> {
+  const _Form({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AutofillGroup(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppSpacing.gapV(AppSpacing.base),
+          _Label(AppStrings.fullName.tr),
+          AppTextField(
+            initialText: controller.fullName.value,
+            hint: AppStrings.fullName.tr,
+            textInputAction: TextInputAction.next,
+            onChanged: (value) => controller.fullName.value = value,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          _Label(AppStrings.email.tr),
+          AppTextField(
+            initialText: controller.email.value,
+            hint: AppStrings.emailHint.tr,
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.next,
+            autofillHints: const [AutofillHints.email],
+            onChanged: (value) => controller.email.value = value,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          _Label(AppStrings.password.tr),
+          AppTextField(
+            hint: AppStrings.passwordHint.tr,
+            obscureText: true,
+            showPasswordToggle: true,
+            textInputAction: TextInputAction.next,
+            onChanged: (value) => controller.password.value = value,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          _Label(AppStrings.specialty.tr),
+          Obx(
+            () => AppDropdownField(
+              value: controller.specialty.value,
+              options: DoctorPracticeData.specialties,
+              onChanged: controller.selectSpecialty,
             ),
-            AppSpacing.gapV(AppSpacing.sm),
-            _Label(AppStrings.email.tr),
-            AppTextField(
-              initialText: controller.email.value,
-              hint: AppStrings.emailHint.tr,
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              autofillHints: const [AutofillHints.email],
-              onChanged: (value) => controller.email.value = value,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          _Label(AppStrings.countryOfPractice.tr),
+          Obx(
+            () => AppDropdownField(
+              value: controller.country.value,
+              options: DoctorPracticeData.countries,
+              onChanged: controller.selectCountry,
             ),
-            AppSpacing.gapV(AppSpacing.sm),
-            _Label(AppStrings.password.tr),
-            AppTextField(
-              hint: AppStrings.passwordHint.tr,
-              obscureText: true,
-              showPasswordToggle: true,
-              textInputAction: TextInputAction.next,
-              onChanged: (value) => controller.password.value = value,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          _Label(AppStrings.preferredLanguage.tr),
+          Obx(
+            () => AppDropdownField(
+              value: controller.language.value,
+              options: DoctorPracticeData.languages,
+              onChanged: controller.selectLanguage,
             ),
-            AppSpacing.gapV(AppSpacing.sm),
-            _Label(AppStrings.specialty.tr),
-            Obx(
-              () => AppDropdownField(
-                value: controller.specialty.value,
-                options: DoctorPracticeData.specialties,
-                onChanged: controller.selectSpecialty,
-              ),
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          _Label(AppStrings.experience.tr),
+          AppTextField(
+            initialText: controller.experience.value,
+            hint: AppStrings.experience.tr,
+            keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.next,
+            onChanged: (value) => controller.experience.value = value,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          _Label(AppStrings.biographyLabel.tr),
+          _BiographyField(
+            initialText: controller.biography.value,
+            onChanged: (value) => controller.biography.value = value,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          _Label(AppStrings.licenseNumber.tr),
+          AppTextField(
+            initialText: controller.licenceNumber.value,
+            hint: AppStrings.licenseNumberHint.tr,
+            textInputAction: TextInputAction.done,
+            onChanged: (value) => controller.licenceNumber.value = value,
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          _Label(AppStrings.uploadLicense.tr),
+          Obx(
+            () => DashedDropZone(
+              hasFile: controller.hasLicenceDocument.value,
+              onTap: controller.attachLicence,
             ),
-            AppSpacing.gapV(AppSpacing.sm),
-            _Label(AppStrings.countryOfPractice.tr),
-            Obx(
-              () => AppDropdownField(
-                value: controller.country.value,
-                options: DoctorPracticeData.countries,
-                onChanged: controller.selectCountry,
-              ),
+          ),
+          AppSpacing.gapV(AppSpacing.base),
+          const _ReviewNote(),
+          AppSpacing.gapV(AppSpacing.base),
+          Obx(
+            () => AppButton(
+              label: AppStrings.next.tr,
+              isLoading: controller.isSubmitting.value,
+              onPressed: controller.submit,
             ),
-            AppSpacing.gapV(AppSpacing.sm),
-            _Label(AppStrings.preferredLanguage.tr),
-            Obx(
-              () => AppDropdownField(
-                value: controller.language.value,
-                options: DoctorPracticeData.languages,
-                onChanged: controller.selectLanguage,
-              ),
-            ),
-            AppSpacing.gapV(AppSpacing.sm),
-            _Label(AppStrings.experience.tr),
-            AppTextField(
-              initialText: controller.experience.value,
-              hint: AppStrings.experience.tr,
-              keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.next,
-              onChanged: (value) => controller.experience.value = value,
-            ),
-            AppSpacing.gapV(AppSpacing.sm),
-            _Label(AppStrings.biographyLabel.tr),
-            _BiographyField(
-              onChanged: (value) => controller.biography.value = value,
-            ),
-            AppSpacing.gapV(AppSpacing.sm),
-            _Label(AppStrings.licenseNumber.tr),
-            AppTextField(
-              hint: AppStrings.licenseNumberHint.tr,
-              textInputAction: TextInputAction.done,
-              onChanged: (value) => controller.licenceNumber.value = value,
-            ),
-            AppSpacing.gapV(AppSpacing.sm),
-            _Label(AppStrings.uploadLicense.tr),
-            Obx(
-              () => DashedDropZone(
-                hasFile: controller.hasLicenceDocument.value,
-                onTap: controller.attachLicence,
-              ),
-            ),
-            AppSpacing.gapV(AppSpacing.base),
-            const _ReviewNote(),
-            AppSpacing.gapV(AppSpacing.base),
-            AppButton(label: AppStrings.next.tr, onPressed: controller.submit),
-            AppSpacing.gapV(AppSpacing.md),
-          ],
-        ),
+          ),
+          AppSpacing.gapV(AppSpacing.md),
+        ],
       ),
     );
   }
@@ -138,10 +158,30 @@ class _Label extends StatelessWidget {
 }
 
 /// Three-line box; `AppTextField` is the app's fixed single-line control.
-class _BiographyField extends StatelessWidget {
-  const _BiographyField({required this.onChanged});
+///
+/// Stateful because it owns its text controller, the same arrangement as
+/// [AppTextField]: [initialText] seeds it on creation, so a value that arrives
+/// later reaches the box through the form's key rather than a rebuild.
+class _BiographyField extends StatefulWidget {
+  const _BiographyField({required this.onChanged, this.initialText});
 
   final ValueChanged<String> onChanged;
+  final String? initialText;
+
+  @override
+  State<_BiographyField> createState() => _BiographyFieldState();
+}
+
+class _BiographyFieldState extends State<_BiographyField> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initialText,
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -158,9 +198,9 @@ class _BiographyField extends StatelessWidget {
           width: AppSizes.borderWidth,
         ),
       ),
-      // No controller passed: the field owns its own.
       child: TextField(
-        onChanged: onChanged,
+        controller: _controller,
+        onChanged: widget.onChanged,
         maxLines: 3,
         minLines: 3,
         cursorColor: AppColors.primary800,
