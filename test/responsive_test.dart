@@ -6,6 +6,7 @@ import 'package:bienify_app/core/widgets/app_pill_selector.dart';
 import 'package:bienify_app/features/Role/doctor_role/presentation/bindings/doctor_bindings.dart';
 import 'package:bienify_app/features/Role/doctor_role/presentation/screens/doctor_shell_screen.dart';
 import 'package:bienify_app/features/Role/doctor_role/presentation/screens/results_to_review_screen.dart';
+import 'package:bienify_app/features/Role/doctor_role/presentation/screens/write_prescription_screen.dart';
 import 'package:bienify_app/features/Role/patient/main/presentation/bindings/main_binding.dart';
 import 'package:bienify_app/features/Role/patient/main/presentation/screens/main_shell_screen.dart';
 import 'package:bienify_app/features/Role/patient/profile/presentation/bindings/profile_bindings.dart';
@@ -99,6 +100,12 @@ void main() {
       ResultsToReviewBinding(),
     ),
     'order history': (const OrderHistoryScreen(), AccountBinding()),
+    // The prescription form packs a strength field beside a unit picker and
+    // two rows of choice chips; 320 is where that gets tight.
+    'write prescription': (
+      const WritePrescriptionScreen(),
+      WritePrescriptionBinding(),
+    ),
   };
 
   /// The label sets the app actually puts in a pill row.
