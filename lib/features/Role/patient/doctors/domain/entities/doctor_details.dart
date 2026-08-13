@@ -33,10 +33,20 @@ class DoctorDetails {
 
 /// A bookable slot on a given day.
 class TimeSlot {
-  const TimeSlot({required this.label, this.isBooked = false});
+  const TimeSlot({required this.label, this.startsAt, this.isBooked = false});
 
   /// e.g. `10:30 AM`.
   final String label;
+
+  /// The instant the server offered, kept alongside the label it is shown as.
+  ///
+  /// Booking is refused unless `slotStart` equals one of the server's own slot
+  /// starts exactly, so the value has to survive the round trip rather than be
+  /// rebuilt from `10:30 AM` — a label cannot carry the date, and parsing one
+  /// back guesses at both the day and the timezone.
+  ///
+  /// Null for the sample data, which has no real instant behind it.
+  final DateTime? startsAt;
 
   /// Booked slots are shown struck through and cannot be selected.
   final bool isBooked;

@@ -19,11 +19,18 @@ class WalletCard extends StatelessWidget {
   const WalletCard({
     super.key,
     required this.wallet,
+    required this.deductionLabel,
     required this.isEnabled,
     required this.onChanged,
   });
 
   final Wallet wallet;
+
+  /// What will actually come out, which is the bill when the balance covers
+  /// it. Printing the balance instead promised to take $879.01 towards a $50
+  /// consultation — the same fault the pharmacy basket already fixed.
+  final String deductionLabel;
+
   final bool isEnabled;
   final ValueChanged<bool> onChanged;
 
@@ -96,7 +103,7 @@ class WalletCard extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: Text(
                 AppStrings.walletDeduction.trParams({
-                  'amount': wallet.balanceLabel,
+                  'amount': deductionLabel,
                 }),
                 style: AppTextStyles.labelLarge.rc(AppColors.gray800),
               ),

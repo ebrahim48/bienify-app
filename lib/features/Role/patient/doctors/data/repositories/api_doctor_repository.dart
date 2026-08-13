@@ -94,7 +94,9 @@ class ApiDoctorRepository implements DoctorRepository {
     for (final slot in Api.rows(data['slots'])) {
       final start = Api.date(slot['start']).toLocal();
       final day = DateTime(start.year, start.month, start.day);
-      byDay.putIfAbsent(day, () => []).add(TimeSlot(label: _clock(start)));
+      byDay
+          .putIfAbsent(day, () => [])
+          .add(TimeSlot(label: _clock(start), startsAt: start));
     }
 
     final days =

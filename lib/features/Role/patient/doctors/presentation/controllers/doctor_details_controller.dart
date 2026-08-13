@@ -6,6 +6,7 @@ import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/routes/app_routes.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../../appointments/domain/entities/appointment.dart';
+import '../../../appointments/domain/repositories/appointment_repository.dart';
 import '../../../chat/domain/entities/conversation.dart';
 import '../../domain/entities/doctor.dart';
 import '../../domain/entities/doctor_details.dart';
@@ -17,12 +18,15 @@ class DoctorDetailsController extends GetxController with SubmissionMixin {
     required this.doctor,
     required GetDoctorDetails getDetails,
     required GetDoctorAvailability getAvailability,
+    AppointmentRepository? appointments,
   }) : _getDetails = getDetails,
-       _getAvailability = getAvailability;
+       _getAvailability = getAvailability,
+       _appointments = appointments ?? Get.find<AppointmentRepository>();
 
   final Doctor doctor;
   final GetDoctorDetails _getDetails;
   final GetDoctorAvailability _getAvailability;
+  final AppointmentRepository _appointments;
 
   final Rxn<DoctorDetails> details = Rxn<DoctorDetails>();
   final Rxn<DoctorAvailability> availability = Rxn<DoctorAvailability>();
@@ -89,8 +93,17 @@ class DoctorDetailsController extends GetxController with SubmissionMixin {
     ),
   );
 
-  /// Carries the chosen slot into the payment summary.
-  void bookAppointment() {
+  /// Reserves the chosen slot, then carries the booking into the payment
+  /// summary.
+  ///
+  /// The appointment is created here rather than on the payment screen because
+  /// the slot has to be claimed before the patient starts paying for it —
+  /// two people can be looking at the same free slot, and the server settles
+  /// that atomically. It also means the summary is priced by the server: this
+  /// used to hand the next screen an invented `draft-…` appointment with no
+  /// fee, so it offered to charge nothing and then paid an id no server would
+  /// recognise.
+  Future<void> bookAppointment() async {
     if (!canBook) {
       AppSnackbar.info(AppStrings.selectTimeSlot.tr);
       return;
@@ -99,16 +112,23 @@ class DoctorDetailsController extends GetxController with SubmissionMixin {
     final day = selectedDay.value!;
     final slot = selectedSlot.value!;
 
-    Get.toNamed<void>(
-      AppRoutes.paymentSummary,
-      arguments: Appointment(
-        id: 'draft-${doctor.id}-${day.date.millisecondsSinceEpoch}',
-        doctorName: doctor.name,
-        specialty: doctor.specialty,
-        scheduledAt: _combine(day.date, slot.label),
-      ),
-    );
+    Appointment? booked;
+    final ok = await submit(() async {
+      booked = await _appointments.book(
+        doctorProfileId: doctor.id,
+        slotStart: slot.startsAt ?? _combine(day.date, slot.label),
+        type: _consultationType,
+      );
+    });
+
+    if (!ok || booked == null) return;
+
+    Get.toNamed<void>(AppRoutes.paymentSummary, arguments: booked);
   }
+
+  /// What the app books. There is no picker for it in the design, and the
+  /// consultation opens in the video screen, so every booking is a video one.
+  static const String _consultationType = 'video';
 
   /// Merges a selected day with a slot label such as `02:30 AM`.
   DateTime _combine(DateTime day, String label) {

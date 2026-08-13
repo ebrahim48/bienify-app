@@ -52,6 +52,9 @@ class PaymentSummaryScreen extends GetView<PaymentController> {
             AppSpacing.gapV(AppSpacing.sm),
             WalletCard(
               wallet: controller.wallet.value,
+              deductionLabel: controller.breakdown.format(
+                controller.breakdown.walletDeduction,
+              ),
               isEnabled: controller.useWallet.value,
               onChanged: controller.toggleWallet,
             ),
