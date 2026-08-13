@@ -442,6 +442,7 @@ ShopOrder shopOrderFrom(Map<String, dynamic> json) {
     placedAtLabel: _clockLabel(placedAt),
     status: shopOrderStatusFrom(Api.str(json['status'])),
     lines: Api.rows(json['items']).map(shopOrderLineFrom).toList(),
+    customerPhotoUrl: Api.avatarOf(json['patientId']),
   );
 }
 

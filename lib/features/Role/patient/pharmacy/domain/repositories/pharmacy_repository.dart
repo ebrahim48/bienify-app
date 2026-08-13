@@ -20,6 +20,13 @@ abstract class PharmacyRepository {
     String? prescriptionId,
   });
 
+  /// Pays for a placed order out of the patient's wallet.
+  ///
+  /// Until this is called the order sits in `pending_payment`, where the
+  /// pharmacy is shown it as new but the server refuses to let them accept
+  /// it — so an unpaid order is a dead end on both sides.
+  Future<void> payOrder(String orderId);
+
   /// The patient's orders, newest first.
   Future<List<PharmacyOrder>> orders();
 }

@@ -9,6 +9,7 @@ import '../../../../../core/theme/app_sizes.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/utils/responsive.dart';
+import '../../../../../core/widgets/app_avatar.dart';
 import '../../../../../core/widgets/app_card.dart';
 import '../../domain/entities/pharmacy_shop.dart';
 
@@ -98,18 +99,15 @@ class ShopOrderRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: _disc.w,
-            height: _disc.w,
-            decoration: const BoxDecoration(
-              color: AppColors.customerInitials,
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              order.initials,
-              style: AppTextStyles.titleSmall.rc(AppColors.white),
-            ),
+          // The customer's photo — every account has one — with the tinted
+          // initials disc only as the failure fallback.
+          AppAvatar(
+            imageUrl: order.customerPhotoUrl,
+            name: order.customerName,
+            size: _disc,
+            fallbackAsset: null,
+            backgroundColor: AppColors.customerInitials,
+            foregroundColor: AppColors.white,
           ),
           AppSpacing.gapH(AppSpacing.xs),
           Expanded(

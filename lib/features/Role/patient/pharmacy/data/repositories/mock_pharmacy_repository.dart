@@ -8,6 +8,9 @@ import '../static/pharmacy_mock_data.dart';
 /// Resolves immediately. A simulated network delay only makes a golden race
 /// the clock and capture an empty list.
 class MockPharmacyRepository implements PharmacyRepository {
+  @override
+  Future<void> payOrder(String orderId) async {}
+
   const MockPharmacyRepository();
 
   @override

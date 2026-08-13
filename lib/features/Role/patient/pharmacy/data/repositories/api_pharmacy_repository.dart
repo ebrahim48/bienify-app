@@ -64,6 +64,11 @@ class ApiPharmacyRepository implements PharmacyRepository {
   }
 
   @override
+  Future<void> payOrder(String orderId) async {
+    await _api.post(ApiConstants.postMedicineOrdersPay(orderId));
+  }
+
+  @override
   Future<List<PharmacyOrder>> orders() async {
     final rows = await _api.getList(
       ApiConstants.medicineOrders,

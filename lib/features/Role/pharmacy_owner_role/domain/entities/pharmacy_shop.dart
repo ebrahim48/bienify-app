@@ -96,6 +96,7 @@ class ShopOrder {
     required this.status,
     required this.lines,
     this.prescriptionFile,
+    this.customerPhotoUrl,
   });
 
   final String id;
@@ -105,8 +106,11 @@ class ShopOrder {
 
   final String customerName;
 
-  /// `SJ`, on the tinted disc.
+  /// `SJ`, on the tinted disc — only when the customer has no picture.
   final String initials;
+
+  /// The customer's own photo, which every account now has.
+  final String? customerPhotoUrl;
 
   final String phone;
   final String address;
@@ -141,6 +145,7 @@ class ShopOrder {
     status: status ?? this.status,
     lines: lines,
     prescriptionFile: prescriptionFile,
+    customerPhotoUrl: customerPhotoUrl,
   );
 }
 

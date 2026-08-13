@@ -239,8 +239,9 @@ class PharmacyCartController extends GetxController {
     }
 
     isPlacingOrder.value = true;
+    String orderId;
     try {
-      await _pharmacy.placeOrder(
+      orderId = await _pharmacy.placeOrder(
         pharmacyId: pharmacyId,
         quantitiesByMedicineId: {
           for (final line in lines) line.medicine.id: line.quantity,
@@ -249,7 +250,18 @@ class PharmacyCartController extends GetxController {
       );
     } on AppException catch (e) {
       AppSnackbar.error(e.message);
+      isPlacingOrder.value = false;
       return;
+    }
+
+    // Paid straight away, out of the wallet — unpaid, the order is a dead
+    // end: the pharmacy sees it as new but the server refuses to let them
+    // accept it. A wallet that cannot cover it leaves the order pending and
+    // says why, rather than pretending the purchase completed.
+    try {
+      await _pharmacy.payOrder(orderId);
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
     } finally {
       isPlacingOrder.value = false;
     }
