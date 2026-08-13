@@ -24,7 +24,7 @@ class DoctorShellController extends GetxController {
     DoctorTab.home => AppStrings.navHome.tr,
     DoctorTab.appointments => AppStrings.navAppointments.tr,
     // Three s's, as the design spells it.
-    DoctorTab.message => AppStrings.navMesssage.tr,
+    DoctorTab.message => AppStrings.navMessage.tr,
     DoctorTab.profile => AppStrings.navProfile.tr,
   };
 }

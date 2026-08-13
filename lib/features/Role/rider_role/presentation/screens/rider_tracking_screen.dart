@@ -261,7 +261,10 @@ class _RouteSheet extends GetView<RiderOrdersController> {
             AppSpacing.gapV(AppSpacing.sm),
             _NoteRow(note: delivery.note),
             AppSpacing.gapV(AppSpacing.sm),
-            _CustomerRow(unread: delivery.unreadMessages),
+            _CustomerRow(
+              name: delivery.request.customerName,
+              unread: delivery.unreadMessages,
+            ),
             AppSpacing.gapV(AppSpacing.sm),
             _ArrivedButton(
               label: controller.advanceLabel,
@@ -483,7 +486,11 @@ class _NoteBubble extends StatelessWidget {
 
 /// The customer's avatar, and the chat with its unread count.
 class _CustomerRow extends GetView<RiderOrdersController> {
-  const _CustomerRow({required this.unread});
+  const _CustomerRow({required this.name, required this.unread});
+
+  /// Whose parcel this is. Without it the disc drew a bundled headshot of a
+  /// doctor in place of the customer.
+  final String name;
 
   final int unread;
 
@@ -493,7 +500,7 @@ class _CustomerRow extends GetView<RiderOrdersController> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const AppAvatar(size: 36),
+        AppAvatar(name: name, size: 36),
         AppSpacing.gapH(AppSpacing.xs),
         Expanded(
           child: Text(

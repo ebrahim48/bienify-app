@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../../../../../core/constants/app_assets.dart';
 import '../../../../../../core/constants/app_icons.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_radius.dart';
 import '../../../../../../core/theme/app_sizes.dart';
 import '../../../../../../core/theme/app_spacing.dart';
+import '../../../../../../core/widgets/app_avatar.dart';
 import '../../../../../../core/widgets/app_svg_icon.dart';
 
 /// The portrait panel at the top of Doctor Details: a soft blue wash behind
@@ -23,12 +23,20 @@ class DoctorHero extends StatelessWidget {
     super.key,
     required this.onMessage,
     this.imageUrl,
-    this.portraitAsset = AppAssets.doctorPortrait,
+    this.name,
+    this.portraitAsset,
   });
 
   final VoidCallback onMessage;
   final String? imageUrl;
-  final String portraitAsset;
+
+  /// Whose initials stand in when there is no photograph.
+  final String? name;
+
+  /// A bundled portrait, when one is genuinely wanted. Null by default: a
+  /// doctor who has uploaded nothing shows their initials rather than the
+  /// stock face every other photoless doctor would also wear.
+  final String? portraitAsset;
 
   static const double height = 260;
   static const double _actionSize = 48;
@@ -83,9 +91,7 @@ class DoctorHero extends StatelessWidget {
   /// on Doctor Details wore the same stock face.
   Widget _portrait() {
     final url = imageUrl;
-    if (url == null || url.isEmpty) {
-      return Image.asset(portraitAsset, fit: BoxFit.cover);
-    }
+    if (url == null || url.isEmpty) return _withoutPhoto();
 
     return CachedNetworkImage(
       imageUrl: url,
@@ -95,9 +101,16 @@ class DoctorHero extends StatelessWidget {
         highlightColor: AppColors.primary100,
         child: ColoredBox(color: AppColors.primary200),
       ),
-      errorWidget: (context, _, _) =>
-          Image.asset(portraitAsset, fit: BoxFit.cover),
+      errorWidget: (context, _, _) => _withoutPhoto(),
     );
+  }
+
+  /// The bundled portrait if one was asked for, otherwise this doctor's own
+  /// initials at portrait size.
+  Widget _withoutPhoto() {
+    final asset = portraitAsset;
+    if (asset != null) return Image.asset(asset, fit: BoxFit.cover);
+    return AppAvatar(name: name, size: _portraitSize);
   }
 }
 

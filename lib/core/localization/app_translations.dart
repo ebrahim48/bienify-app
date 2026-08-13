@@ -246,7 +246,7 @@ class AppTranslations extends Translations {
 
     // Appointments
     AppStrings.needCare: 'Need Care?',
-    AppStrings.needCareBody: 'You Don’t have an upcoming appointments',
+    AppStrings.needCareBody: 'You have no upcoming appointments',
     AppStrings.bookAppointmentCta: 'Book Appointment',
     AppStrings.appointmentHistory: 'Appointment History',
     AppStrings.upcomingAppointmentsTab: 'Upcoming Appointments',
@@ -645,7 +645,7 @@ class AppTranslations extends Translations {
     AppStrings.notesHint: 'Anything else the patient should know',
     AppStrings.searchPatientName: 'Search patient Name',
     AppStrings.messageTitle: 'Message',
-    AppStrings.navMesssage: 'Messsage',
+    AppStrings.navMessage: 'Message',
     AppStrings.navProfile: 'Profile',
     AppStrings.goodMorning: 'Good morning,',
     AppStrings.availableBalance2: 'Available Balance',
@@ -1597,7 +1597,7 @@ class AppTranslations extends Translations {
     AppStrings.notesHint: 'Cualquier otra indicación para el paciente',
     AppStrings.searchPatientName: 'Buscar paciente',
     AppStrings.messageTitle: 'Mensajes',
-    AppStrings.navMesssage: 'Mensajes',
+    AppStrings.navMessage: 'Mensajes',
     AppStrings.navProfile: 'Perfil',
     AppStrings.goodMorning: 'Buenos días,',
     AppStrings.availableBalance2: 'Saldo disponible',

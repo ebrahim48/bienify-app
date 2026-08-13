@@ -3,20 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../constants/app_assets.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../utils/responsive.dart';
 
 /// Circular profile image with a graceful fallback chain.
 ///
-/// Network photo → [fallbackAsset] → initials → generic glyph. The mock
-/// backend ships no photo URLs, so in practice doctors render the bundled
-/// headshot and the chain only reaches initials if that is cleared too.
+/// Network photo → [fallbackAsset] → initials → generic glyph.
+///
+/// [fallbackAsset] is null by default, so a person with no photo shows their
+/// own initials. It used to default to a bundled headshot, which meant every
+/// caller that did not opt out drew one stranger's face for every photoless
+/// doctor, patient and courier — including signed-in users looking at their
+/// own profile. A bundled image is only ever right when it stands for a thing
+/// rather than a person.
 ///
 /// ```dart
 /// AppAvatar(imageUrl: doctor.photoUrl, name: doctor.name, size: 44)
-/// AppAvatar(name: patient.name, fallbackAsset: null)   // monogram instead
 /// ```
 class AppAvatar extends StatelessWidget {
   const AppAvatar({
@@ -26,7 +29,7 @@ class AppAvatar extends StatelessWidget {
     this.size = 44,
     this.backgroundColor = AppColors.primary100,
     this.foregroundColor = AppColors.primary800,
-    this.fallbackAsset = AppAssets.doctorPlaceholder,
+    this.fallbackAsset,
     this.child,
   });
 

@@ -642,7 +642,7 @@ class AppStrings {
   static const String notesHint = 'notes_hint';
   static const String searchPatientName = 'search_patient_name';
   static const String messageTitle = 'message_title';
-  static const String navMesssage = 'nav_messsage';
+  static const String navMessage = 'nav_message';
   static const String navProfile = 'nav_profile';
   static const String goodMorning = 'good_morning';
   static const String availableBalance2 = 'available_balance_2';

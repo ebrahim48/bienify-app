@@ -12,7 +12,7 @@ import 'doctor_home_screen.dart';
 import 'doctor_messages_screen.dart';
 import 'doctor_profile_screen.dart';
 
-/// The practitioner shell: Home, Appointments, Messsage, Profile.
+/// The practitioner shell: Home, Appointments, Message, Profile.
 ///
 /// Reuses `AppBottomNavBar` and `NavDestination` from the patient shell — the
 /// bar is already generic over its destinations, so only the four entries
@@ -41,7 +41,7 @@ class DoctorShellScreen extends GetView<DoctorShellController> {
               badgeCount: controller.pendingRequests.value,
             ),
             const NavDestination(
-              labelKey: AppStrings.navMesssage,
+              labelKey: AppStrings.navMessage,
               icon: AppIcons.bottomMessage,
             ),
             const NavDestination(

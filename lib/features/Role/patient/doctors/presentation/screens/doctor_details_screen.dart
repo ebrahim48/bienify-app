@@ -45,6 +45,7 @@ class DoctorDetailsScreen extends GetView<DoctorDetailsController> {
             AppSpacing.gapV(AppSpacing.xs),
             DoctorHero(
               imageUrl: details.doctor.photoUrl,
+              name: details.doctor.name,
               onMessage: controller.openChat,
             ),
             AppSpacing.gapV(AppSpacing.base),

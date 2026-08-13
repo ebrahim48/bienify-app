@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
-import '../constants/app_assets.dart';
 import '../constants/app_strings.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
@@ -79,7 +78,6 @@ class RoleProfileCard extends StatelessWidget {
                 imageUrl: photoUrl,
                 name: name,
                 size: _avatar,
-                fallbackAsset: AppAssets.doctorPlaceholder,
               ),
               Positioned(
                 right: -2,

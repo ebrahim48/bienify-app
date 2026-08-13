@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 
-import '../../../../../core/constants/app_assets.dart';
 import '../../../../../core/constants/app_strings.dart';
 import '../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../core/routes/app_routes.dart';
@@ -57,9 +56,8 @@ class DoctorProfileController extends GetxController {
         // prints whichever contact it has.
         maskedPhone: details.email,
         photoUrl: details.photoUrl,
-        // A practitioner without an uploaded photo still gets a portrait
-        // rather than a monogram, as every other people row in the app does.
-        photoAsset: AppAssets.doctorPlaceholder,
+        // No bundled headshot: a practitioner who has not uploaded a photo
+        // sees their own initials, not a stranger's face.
       );
       fullName.value = details.fullName;
       email.value = details.email;

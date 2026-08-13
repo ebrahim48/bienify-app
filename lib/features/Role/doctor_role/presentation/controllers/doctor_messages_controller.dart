@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 
-import '../../../../../core/constants/app_assets.dart';
 import '../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../patient/chat/domain/entities/conversation.dart';
@@ -63,7 +62,7 @@ class DoctorMessagesController extends GetxController {
         // the preview is the nearest thing the list carries.
         specialty: thread.preview,
         photoUrl: thread.photoUrl,
-        photoAsset: thread.photoAsset ?? AppAssets.doctorPlaceholder,
+        photoAsset: thread.photoAsset,
         isOnline: true,
       ),
     );
