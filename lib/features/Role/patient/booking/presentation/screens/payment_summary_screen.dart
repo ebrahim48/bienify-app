@@ -52,9 +52,11 @@ class PaymentSummaryScreen extends GetView<PaymentController> {
             AppSpacing.gapV(AppSpacing.sm),
             WalletCard(
               wallet: controller.wallet.value,
-              deductionLabel: controller.breakdown.format(
-                controller.breakdown.walletDeduction,
-              ),
+              // The whole bill, because that is what the server takes from the
+              // balance — not the lesser of bill and balance, which would
+              // under-promise when the wallet is short and the payment is
+              // about to be refused for exactly that reason.
+              deductionLabel: controller.breakdown.totalLabel,
               isEnabled: controller.useWallet.value,
               onChanged: controller.toggleWallet,
             ),

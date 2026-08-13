@@ -45,8 +45,13 @@ class PaymentBreakdown {
 
   double get total => consultationFee + vat;
 
-  /// What the chosen payment method is actually charged.
-  double get payable => (total - walletDeduction).clamp(0, double.infinity);
+  /// What the patient actually parts with, which is the whole bill.
+  ///
+  /// The wallet is where the money comes from, not a discount on it:
+  /// `POST /payments/appointments/:id/pay` debits the full fee from the
+  /// balance. Subtracting the wallet here made a $50 consultation read as
+  /// "Pay $0" while $50 still left the patient's account.
+  double get payable => total;
 
   String format(double amount) => '$currencySymbol${amount.toStringAsFixed(0)}';
 
