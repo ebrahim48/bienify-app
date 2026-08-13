@@ -114,6 +114,7 @@ class DeliveryRequest {
     required this.distanceKm,
     required this.items,
     required this.tab,
+    this.status = '',
   });
 
   final String id;
@@ -139,6 +140,20 @@ class DeliveryRequest {
 
   final RequestTab tab;
 
+  /// Where the parcel is, in the server's own vocabulary: `unassigned`,
+  /// `assigned`, `picked_up`, `in_transit`, `delivered` or `failed`.
+  ///
+  /// The three chips above the list collapse these, but moving a parcel along
+  /// needs the exact one — the server only accepts the next state in sequence.
+  final String status;
+
+  /// Whether the parcel has already changed hands.
+  ///
+  /// A finished job sits under Accepted with the work the courier took, but it
+  /// is not work they can still do: it offers no tracking and cannot be
+  /// delivered again.
+  bool get isDelivered => status == 'delivered';
+
   /// `+$4.50` — a fee is always a gain, so it carries its sign.
   String get feeLabel => '+\$${fee.toStringAsFixed(2)}';
 
@@ -148,7 +163,8 @@ class DeliveryRequest {
   /// `12 min`.
   String get minutesLabel => '$minutes min';
 
-  DeliveryRequest copyWith({RequestTab? tab}) => DeliveryRequest(
+  DeliveryRequest copyWith({RequestTab? tab, String? status}) =>
+      DeliveryRequest(
     id: id,
     code: code,
     fee: fee,
@@ -159,6 +175,7 @@ class DeliveryRequest {
     distanceKm: distanceKm,
     items: items,
     tab: tab ?? this.tab,
+    status: status ?? this.status,
   );
 }
 

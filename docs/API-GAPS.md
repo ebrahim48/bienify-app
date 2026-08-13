@@ -47,20 +47,38 @@ a bug.
 **Fix:** an owner-scoped `GET /pharmacies/me/medicines` that returns both, or
 an `includeInactive` flag honoured only for the owning shop.
 
-## A delivery job carries almost nothing the courier needs
+## A delivery job has no distance and no time to complete
 
-A delivery document holds an order id, two addresses and a status. It holds no
-fee, no line items and no distance — and neither `GET /deliveries/available`
-nor `GET /riders/me/deliveries` populates its references, so there is no
-customer name either.
+*Mostly closed.* A delivery used to hold only an order id, two addresses and a
+status, so a job card printed `+$0.00`, `0 min`, `0.0 km`, an empty bag and no
+customer. The backend now carries `feeMinor` on the delivery — stamped at
+creation, so a rate change cannot alter what an advertised job pays — and both
+`GET /deliveries/available` and `GET /riders/me/deliveries` populate
+`patientId` and `orderId`. The card names the customer, lists the bag and
+prices the job from real fields.
 
-**Where it shows:** every job card on the courier's board. The fee, the items
-and the distance come back empty and the card drops them; the pickup and
-dropoff addresses are the only real content on it.
+**What is still missing:** distance and time. No address carries coordinates —
+`Pharmacy` has none, and a delivery's only geo field is `lastLocation`, the
+courier's own ping. Neither figure is derivable from two free-text addresses,
+so the card omits both rather than printing a zero nobody measured.
 
-**Fix:** populate `patientId` and `orderId` on both lists, and carry a
-`feeMinor` on the delivery — the courier's pay is decided when the job is
-created, not when it is claimed.
+**Fix:** coordinates on the pharmacy and on the order's delivery address (or a
+geocoding step when the delivery is created), after which distance is a
+haversine and the ETA a function of `vehicleType`.
+
+## A courier has no country and no delivery zones
+
+`IRiderProfile` stores a single free-text `city`. The design's edit form asks
+for a country, a city and a set of preferred delivery zones.
+
+**Where it shows:** the courier's Edit Profile. The city is real and round-trips
+— it is added to the picker's list when the stored value is not one of the
+fixed options, because falling back to the first entry silently rewrote a
+courier in Springfield as being in Cameron on the next save. Country is left
+empty and its picker shows its own default; the zone dropdown and the chips
+beneath it are the design's sample and are not saved anywhere.
+
+**Fix:** a `country` on the profile, and a `zones: string[]` the form can write.
 
 ## The courier has no rating
 

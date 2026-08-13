@@ -803,12 +803,18 @@ class AppStrings {
   static const String updateShopInformation = 'update_shop_information';
   static const String shopUpdated = 'shop_updated';
 
+  /// The courier's own version of the two above — they edit a rider profile,
+  /// not a pharmacy.
+  static const String updateRiderInformation = 'update_rider_information';
+  static const String riderUpdated = 'rider_updated';
+
   // ─── Photo upload ────────────────────────────────────────────────────────
   static const String takeAPhoto = 'take_a_photo';
   static const String chooseFromGallery = 'choose_from_gallery';
   static const String replacePhoto = 'replace_photo';
   static const String uploadPhoto = 'upload_photo';
   static const String photoNeeded = 'photo_needed';
+  static const String licenceNumberNeeded = 'licence_number_needed';
 
   // ─── Rider ───────────────────────────────────────────────────────────────
   static const String navEarnings = 'nav_earnings';
@@ -888,6 +894,13 @@ class AppStrings {
   static const String customerNote = 'customer_note';
   static const String customer = 'customer';
   static const String arrived = 'arrived';
+
+  /// The two steps a parcel takes before it arrives, as the courier's one
+  /// button names them in turn.
+  static const String confirmPickedUp = 'confirm_picked_up';
+  static const String confirmOnTheWay = 'confirm_on_the_way';
+  static const String deliveryAlreadyFinished = 'delivery_already_finished';
+
   static const String deliveryCompleted = 'delivery_completed';
   static const String orderDeliveredTitle = 'order_delivered_title';
   static const String orderDeliveredBody = 'order_delivered_body';

@@ -65,12 +65,22 @@ class RiderApplicationController extends GetxController {
     _ => AppStrings.paymentSetup.tr,
   };
 
+  /// The shortest licence number the server will store.
+  static const int _minLicenceLength = 3;
+
   /// Every starred photo has to be there before the step will advance. The
   /// selfie and the payment method are not starred in the designs, so those
   /// steps let the courier past.
+  ///
+  /// The licence number is checked here rather than at the end: it is the one
+  /// field the server insists on, and finding that out after five steps of
+  /// photographs is no way to learn it.
   bool get canContinue => switch (step.value) {
     1 => idFront.value != null && idBack.value != null,
-    2 => licence.value != null && vehiclePhoto.value != null,
+    2 =>
+      licence.value != null &&
+          vehiclePhoto.value != null &&
+          licenceNumber.value.trim().length >= _minLicenceLength,
     _ => true,
   };
 
@@ -99,7 +109,16 @@ class RiderApplicationController extends GetxController {
 
   void next() {
     if (!canContinue) {
-      AppSnackbar.info(AppStrings.photoNeeded.tr);
+      // Say which of the two is missing: "add a photo" is unhelpful advice to
+      // a courier who has taken both and left the number blank.
+      final needsLicenceNumber =
+          step.value == 2 &&
+          licenceNumber.value.trim().length < _minLicenceLength;
+      AppSnackbar.info(
+        needsLicenceNumber
+            ? AppStrings.licenceNumberNeeded.tr
+            : AppStrings.photoNeeded.tr,
+      );
       return;
     }
     if (isLastStep) {

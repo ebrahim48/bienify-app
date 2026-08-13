@@ -38,7 +38,11 @@ class ApiRiderRepository implements RiderRepository {
       rating: 0,
       isOnline: profile['isAvailable'] == true,
       email: Api.str(user['email']),
-      country: city,
+      // A rider profile stores one free-text city and no country. Copying the
+      // city into it printed "Country: Springfield" on the edit form, so the
+      // field is left empty and its picker shows its own default instead.
+      // See docs/API-GAPS.md.
+      country: '',
       city: city,
       address: city,
       vehicleType: Api.str(profile['vehicleType'], 'motorbike'),
@@ -103,16 +107,26 @@ class ApiRiderRepository implements RiderRepository {
 
   @override
   Future<RiderEarnings> earnings() async {
-    final results = await Future.wait([
+    // The courier's own jobs come along for the ride: a wallet movement knows
+    // only that it was a "Delivery earning", so without them every row of the
+    // history reads the same and names nobody. Its `referenceId` is the
+    // delivery, which is what joins the two.
+    final results = await Future.wait<dynamic>([
       _api.getMap(ApiConstants.walletEarnings),
       _api.get(ApiConstants.walletTransactions, query: {'limit': _pageSize}),
+      _api.get(ApiConstants.ridersMeDeliveries, query: {'limit': _pageSize}),
     ]);
 
     final summary = Api.map(results[0]);
 
+    final jobs = {
+      for (final row in ApiClient.listFrom(results[2]))
+        Api.id(row): deliveryRequestFrom(row),
+    };
+
     final history = ApiClient.listFrom(results[1])
         .where((t) => Api.str(t['direction']) == 'credit')
-        .map(deliveryRecordFrom)
+        .map((t) => deliveryRecordFrom(t, job: jobs[Api.id(t['referenceId'])]))
         .toList();
 
     return RiderEarnings(

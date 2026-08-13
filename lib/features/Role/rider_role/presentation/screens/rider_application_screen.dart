@@ -13,6 +13,7 @@ import '../../../../../core/utils/responsive.dart';
 import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/widgets/app_empty_state.dart';
 import '../../../../../core/widgets/app_scaffold.dart';
+import '../../../../../core/widgets/app_text_field.dart';
 import '../../../../../core/widgets/app_top_bar.dart';
 import '../../../../../core/widgets/photo_upload_box.dart';
 import '../../../doctor_role/presentation/widgets/app_dropdown_field.dart';
@@ -197,6 +198,17 @@ class _VehiclePane extends GetView<RiderApplicationController> {
               onPicked: (file) => controller.licence.value = file,
             ),
           ),
+        ),
+        AppSpacing.gapV(AppSpacing.base),
+        // The number the licence is issued under, beside the photo of it. The
+        // server stores it and will not take a profile without one, so the
+        // application cannot be filed until it is here.
+        RiderFieldLabel(AppStrings.licenseNumber.tr),
+        AppTextField(
+          initialText: controller.licenceNumber.value,
+          hint: AppStrings.licenseNumberHint.tr,
+          textInputAction: TextInputAction.done,
+          onChanged: (value) => controller.licenceNumber.value = value,
         ),
         AppSpacing.gapV(AppSpacing.base),
         Obx(

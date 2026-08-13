@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../../../../core/constants/app_strings.dart';
 import '../../../../../core/exceptions/app_exceptions.dart';
+import '../../../../../core/network/mappers.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../core/widgets/app_snackbar.dart';
 import '../../data/static/rider_data.dart';
@@ -29,6 +30,10 @@ class RiderOrdersController extends GetxController {
   /// Whether the customer's note is showing over the sheet.
   final RxBool isNoteVisible = false.obs;
 
+  /// The receipt for the job just handed over, built when it is delivered so
+  /// the confirmation names the customer the courier actually delivered to.
+  final Rxn<DeliveryReceipt> receipt = Rxn<DeliveryReceipt>();
+
   @override
   void onInit() {
     super.onInit();
@@ -47,8 +52,18 @@ class RiderOrdersController extends GetxController {
     }
   }
 
-  List<DeliveryRequest> get visible =>
-      requests.where((request) => request.tab == tab.value).toList();
+  /// The jobs under the active chip, with anything still to do above anything
+  /// already finished — a courier opens this tab to find what they are
+  /// carrying, and a season of completed drops would otherwise bury it.
+  /// Partitioned rather than sorted: `List.sort` is not stable, and within
+  /// each group the server's newest-first order is the one to keep.
+  List<DeliveryRequest> get visible {
+    final rows = requests.where((request) => request.tab == tab.value);
+    return [
+      ...rows.where((request) => !request.isDelivered),
+      ...rows.where((request) => request.isDelivered),
+    ];
+  }
 
   int get openCount => requests.where((r) => r.tab == RequestTab.fresh).length;
 
@@ -110,17 +125,68 @@ class RiderOrdersController extends GetxController {
   /// The courier's own thread with the customer.
   void openChat() => Get.toNamed<void>(AppRoutes.chat);
 
-  /// Handing the package over ends the job.
+  /// A parcel moves one step at a time, and the server refuses a jump: a job
+  /// goes from claimed, to collected, to on the road, to handed over.
+  static const Map<String, String> _nextStatus = {
+    'assigned': 'picked_up',
+    'picked_up': 'in_transit',
+    'in_transit': 'delivered',
+  };
+
+  /// What the tracking screen's single button does next.
+  ///
+  /// The design draws one button and the server keeps four states, so the
+  /// button names the step it is about to take rather than always claiming
+  /// the courier has arrived.
+  String get advanceLabel => switch (active.value?.request.status) {
+    'assigned' => AppStrings.confirmPickedUp,
+    'picked_up' => AppStrings.confirmOnTheWay,
+    _ => AppStrings.arrived,
+  };
+
+  /// Moves the live job on by one state, and finishes it on the last.
+  ///
+  /// The intermediate states are not busywork: the customer's order only
+  /// becomes "out for delivery" when the parcel reaches `in_transit`, so
+  /// skipping them would leave the patient's tracking stuck at "ready".
   Future<void> arrived() async {
     final job = active.value?.request;
-    if (job != null) {
-      try {
-        await _repository.setStatus(job.id, 'delivered');
-      } on AppException catch (e) {
-        AppSnackbar.error(e.message);
-        return;
-      }
+    if (job == null) {
+      await Get.toNamed<void>(AppRoutes.riderDelivered);
+      return;
     }
+
+    final next = _nextStatus[job.status];
+    if (next == null) {
+      AppSnackbar.error(AppStrings.deliveryAlreadyFinished.tr);
+      return;
+    }
+
+    if (isSettling.value) return;
+    isSettling.value = true;
+    try {
+      await _repository.setStatus(job.id, next);
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    } finally {
+      isSettling.value = false;
+    }
+
+    final moved = job.copyWith(status: next);
+    active.value = RiderData.activeDeliveryFor(moved);
+
+    final index = requests.indexWhere((r) => r.id == job.id);
+    if (index != -1) requests[index] = requests[index].copyWith(status: next);
+
+    if (next != 'delivered') return;
+
+    receipt.value = DeliveryReceipt(
+      orderId: job.code,
+      customerName: job.customerName,
+      location: job.customerAddress,
+      timeLabel: clockLabel(DateTime.now()),
+    );
     await Get.toNamed<void>(AppRoutes.riderDelivered);
   }
 }

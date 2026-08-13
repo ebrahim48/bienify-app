@@ -66,7 +66,7 @@ class _Form extends GetView<RiderProfileController> {
           Obx(
             () => AppDropdownField(
               value: controller.country.value,
-              options: RiderData.countries,
+              options: controller.countryOptions.toList(),
               onChanged: controller.selectCountry,
             ),
           ),
@@ -75,7 +75,7 @@ class _Form extends GetView<RiderProfileController> {
           Obx(
             () => AppDropdownField(
               value: controller.city.value,
-              options: RiderData.cities,
+              options: controller.cityOptions.toList(),
               onChanged: controller.selectCity,
             ),
           ),
@@ -112,7 +112,7 @@ class _Form extends GetView<RiderProfileController> {
           AppSpacing.gapV(AppSpacing.base),
           Obx(
             () => AppButton(
-              label: AppStrings.updateShopInformation.tr,
+              label: AppStrings.updateRiderInformation.tr,
               isLoading: controller.isSubmitting.value,
               onPressed: controller.submit,
             ),

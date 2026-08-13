@@ -439,7 +439,7 @@ ShopOrder shopOrderFrom(Map<String, dynamic> json) {
     initials: initialsOf(name),
     phone: Api.str(Api.map(json['patientId'])['phone']),
     address: Api.str(json['deliveryAddress']),
-    placedAtLabel: _clockLabel(placedAt),
+    placedAtLabel: clockLabel(placedAt),
     status: shopOrderStatusFrom(Api.str(json['status'])),
     lines: Api.rows(json['items']).map(shopOrderLineFrom).toList(),
     customerPhotoUrl: Api.avatarOf(json['patientId']),
@@ -453,7 +453,7 @@ OrderLine shopOrderLineFrom(Map<String, dynamic> json) => OrderLine(
 );
 
 /// `10:32 AM`.
-String _clockLabel(DateTime at) {
+String clockLabel(DateTime at) {
   final hour12 = at.hour % 12 == 0 ? 12 : at.hour % 12;
   return '${hour12.toString().padLeft(2, '0')}:'
       '${at.minute.toString().padLeft(2, '0')} '
@@ -500,10 +500,13 @@ String relativeAge(DateTime at) {
 
 /// `GET /deliveries/available` and `/riders/me/deliveries` — a job.
 ///
-/// A delivery document carries an order id, two addresses and a status.
-/// It carries no fee, no line items, no distance and no customer, and neither
-/// list populates its references — so those fields come back empty and the
-/// card drops them. See `docs/API-GAPS.md`.
+/// Both lists populate the customer and the order, and the delivery carries
+/// the fee it was created with, so a card can say who the parcel is for, what
+/// is in it and what carrying it pays.
+///
+/// Distance and time to complete are still absent: no address on the delivery
+/// has coordinates, so neither is derivable. They stay zero and the card omits
+/// them rather than printing a figure nobody measured. See `docs/API-GAPS.md`.
 DeliveryRequest deliveryRequestFrom(Map<String, dynamic> json) {
   final orderId = Api.id(json['orderId']);
   final status = Api.str(json['status']);
@@ -513,15 +516,32 @@ DeliveryRequest deliveryRequestFrom(Map<String, dynamic> json) {
     code:
         'ORD-${orderId.length >= 4 ? orderId.substring(orderId.length - 4) : orderId}'
             .toUpperCase(),
-    fee: 0,
+    fee: Api.majorUnits(json['feeMinor']),
     pickupName: Api.str(json['pickupAddress']),
     customerName: Api.nameOf(json['patientId']),
     customerAddress: Api.str(json['dropoffAddress']),
     minutes: 0,
     distanceKm: 0,
-    items: '',
+    items: orderItemsLabel(json['orderId']),
     tab: requestTabFrom(status),
+    status: status,
   );
+}
+
+/// `Aspirin 75mg × 1, Syringes × 10` — the bag, as one line on a job card.
+///
+/// Empty when the order is a bare id rather than a populated document, which
+/// is what the card checks before drawing the row.
+String orderItemsLabel(dynamic orderRef) {
+  final rows = Api.rows(Api.map(orderRef)['items']);
+  return rows
+      .map((item) {
+        final name = Api.str(item['name']);
+        final quantity = Api.integer(item['quantity']);
+        return quantity > 1 ? '$name × $quantity' : name;
+      })
+      .where((line) => line.isNotEmpty)
+      .join(', ');
 }
 
 /// The server's delivery states, collapsed to the three chips above the list.
@@ -539,19 +559,33 @@ RequestTab requestTabFrom(String raw) => switch (raw) {
 };
 
 /// A credited wallet transaction, as the courier's history lists it.
-DeliveryRecord deliveryRecordFrom(Map<String, dynamic> json) {
+///
+/// [job] is the delivery the movement paid for, when it can be found. A
+/// transaction on its own carries only the description the ledger wrote —
+/// "Delivery earning" on every row — so the job is what lets the history name
+/// the customer and print the order it settles rather than the ledger's own
+/// reference.
+DeliveryRecord deliveryRecordFrom(
+  Map<String, dynamic> json, {
+  DeliveryRequest? job,
+}) {
   final at = Api.date(json['createdAt']);
-  final name = Api.str(json['description'], 'Delivery');
   final reference = Api.id(json['referenceId']);
+  final fallbackCode =
+      'ORD-${reference.length >= 4 ? reference.substring(reference.length - 4) : reference}'
+          .toUpperCase();
+
+  final customer = job?.customerName ?? '';
+  final name = customer.isNotEmpty
+      ? customer
+      : Api.str(json['description'], 'Delivery');
 
   return DeliveryRecord(
     customerName: name,
     initials: initialsOf(name),
     whenLabel: _whenLabel(at),
     fee: Api.majorUnits(json['amountMinor']),
-    orderCode:
-        'ORD-${reference.length >= 4 ? reference.substring(reference.length - 4) : reference}'
-            .toUpperCase(),
+    orderCode: job?.code ?? fallbackCode,
   );
 }
 
@@ -575,7 +609,7 @@ String _whenLabel(DateTime at) {
   final isToday =
       at.year == now.year && at.month == now.month && at.day == now.day;
   final day = isToday ? 'Today' : '${at.day} ${months[at.month - 1]}';
-  return '$day, ${_clockLabel(at)}';
+  return '$day, ${clockLabel(at)}';
 }
 
 // ─── Wallet and order history ──────────────────────────────────────────────

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:bienify_app/app.dart';
 import 'package:bienify_app/core/di/dependency_injection.dart';
 import 'package:bienify_app/core/localization/app_translations.dart';
@@ -137,6 +139,15 @@ void main() {
       find.byType(RiderApplicationScreen),
       matchesGoldenFile('rider_apply_vehicle.png'),
     );
+
+    // The server will not store a profile without a licence number, so the
+    // step holds the courier here until there is one — photographs alone are
+    // not enough to file the application.
+    controller.licence.value = File('licence.jpg');
+    controller.vehiclePhoto.value = File('vehicle.jpg');
+    expect(controller.canContinue, isFalse);
+    controller.licenceNumber.value = 'DL-99887';
+    expect(controller.canContinue, isTrue);
 
     controller.step.value = 3;
     await tester.pumpAndSettle();

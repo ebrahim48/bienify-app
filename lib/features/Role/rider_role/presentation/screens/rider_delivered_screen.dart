@@ -16,6 +16,7 @@ import '../../../../../core/widgets/app_card.dart';
 import '../../../../../core/widgets/app_scaffold.dart';
 import '../../data/static/rider_data.dart';
 import '../../domain/entities/rider.dart';
+import '../controllers/rider_orders_controller.dart';
 
 /// The receipt: the package has changed hands.
 class RiderDeliveredScreen extends StatelessWidget {
@@ -23,9 +24,21 @@ class RiderDeliveredScreen extends StatelessWidget {
 
   static const double _hero = 180;
 
+  /// The job the courier just finished.
+  ///
+  /// Read off the live orders controller rather than through `GetView`: this
+  /// page is also reachable with no courier session behind it — a deep link,
+  /// or a reload that dropped the controller — and the design's sample is the
+  /// right thing to draw then. A controller built fresh for this route would
+  /// carry no receipt anyway, so there is nothing to bind.
+  DeliveryReceipt get _receipt {
+    if (!Get.isRegistered<RiderOrdersController>()) return RiderData.receipt;
+    return Get.find<RiderOrdersController>().receipt.value ?? RiderData.receipt;
+  }
+
   @override
   Widget build(BuildContext context) {
-    const receipt = RiderData.receipt;
+    final receipt = _receipt;
 
     return AppScaffold(
       // The photograph runs edge to edge, so the page owns its own gutters.
@@ -87,7 +100,7 @@ class RiderDeliveredScreen extends StatelessWidget {
                   style: AppTextStyles.bodyLarge.rc(AppColors.gray600),
                 ),
                 AppSpacing.gapV(AppSpacing.base),
-                const _Receipt(receipt: receipt),
+                _Receipt(receipt: receipt),
                 AppSpacing.gapV(AppSpacing.md),
               ],
             ),

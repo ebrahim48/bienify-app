@@ -263,7 +263,10 @@ class _RouteSheet extends GetView<RiderOrdersController> {
             AppSpacing.gapV(AppSpacing.sm),
             _CustomerRow(unread: delivery.unreadMessages),
             AppSpacing.gapV(AppSpacing.sm),
-            _ArrivedButton(onTap: controller.arrived),
+            _ArrivedButton(
+              label: controller.advanceLabel,
+              onTap: controller.arrived,
+            ),
           ],
         ),
       ),
@@ -542,9 +545,13 @@ class _CustomerRow extends GetView<RiderOrdersController> {
 }
 
 /// Outlined rather than filled — the trip is not done until it is tapped.
+///
+/// Carries the step it is about to take: a parcel is collected and put on the
+/// road before it arrives, and the server will not skip either.
 class _ArrivedButton extends StatelessWidget {
-  const _ArrivedButton({required this.onTap});
+  const _ArrivedButton({required this.label, required this.onTap});
 
+  final String label;
   final VoidCallback onTap;
 
   @override
@@ -566,7 +573,7 @@ class _ArrivedButton extends StatelessWidget {
           ),
           child: Center(
             child: Text(
-              AppStrings.arrived.tr,
+              label.tr,
               style: AppTextStyles.buttonLarge.rc(AppColors.actionFill),
             ),
           ),

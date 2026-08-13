@@ -64,14 +64,17 @@ class RiderProfileController extends GetxController {
       earnings.value = await _repository.earnings();
       fullName.value = loaded.name;
       email.value = loaded.email;
-      // The pickers hold fixed lists and the server stores a free-text city,
-      // so a value they do not hold would break the dropdown.
-      country.value = RiderData.countries.contains(loaded.country)
-          ? loaded.country
-          : RiderData.countries.first;
-      city.value = RiderData.cities.contains(loaded.city)
-          ? loaded.city
-          : RiderData.cities.first;
+      // The server stores a free-text city and the pickers hold fixed lists,
+      // so the stored value is added to its list rather than swapped for the
+      // first entry: falling back would show a courier in Springfield as being
+      // in Cameron, and saving the form would then write that back over the
+      // city they actually work in.
+      countryOptions.value = _withStored(RiderData.countries, loaded.country);
+      cityOptions.value = _withStored(RiderData.cities, loaded.city);
+      country.value = loaded.country.isEmpty
+          ? RiderData.countries.first
+          : loaded.country;
+      city.value = loaded.city.isEmpty ? RiderData.cities.first : loaded.city;
       address.value = loaded.address;
       formGeneration.value++;
     } on AppException catch (e) {
@@ -109,6 +112,17 @@ class RiderProfileController extends GetxController {
   final RxString email = ''.obs;
   final RxString country = RiderData.countries.first.obs;
   final RxString city = RiderData.cities.first.obs;
+
+  /// The picker lists, widened to hold whatever the server already stores.
+  final RxList<String> countryOptions = <String>[...RiderData.countries].obs;
+  final RxList<String> cityOptions = <String>[...RiderData.cities].obs;
+
+  /// [options] with [stored] at the front when the list does not already
+  /// offer it, so a dropdown can show the value it was given.
+  static List<String> _withStored(List<String> options, String stored) =>
+      stored.isEmpty || options.contains(stored)
+      ? List.of(options)
+      : [stored, ...options];
   final RxString address = ''.obs;
   final RxString zone = RiderData.zones.first.obs;
   final RxList<String> zones = <String>[].obs;
@@ -151,6 +165,6 @@ class RiderProfileController extends GetxController {
     }
     await load();
     Get.back<void>();
-    AppSnackbar.success(AppStrings.shopUpdated.tr);
+    AppSnackbar.success(AppStrings.riderUpdated.tr);
   }
 }

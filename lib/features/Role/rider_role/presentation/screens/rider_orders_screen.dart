@@ -93,6 +93,11 @@ class _RequestCard extends GetView<RiderOrdersController> {
 
   @override
   Widget build(BuildContext context) {
+    // A figure nobody measured is worse than no figure: an unpriced job read
+    // as "+$0.00" and an unmeasured trip as "0 min, 0.0 km". Each part of the
+    // card appears only once there is something behind it.
+    final hasMeta = request.items.isNotEmpty;
+
     return AppCard(
       hasShadow: false,
       padding: EdgeInsets.zero,
@@ -114,7 +119,7 @@ class _RequestCard extends GetView<RiderOrdersController> {
                         style: AppTextStyles.bodyMedium.rc(AppColors.gray500),
                       ),
                     ),
-                    FeePill(label: request.feeLabel),
+                    if (request.fee > 0) FeePill(label: request.feeLabel),
                   ],
                 ),
                 AppSpacing.gapV(AppSpacing.xs),
@@ -130,14 +135,16 @@ class _RequestCard extends GetView<RiderOrdersController> {
                   name: request.customerName,
                   detail: request.customerAddress,
                 ),
-                AppSpacing.gapV(AppSpacing.xs),
-                Divider(
-                  height: AppSizes.borderWidth,
-                  thickness: AppSizes.borderWidth,
-                  color: AppColors.chipSurface,
-                ),
-                AppSpacing.gapV(AppSpacing.xs),
-                _Meta(request: request),
+                if (hasMeta) ...[
+                  AppSpacing.gapV(AppSpacing.xs),
+                  Divider(
+                    height: AppSizes.borderWidth,
+                    thickness: AppSizes.borderWidth,
+                    color: AppColors.chipSurface,
+                  ),
+                  AppSpacing.gapV(AppSpacing.xs),
+                  _Meta(request: request),
+                ],
               ],
             ),
           ),
@@ -186,12 +193,15 @@ class _Endpoint extends StatelessWidget {
                   FontWeight.w500,
                 ),
               ),
-              Text(
-                name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.titleSmall.rc(AppColors.gray900),
-              ),
+              // An unnamed customer leaves a blank line where a name goes,
+              // which reads as a card that failed to load.
+              if (name.isNotEmpty)
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.titleSmall.rc(AppColors.gray900),
+                ),
               if (detail != null)
                 Text(
                   detail!,
@@ -221,9 +231,12 @@ class _Meta extends StatelessWidget {
       spacing: AppSpacing.sm.w,
       runSpacing: AppSpacing.xs2.h,
       children: [
-        _MetaItem(emoji: '🕐', label: request.minutesLabel),
-        _MetaItem(emoji: '📏', label: request.distanceLabel),
-        _MetaItem(emoji: '💊', label: request.items),
+        if (request.minutes > 0)
+          _MetaItem(emoji: '🕐', label: request.minutesLabel),
+        if (request.distanceKm > 0)
+          _MetaItem(emoji: '📏', label: request.distanceLabel),
+        if (request.items.isNotEmpty)
+          _MetaItem(emoji: '💊', label: request.items),
       ],
     );
   }
@@ -249,7 +262,8 @@ class _MetaItem extends StatelessWidget {
 }
 
 /// The foot of a card: Decline / Accept while the job is new, Track LIVE once
-/// it is taken, and nothing at all once it is cancelled.
+/// it is taken, a plain Delivered mark once the parcel has changed hands, and
+/// nothing at all once it is cancelled.
 class _Actions extends GetView<RiderOrdersController> {
   const _Actions({required this.request});
 
@@ -261,6 +275,21 @@ class _Actions extends GetView<RiderOrdersController> {
   Widget build(BuildContext context) {
     if (request.tab == RequestTab.cancelled) {
       return const SizedBox.shrink();
+    }
+
+    // Offering to track a parcel already handed over sends the courier to a
+    // map of a finished trip, and Arrived on it is a status change the server
+    // refuses — a delivery is a terminal state.
+    if (request.isDelivered) {
+      return SizedBox(
+        height: _height.h,
+        child: Center(
+          child: Text(
+            AppStrings.stateDelivered.tr,
+            style: AppTextStyles.titleSmall.rc(AppColors.gray500),
+          ),
+        ),
+      );
     }
 
     if (request.tab == RequestTab.accepted) {

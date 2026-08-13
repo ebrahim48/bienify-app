@@ -820,6 +820,8 @@ class AppTranslations extends Translations {
     AppStrings.uploadFileTypes: 'PDF, JPG or PNG (MAX. 5MB)',
     AppStrings.updateShopInformation: 'Update Shop Information',
     AppStrings.shopUpdated: 'Shop information updated',
+    AppStrings.updateRiderInformation: 'Update Rider Information',
+    AppStrings.riderUpdated: 'Rider information updated',
 
     // Photo upload
     AppStrings.takeAPhoto: 'Take a photo',
@@ -827,6 +829,7 @@ class AppTranslations extends Translations {
     AppStrings.replacePhoto: 'Replace',
     AppStrings.uploadPhoto: 'Upload Photo',
     AppStrings.photoNeeded: 'Add the photos marked with a star',
+    AppStrings.licenceNumberNeeded: 'Enter the number on your driving licence',
 
     // Rider
     AppStrings.navEarnings: 'Earnings',
@@ -921,6 +924,9 @@ class AppTranslations extends Translations {
     AppStrings.customerNote: 'Please provide as soon as possible !',
     AppStrings.customer: 'Customer',
     AppStrings.arrived: 'Arrived',
+    AppStrings.confirmPickedUp: 'Picked Up',
+    AppStrings.confirmOnTheWay: 'On The Way',
+    AppStrings.deliveryAlreadyFinished: 'This delivery is already finished.',
     AppStrings.deliveryCompleted: 'Delivery Completed',
     AppStrings.orderDeliveredTitle: 'Order successfully delivered!',
     AppStrings.orderDeliveredBody: 'Customer has received the package.',
@@ -1751,6 +1757,8 @@ class AppTranslations extends Translations {
     AppStrings.uploadFileTypes: 'PDF, JPG o PNG (MÁX. 5MB)',
     AppStrings.updateShopInformation: 'Actualizar la farmacia',
     AppStrings.shopUpdated: 'Farmacia actualizada',
+    AppStrings.updateRiderInformation: 'Actualizar los datos del repartidor',
+    AppStrings.riderUpdated: 'Datos del repartidor actualizados',
 
     // Subir fotos
     AppStrings.takeAPhoto: 'Hacer una foto',
@@ -1758,6 +1766,8 @@ class AppTranslations extends Translations {
     AppStrings.replacePhoto: 'Cambiar',
     AppStrings.uploadPhoto: 'Subir foto',
     AppStrings.photoNeeded: 'Añade las fotos marcadas con un asterisco',
+    AppStrings.licenceNumberNeeded:
+        'Introduce el número de tu permiso de conducir',
 
     // Repartidor
     AppStrings.navEarnings: 'Ganancias',
@@ -1852,6 +1862,9 @@ class AppTranslations extends Translations {
     AppStrings.customerNote: '¡Por favor, cuanto antes!',
     AppStrings.customer: 'Cliente',
     AppStrings.arrived: 'He llegado',
+    AppStrings.confirmPickedUp: 'Recogido',
+    AppStrings.confirmOnTheWay: 'En camino',
+    AppStrings.deliveryAlreadyFinished: 'Esta entrega ya está finalizada.',
     AppStrings.deliveryCompleted: 'Entrega completada',
     AppStrings.orderDeliveredTitle: '¡Pedido entregado!',
     AppStrings.orderDeliveredBody: 'El cliente ha recibido el paquete.',
