@@ -33,15 +33,27 @@ class WritePrescriptionController extends GetxController {
 
   final RxString name = ''.obs;
   final RxString durationDays = ''.obs;
-  final RxString dailyDose = ''.obs;
-  final RxString instructions = ''.obs;
+  final RxString notes = ''.obs;
+
+  /// How much per dose, and in what. Kept apart from the name so a pharmacy
+  /// reads a strength rather than parsing one out of "Amoxicillin500mg".
+  final RxString strength = ''.obs;
+  final Rx<DoseUnit> unit = DoseUnit.mg.obs;
+
+  /// Doses per day, picked rather than typed — there are only ever a handful.
+  final RxInt timesPerDay = 1.obs;
+
+  final Rx<MealTiming> timing = MealTiming.anytime.obs;
+
+  /// The counts the picker offers.
+  static const List<int> dailyFrequencies = [1, 2, 3, 4, 5, 6];
 
   /// Bumped on every save so the form's fields are rebuilt empty — they own
   /// their text controllers, so clearing them means giving them a new key.
   final RxInt formGeneration = 0.obs;
 
   /// True once at least one line has been saved in this sitting, which is what
-  /// reveals "Submit Your patients" in the design.
+  /// reveals "Send to Patient" in the design.
   final RxBool hasSaved = false.obs;
 
   /// A new script starts empty — the lines in the design are a filled-in
@@ -57,24 +69,38 @@ class WritePrescriptionController extends GetxController {
 
   void setDuration(String value) => durationDays.value = value;
 
-  void setDose(String value) => dailyDose.value = value;
+  void setStrength(String value) => strength.value = value;
 
-  void setInstructions(String value) => instructions.value = value;
+  void setUnit(DoseUnit value) => unit.value = value;
 
-  /// `1 capsule` / `3 times daily` for the two seeded lines, which carry the
-  /// design's wording; anything written here prints its own numbers.
+  void setTimesPerDay(int value) => timesPerDay.value = value;
+
+  void setTiming(MealTiming value) => timing.value = value;
+
+  void setNotes(String value) => notes.value = value;
+
+  String timingLabel(MealTiming value) => switch (value) {
+    MealTiming.anytime => AppStrings.timingAnytime.tr,
+    MealTiming.beforeMeal => AppStrings.timingBeforeMeal.tr,
+    MealTiming.afterMeal => AppStrings.timingAfterMeal.tr,
+    MealTiming.withFood => AppStrings.timingWithFood.tr,
+  };
+
+  /// `500 mg` / `3 times daily` for a line as written; the two seeded lines
+  /// carry the design's own wording.
   (String, String) dosageFor(PrescribedMedicine medicine) =>
       DoctorPracticeData.seededDosage[medicine.name] ??
       (
         medicine.doseLabel,
-        AppStrings.timesDaily.trParams({'count': '${medicine.dailyDose}'}),
+        AppStrings.timesDaily.trParams({'count': '${medicine.timesPerDay}'}),
       );
 
   void save() {
     final duration = int.tryParse(durationDays.value.trim());
-    final dose = int.tryParse(dailyDose.value.trim());
 
-    if (name.value.trim().isEmpty || duration == null || dose == null) {
+    if (name.value.trim().isEmpty ||
+        strength.value.trim().isEmpty ||
+        duration == null) {
       AppSnackbar.info(AppStrings.prescriptionNeedsFields.tr);
       return;
     }
@@ -82,16 +108,22 @@ class WritePrescriptionController extends GetxController {
     medicines.add(
       PrescribedMedicine(
         name: name.value.trim(),
+        strength: strength.value.trim(),
+        unit: unit.value,
         durationDays: duration,
-        dailyDose: dose,
-        instructions: instructions.value.trim(),
+        timesPerDay: timesPerDay.value,
+        timing: timing.value,
+        notes: notes.value.trim(),
       ),
     );
 
     name.value = '';
+    strength.value = '';
     durationDays.value = '';
-    dailyDose.value = '';
-    instructions.value = '';
+    notes.value = '';
+    // The unit and the schedule are deliberately left where they are: a
+    // script is usually several lines of the same shape, and re-picking
+    // "mg, 3 times daily, after meals" for each one is needless work.
     formGeneration.value++;
     hasSaved.value = true;
     AppSnackbar.success(AppStrings.medicineAdded.tr);

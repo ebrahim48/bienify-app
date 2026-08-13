@@ -321,24 +321,79 @@ class DoctorAppointment {
 // ─── Prescribing ───────────────────────────────────────────────────────────
 
 /// A line the doctor is writing onto a prescription.
+/// The unit a strength is measured in.
+enum DoseUnit { mg, mcg, g, ml, iu, tablet, capsule, drop, puff }
+
+extension DoseUnitLabel on DoseUnit {
+  /// What goes after the number: `500 mg`, `2 tablet`.
+  String get label => switch (this) {
+    DoseUnit.mg => 'mg',
+    DoseUnit.mcg => 'mcg',
+    DoseUnit.g => 'g',
+    DoseUnit.ml => 'ml',
+    DoseUnit.iu => 'IU',
+    DoseUnit.tablet => 'tablet',
+    DoseUnit.capsule => 'capsule',
+    DoseUnit.drop => 'drop',
+    DoseUnit.puff => 'puff',
+  };
+}
+
+/// When the dose is taken relative to eating.
+///
+/// A choice rather than free text: "after meals", "Aftermeals" and "p.c." all
+/// mean the same thing, and a pharmacist reading the script should not have to
+/// work out which one a doctor typed.
+enum MealTiming { anytime, beforeMeal, afterMeal, withFood }
+
 class PrescribedMedicine {
   const PrescribedMedicine({
     required this.name,
+    required this.strength,
+    required this.unit,
     required this.durationDays,
-    required this.dailyDose,
-    required this.instructions,
+    required this.timesPerDay,
+    required this.timing,
+    this.notes = '',
   });
 
+  /// The drug alone — `Amoxicillin`, not `Amoxicillin 500mg`. The strength is
+  /// its own field so a pharmacy can read it without parsing a name.
   final String name;
+
+  /// How much per dose, as typed: `500`.
+  final String strength;
+
+  final DoseUnit unit;
+
   final int durationDays;
-  final int dailyDose;
-  final String instructions;
+
+  /// Doses in a day.
+  final int timesPerDay;
+
+  final MealTiming timing;
+
+  /// Anything the two structured fields cannot say.
+  final String notes;
 
   String get durationLabel => '$durationDays days';
 
-  /// `1 capsule` is not knowable from a dose count, so the card prints the
-  /// count itself — which is what the design shows once a line is added.
-  String get doseLabel => '$dailyDose';
+  /// `500 mg`.
+  String get doseLabel => '$strength ${unit.label}';
+}
+
+/// `3 times daily, after meal` — what the server stores as one `frequency`.
+///
+/// The app keeps the count and the meal timing apart so the form can ask for
+/// them separately, and joins them here because the API has a single field.
+String prescriptionFrequency(PrescribedMedicine medicine) {
+  final times = '${medicine.timesPerDay} times daily';
+  return switch (medicine.timing) {
+    MealTiming.anytime => times,
+    MealTiming.beforeMeal => '$times, before meal',
+    MealTiming.afterMeal => '$times, after meal',
+    MealTiming.withFood => '$times, with food',
+  };
 }
 
 // ─── Earnings ──────────────────────────────────────────────────────────────

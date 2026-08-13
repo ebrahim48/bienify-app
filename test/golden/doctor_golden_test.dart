@@ -313,24 +313,28 @@ void main() {
       matchesGoldenFile('doctor_write_prescription.png'),
     );
 
-    // An incomplete line is refused rather than silently added.
+    // An incomplete line is refused rather than silently added: a name with
+    // no strength behind it is not a prescription.
     controller
-      ..setName('Ibuprofen 400 mg')
+      ..setName('Ibuprofen')
       ..save();
     await tester.pumpAndSettle(const Duration(seconds: 5));
     expect(controller.medicines, isEmpty);
 
     controller
+      ..setStrength('400')
+      ..setUnit(DoseUnit.mg)
       ..setDuration('5')
-      ..setDose('2')
-      ..setInstructions('Take with food or milk')
+      ..setTimesPerDay(2)
+      ..setTiming(MealTiming.withFood)
+      ..setNotes('Take with food or milk')
       ..save();
     await tester.pumpAndSettle(const Duration(seconds: 5));
 
     expect(controller.medicines.length, 1);
     expect(controller.hasSaved.value, isTrue);
     // Saving reveals the submit action, as the design's second screen shows.
-    expect(find.text('Submit Your patients'), findsOneWidget);
+    expect(find.text('Send to Patient'), findsOneWidget);
 
     await settleImages(tester);
     await expectLater(

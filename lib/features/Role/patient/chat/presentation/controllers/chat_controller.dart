@@ -38,6 +38,15 @@ class ChatController extends GetxController {
   final RxBool canSend = false.obs;
 
   Timer? _replyTimer;
+  Timer? _poll;
+  bool _isRefreshing = false;
+
+  /// How often an open thread re-reads the server.
+  ///
+  /// There is no push channel and no socket, so the other side's messages
+  /// arrive only when this asks for them. Three seconds is close enough to
+  /// feel like a conversation without hammering a thread nobody is typing in.
+  static const Duration _pollInterval = Duration(seconds: 3);
 
   @override
   void onInit() {
@@ -46,6 +55,45 @@ class ChatController extends GetxController {
     load();
     // The thread opens at the newest message, as a chat should.
     WidgetsBinding.instance.addPostFrameCallback((_) => jumpToLatest());
+    if (isLive) {
+      _poll = Timer.periodic(_pollInterval, (_) => _refresh());
+    }
+  }
+
+  /// Pulls in whatever the other side has said since the last look.
+  ///
+  /// Appends rather than replacing the list: rebuilding it every few seconds
+  /// would flicker and fight the scroll position for no gain, since a live
+  /// thread holds nothing the server does not.
+  Future<void> _refresh() async {
+    if (_isRefreshing || isSending.value) return;
+    _isRefreshing = true;
+    try {
+      final latest = await _repository.messages(peer.appointmentId!);
+      final known = messages.map((m) => m.id).toSet();
+      final arrived = latest.where((m) => !known.contains(m.id)).toList();
+      if (arrived.isEmpty) return;
+
+      // Whether to follow the conversation down is decided before the list
+      // grows: a reader who has scrolled up to re-read something should not
+      // be yanked to the bottom by someone else's message.
+      final shouldFollow = _isNearBottom;
+      messages.addAll(arrived);
+      if (shouldFollow) _scrollToLatest();
+    } on AppException {
+      // A poll that fails is not worth a snackbar over an open thread — the
+      // next one is three seconds away, and the messages already read are
+      // still on screen.
+    } finally {
+      _isRefreshing = false;
+    }
+  }
+
+  /// Within a screenful of the newest message.
+  bool get _isNearBottom {
+    if (!scrollController.hasClients) return true;
+    final position = scrollController.position;
+    return position.maxScrollExtent - position.pixels < 120;
   }
 
   Future<void> load() async {
@@ -69,6 +117,7 @@ class ChatController extends GetxController {
 
   @override
   void onClose() {
+    _poll?.cancel();
     _replyTimer?.cancel();
     inputController
       ..removeListener(_onInputChanged)

@@ -28,6 +28,15 @@ class ConsultationHistoryScreen extends StatelessWidget {
 
   String get _homeRoute => isDoctor ? AppRoutes.doctorHome : AppRoutes.home;
 
+  /// The consultation is finished, so the call must not stay on the stack —
+  /// but the vault is somewhere the patient browses out of, not a dead end.
+  void _openVault() {
+    AppNavigator.resetTo(AppRoutes.home);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Get.toNamed<void>(AppRoutes.healthProfile);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
@@ -43,9 +52,13 @@ class ConsultationHistoryScreen extends StatelessWidget {
                 ? AppStrings.writePrescription.tr
                 : AppStrings.checkMedicalVault.tr,
             radius: AppRadius.lg,
+            // The patient's button says Medical Vault and used to land on
+            // Home, which is where the outlined button below already goes —
+            // the two did the same thing. Home is reset under it first so
+            // Back leaves the vault rather than the app.
             onPressed: () => isDoctor
                 ? Get.toNamed<void>(AppRoutes.doctorWritePrescription)
-                : AppNavigator.resetTo(AppRoutes.home),
+                : _openVault(),
           ),
           AppSpacing.gapV(AppSpacing.sm),
           AppButton(

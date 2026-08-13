@@ -203,8 +203,13 @@ DoctorAppointment doctorAppointmentFrom(Map<String, dynamic> json) {
     filter: doctorApptFilterFrom(status),
     // The room opens on the hour and the server closes it at `slotEnd`; a
     // muted Join outside that window is what the design shows.
+    //
+    // `in_progress` counts as joinable, not just `confirmed`: joining is what
+    // moves a booking to `in_progress`, so accepting only `confirmed` would
+    // grey the button out the moment the doctor first entered the room and
+    // leave them no way back into a call they had dropped out of.
     isJoinable:
-        status == 'confirmed' &&
+        (status == 'confirmed' || status == 'in_progress') &&
         DateTime.now().isAfter(
           scheduledAt.subtract(const Duration(minutes: 10)),
         ) &&

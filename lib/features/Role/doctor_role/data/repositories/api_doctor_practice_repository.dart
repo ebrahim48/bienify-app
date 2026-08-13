@@ -452,10 +452,11 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
             {
               'medicineName': medicine.name,
               'dosage': medicine.doseLabel,
-              'frequency': '${medicine.dailyDose} times daily',
+              // Frequency carries when as well as how often, because the
+              // server has one field for both and a pharmacist needs both.
+              'frequency': prescriptionFrequency(medicine),
               'durationDays': medicine.durationDays,
-              if (medicine.instructions.isNotEmpty)
-                'notes': medicine.instructions,
+              if (medicine.notes.isNotEmpty) 'notes': medicine.notes,
             },
         ],
       },

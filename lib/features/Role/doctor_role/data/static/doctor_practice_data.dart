@@ -216,16 +216,21 @@ class DoctorPracticeData {
   /// The two lines already on the script when Write Prescriptions opens.
   static List<PrescribedMedicine> prescribed() => [
     const PrescribedMedicine(
-      name: 'Amoxicillin 500mg',
+      name: 'Amoxicillin',
+      strength: '500',
+      unit: DoseUnit.mg,
       durationDays: 7,
-      dailyDose: 3,
-      instructions: 'Take with food',
+      timesPerDay: 3,
+      timing: MealTiming.withFood,
     ),
     const PrescribedMedicine(
-      name: 'Ibuprofen 400mg',
+      name: 'Ibuprofen',
+      strength: '400',
+      unit: DoseUnit.mg,
       durationDays: 5,
-      dailyDose: 3,
-      instructions: 'Take with food or milk',
+      timesPerDay: 3,
+      timing: MealTiming.withFood,
+      notes: 'Take with food or milk',
     ),
   ];
 

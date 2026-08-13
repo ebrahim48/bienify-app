@@ -13,6 +13,7 @@ import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/widgets/app_scaffold.dart';
 import '../../../../../core/widgets/app_text_field.dart';
 import '../../../../../core/widgets/app_top_bar.dart';
+import '../widgets/app_dropdown_field.dart';
 import '../../domain/entities/doctor_practice.dart';
 import '../controllers/write_prescription_controller.dart';
 
@@ -60,7 +61,7 @@ class WritePrescriptionScreen extends GetView<WritePrescriptionController> {
                 : const SizedBox.shrink(),
           ),
           AppSpacing.gapV(AppSpacing.md),
-          // "Submit Your patients" appears once a line has been written, as
+          // "Send to Patient" appears once a line has been written, as
           // the design shows it only on the second screen.
           Obx(
             () => controller.hasSaved.value
@@ -123,10 +124,11 @@ class _MedicineCard extends StatelessWidget {
           AppSpacing.gapV(AppSpacing.xs),
           _Detail(label: AppStrings.dosageLabel.tr, value: dose),
           _Detail(label: AppStrings.frequencyLabel.tr, value: frequency),
-          _Detail(
-            label: AppStrings.instructionsLabel.tr,
-            value: medicine.instructions,
-          ),
+          if (medicine.notes.isNotEmpty)
+            _Detail(
+              label: AppStrings.instructionsLabel.tr,
+              value: medicine.notes,
+            ),
         ],
       ),
     );
@@ -245,11 +247,88 @@ class _MedicineForm extends StatelessWidget {
       children: [
         _FieldLabel(AppStrings.medicineName.tr),
         AppTextField(
-          hint: AppStrings.medicineName.tr,
+          hint: AppStrings.prescriptionMedicineNameHint.tr,
           textInputAction: TextInputAction.next,
           onChanged: controller.setName,
         ),
         AppSpacing.gapV(AppSpacing.sm),
+
+        // Strength and its unit sit on one line: they are one fact, and the
+        // number means nothing without the unit beside it.
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _FieldLabel(AppStrings.strengthLabel.tr),
+                  AppTextField(
+                    hint: AppStrings.strengthHint.tr,
+                    keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.next,
+                    onChanged: controller.setStrength,
+                  ),
+                ],
+              ),
+            ),
+            AppSpacing.gapH(AppSpacing.sm),
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _FieldLabel(AppStrings.unitLabel.tr),
+                  Obx(
+                    () => AppDropdownField(
+                      value: controller.unit.value.label,
+                      options: [
+                        for (final unit in DoseUnit.values) unit.label,
+                      ],
+                      onChanged: (label) => controller.setUnit(
+                        DoseUnit.values.firstWhere((u) => u.label == label),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        AppSpacing.gapV(AppSpacing.sm),
+
+        _FieldLabel(AppStrings.timesPerDayLabel.tr),
+        Obx(
+          () => _ChoiceChips(
+            labels: [
+              for (final n in WritePrescriptionController.dailyFrequencies)
+                '$n',
+            ],
+            selectedIndex: WritePrescriptionController.dailyFrequencies.indexOf(
+              controller.timesPerDay.value,
+            ),
+            onSelected: (index) => controller.setTimesPerDay(
+              WritePrescriptionController.dailyFrequencies[index],
+            ),
+          ),
+        ),
+        AppSpacing.gapV(AppSpacing.sm),
+
+        _FieldLabel(AppStrings.whenToTakeLabel.tr),
+        Obx(
+          () => _ChoiceChips(
+            labels: [
+              for (final timing in MealTiming.values)
+                controller.timingLabel(timing),
+            ],
+            selectedIndex: MealTiming.values.indexOf(controller.timing.value),
+            onSelected: (index) =>
+                controller.setTiming(MealTiming.values[index]),
+          ),
+        ),
+        AppSpacing.gapV(AppSpacing.sm),
+
         _FieldLabel(AppStrings.enterDurationInDays.tr),
         AppTextField(
           hint: AppStrings.enterDurationInDays.tr,
@@ -258,19 +337,11 @@ class _MedicineForm extends StatelessWidget {
           onChanged: controller.setDuration,
         ),
         AppSpacing.gapV(AppSpacing.sm),
-        _FieldLabel(AppStrings.dailyDose.tr),
+        _FieldLabel(AppStrings.notesLabel.tr),
         AppTextField(
-          hint: AppStrings.dailyDose.tr,
-          keyboardType: TextInputType.number,
-          textInputAction: TextInputAction.next,
-          onChanged: controller.setDose,
-        ),
-        AppSpacing.gapV(AppSpacing.sm),
-        _FieldLabel(AppStrings.instructionsField.tr),
-        AppTextField(
-          hint: AppStrings.instructionsField.tr,
+          hint: AppStrings.notesHint.tr,
           textInputAction: TextInputAction.done,
-          onChanged: controller.setInstructions,
+          onChanged: controller.setNotes,
           onSubmitted: (_) => controller.save(),
         ),
         AppSpacing.gapV(AppSpacing.base),
@@ -299,4 +370,80 @@ class _FieldLabel extends StatelessWidget {
     padding: EdgeInsets.only(bottom: AppSpacing.xs2.h),
     child: Text(label, style: AppTextStyles.bodyMedium.rc(AppColors.gray600)),
   );
+}
+
+/// A row of single-choice chips.
+///
+/// Used where the answer is one of a short, known set — how many doses a day,
+/// and when they are taken. Typing those as free text is how one script says
+/// "after meals" and the next says "p.c.".
+class _ChoiceChips extends StatelessWidget {
+  const _ChoiceChips({
+    required this.labels,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  final List<String> labels;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: AppSpacing.xs.w,
+      runSpacing: AppSpacing.xs.h,
+      children: [
+        for (final (index, label) in labels.indexed)
+          _Chip(
+            label: label,
+            isSelected: index == selectedIndex,
+            onTap: () => onSelected(index),
+          ),
+      ],
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  const _Chip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: isSelected ? AppColors.actionFill : AppColors.surface,
+      borderRadius: AppRadius.rXl3,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: AppRadius.rXl3,
+            border: Border.all(
+              color: isSelected ? AppColors.actionFill : AppColors.fieldBorder,
+              width: AppSizes.borderWidth,
+            ),
+          ),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm.w,
+            vertical: AppSpacing.xs.h,
+          ),
+          child: Text(
+            label,
+            style: AppTextStyles.bodyMedium.rc(
+              isSelected ? AppColors.actionLabel : AppColors.gray700,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

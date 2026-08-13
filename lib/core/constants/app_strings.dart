@@ -621,6 +621,25 @@ class AppStrings {
   static const String prescriptionSent = 'prescription_sent';
   static const String prescriptionNeedsFields = 'prescription_needs_fields';
   static const String timesDaily = 'times_daily';
+
+  /// The structured prescription form: strength and its unit, how many doses
+  /// a day, and when they are taken relative to eating.
+  /// The prescription form asks for the drug alone; the pharmacy's own
+  /// Add Medicine form keeps the strength in the product name, so the two
+  /// hints cannot be shared.
+  static const String prescriptionMedicineNameHint =
+      'prescription_medicine_name_hint';
+  static const String strengthLabel = 'strength_label';
+  static const String strengthHint = 'strength_hint';
+  static const String unitLabel = 'unit_label';
+  static const String timesPerDayLabel = 'times_per_day_label';
+  static const String whenToTakeLabel = 'when_to_take_label';
+  static const String timingAnytime = 'timing_anytime';
+  static const String timingBeforeMeal = 'timing_before_meal';
+  static const String timingAfterMeal = 'timing_after_meal';
+  static const String timingWithFood = 'timing_with_food';
+  static const String notesLabel = 'notes_label';
+  static const String notesHint = 'notes_hint';
   static const String searchPatientName = 'search_patient_name';
   static const String messageTitle = 'message_title';
   static const String navMesssage = 'nav_messsage';

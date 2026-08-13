@@ -57,6 +57,7 @@ class VideoCallController extends GetxController {
       // Starting it on join instead would give each side a different figure,
       // counting however long they each waited for the other.
       if (state.stage == CallStage.live) {
+        _hasConnected = true;
         _startClock();
       } else {
         _pauseClock();
@@ -126,9 +127,21 @@ class VideoCallController extends GetxController {
   /// twice and leave a screen stranded on the stack.
   bool _hasLeft = false;
 
+  /// Whether the two of them were ever in the room together.
+  bool _hasConnected = false;
+
   void endCall() {
     if (_hasLeft) return;
     _hasLeft = true;
+
+    // Hanging up on a call nobody answered is not a finished consultation, so
+    // it does not land on the summary that congratulates the doctor and
+    // offers to write a prescription. It just goes back.
+    if (!_hasConnected) {
+      Get.back<void>();
+      return;
+    }
+
     Get.offNamed<void>(
       isDoctor
           ? AppRoutes.doctorConsultationDone
