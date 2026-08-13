@@ -224,6 +224,10 @@
   "/api/v1/consultations/:id/prescriptions"
  ],
  [
+  "POST",
+  "/api/v1/consultations/:id/token"
+ ],
+ [
   "GET",
   "/api/v1/consultations/threads"
  ],

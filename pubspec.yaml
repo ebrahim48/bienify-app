@@ -41,6 +41,11 @@ dependencies:
   # Camera / gallery capture behind every upload box
   image_picker: ^1.1.2
 
+  # Live video consultation. The app never holds Agora credentials: the App ID
+  # and a short-lived channel token both come from `POST /consultations/:id/join`.
+  agora_rtc_engine: ^6.3.2
+  permission_handler: ^11.3.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

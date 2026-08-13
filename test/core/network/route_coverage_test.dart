@@ -34,7 +34,7 @@ void main() {
   });
 
   test('the backend serves the number of routes we think it does', () {
-    expect(routes, hasLength(145));
+    expect(routes, hasLength(146));
   });
 
   test('every backend route has a constant holding its exact path', () {

@@ -266,6 +266,12 @@ class AppStrings {
 
   // ─── Video consultation ──────────────────────────────────────────────────
   static const String goodConnection = 'good_connection';
+
+  /// What the call stage says before the other party's picture arrives.
+  static const String callAskingPermission = 'call_asking_permission';
+  static const String callConnecting = 'call_connecting';
+  static const String callWaitingForOther = 'call_waiting_for_other';
+  static const String callRinging = 'call_ringing';
   static const String doctorVideoFeed = 'doctor_video_feed';
   static const String you = 'you';
   static const String callDuration = 'call_duration';

@@ -18,6 +18,10 @@ class ConsultationsApi {
   Future<dynamic> createJoin({required String id, Object? body}) =>
       _c.post(ApiConstants.postConsultationsJoin(id), body: body);
 
+  /// `POST /api/v1/consultations/:id/token`
+  Future<dynamic> createToken({required String id}) =>
+      _c.post(ApiConstants.postConsultationsToken(id));
+
   /// `GET /api/v1/consultations/:id/messages`
   Future<dynamic> getMessages({
     required String id,

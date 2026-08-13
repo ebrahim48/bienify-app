@@ -55,7 +55,7 @@ Ran against `http://localhost:3500` through `ApiClient`.
 | PASS | anon | GET | `/api/v1/appointments/slots` | ok |
 | PASS | anon | GET | `/api/v1/reviews/doctors/6a7aaebd9edac194dd587765` | ok |
 | PASS | patient | GET | `/api/v1/appointments/6a7aaebb68ba3172df927840` | ok |
-| PASS | patient | GET | `/api/v1/medicine-orders/6a7d3da5017bf26c91c21d38` | ok |
+| PASS | patient | GET | `/api/v1/medicine-orders/6a7d53f80bf6dad72f77dc5a` | ok |
 | PASS | patient | GET | `/api/v1/prescriptions/6a7aaebc68ba3172df927843` | ok |
 | PASS | - | WRITE | `patient updates their profile` | ok |
 | PASS | - | WRITE | `patient asks for an avatar upload URL` | ok |

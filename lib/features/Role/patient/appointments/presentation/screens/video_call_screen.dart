@@ -1,10 +1,11 @@
+import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
-import '../../../../../../core/constants/app_assets.dart';
 import '../../../../../../core/constants/app_strings.dart';
+import '../../../../../../core/services/video_call_service.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_radius.dart';
 import '../../../../../../core/theme/app_sizes.dart';
@@ -55,10 +56,14 @@ class _Stage extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
+        // The observable is read here, inside the builder: an Obx whose
+        // closure only constructs a child subscribes to nothing, because the
+        // child's own build runs outside it.
         Obx(
-          () => controller.isCameraOff.value
-              ? const ColoredBox(color: AppColors.gray800)
-              : Image.asset(AppAssets.doctorVideo, fit: BoxFit.cover),
+          () => _RemoteFeed(
+            call: controller.call.value,
+            engine: controller.service.engine,
+          ),
         ),
 
         // Keeps the name legible over a bright frame.
@@ -109,22 +114,87 @@ class _Stage extends StatelessWidget {
         Positioned(
           right: AppSpacing.base.w,
           bottom: AppSpacing.xl4.h,
-          child: const _SelfView(),
+          child: Obx(
+            () => _SelfView(
+              isCameraOff: controller.isCameraOff.value,
+              // Read so the preview appears the moment the channel is joined:
+              // the engine is not observable, and the camera toggle alone
+              // would leave this grey until it was pressed.
+              engine: controller.call.value.stage == CallStage.idle
+                  ? null
+                  : controller.service.engine,
+            ),
+          ),
         ),
 
         Positioned(
           left: AppSpacing.sm.w,
           top: AppSpacing.sm.h,
-          child: SafeArea(child: const _ConnectionPill()),
+          child: SafeArea(
+            child: Obx(
+              () => _ConnectionPill(
+                isLive: controller.call.value.stage == CallStage.live,
+              ),
+            ),
+          ),
         ),
       ],
     );
   }
 }
 
-/// The patient's own feed.
+/// The other party, full-bleed.
+///
+/// Until they arrive there is no frame to show, so the stage says what it is
+/// waiting for rather than holding a black rectangle.
+class _RemoteFeed extends StatelessWidget {
+  const _RemoteFeed({required this.call, required this.engine});
+
+  final CallState call;
+  final RtcEngine? engine;
+
+  @override
+  Widget build(BuildContext context) {
+    if (call.hasRemote && engine != null) {
+      return AgoraVideoView(
+        controller: VideoViewController.remote(
+          rtcEngine: engine!,
+          canvas: VideoCanvas(uid: call.remoteUid),
+          connection: RtcConnection(channelId: call.channelId),
+        ),
+      );
+    }
+
+    return ColoredBox(
+      color: AppColors.gray800,
+      child: Center(
+        child: Padding(
+          padding: EdgeInsets.all(AppSpacing.base.w),
+          child: Text(
+            _waitingLabel(call),
+            textAlign: TextAlign.center,
+            style: AppTextStyles.bodyLarge.rc(AppColors.gray100),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _waitingLabel(CallState call) => switch (call.stage) {
+    CallStage.requestingPermissions => AppStrings.callAskingPermission.tr,
+    CallStage.connecting => AppStrings.callConnecting.tr,
+    CallStage.failed => call.message,
+    // In the channel, nobody on the other end yet: that is a phone ringing.
+    _ => AppStrings.callRinging.tr,
+  };
+}
+
+/// This side's own feed.
 class _SelfView extends StatelessWidget {
-  const _SelfView();
+  const _SelfView({required this.isCameraOff, required this.engine});
+
+  final bool isCameraOff;
+  final RtcEngine? engine;
 
   @override
   Widget build(BuildContext context) {
@@ -133,14 +203,23 @@ class _SelfView extends StatelessWidget {
       child: SizedBox(
         width: VideoCallScreen._pipWidth.w,
         height: VideoCallScreen._pipHeight.h,
-        child: Image.asset(AppAssets.clientVideo, fit: BoxFit.cover),
+        child: isCameraOff || engine == null
+            ? const ColoredBox(color: AppColors.gray900)
+            : AgoraVideoView(
+                controller: VideoViewController(
+                  rtcEngine: engine!,
+                  canvas: const VideoCanvas(uid: 0),
+                ),
+              ),
       ),
     );
   }
 }
 
 class _ConnectionPill extends StatelessWidget {
-  const _ConnectionPill();
+  const _ConnectionPill({required this.isLive});
+
+  final bool isLive;
 
   @override
   Widget build(BuildContext context) {
@@ -150,16 +229,24 @@ class _ConnectionPill extends StatelessWidget {
         vertical: AppSpacing.xs2.h,
       ),
       decoration: BoxDecoration(
-        color: AppColors.openInk,
+        // Green only once both parties are actually through; a "Good
+        // connection" badge over a channel nobody has joined is a lie.
+        color: isLive ? AppColors.openInk : AppColors.gray600,
         borderRadius: AppRadius.rLg,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.wifi_rounded, size: AppSizes.lg.w, color: AppColors.white),
+          Icon(
+            isLive ? Icons.wifi_rounded : Icons.wifi_tethering_rounded,
+            size: AppSizes.lg.w,
+            color: AppColors.white,
+          ),
           AppSpacing.gapH(AppSpacing.xs2),
           Text(
-            AppStrings.goodConnection.tr,
+            isLive
+                ? AppStrings.goodConnection.tr
+                : AppStrings.callConnecting.tr,
             style: AppTextStyles.labelMedium.rc(AppColors.white),
           ),
         ],
@@ -184,19 +271,31 @@ class _CallFooter extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Obx(
-                () => Text(
-                  controller.durationLabel,
-                  style: AppTextStyles.headlineSmall.rw(
-                    AppColors.gray900,
-                    FontWeight.w400,
-                  ),
-                ),
-              ),
-              Text(
-                AppStrings.callDuration.tr,
-                style: AppTextStyles.bodyLarge.rc(AppColors.gray500),
-              ),
+              // Until the other side picks up there is no duration to show —
+              // a stopped 00:00 reads as a broken clock — so the footer rings
+              // instead, and the count replaces it once they are both on.
+              Obx(() {
+                final isLive =
+                    controller.call.value.stage == CallStage.live;
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isLive
+                          ? controller.durationLabel
+                          : AppStrings.callRinging.tr,
+                      style: AppTextStyles.headlineSmall.rw(
+                        AppColors.gray900,
+                        FontWeight.w400,
+                      ),
+                    ),
+                    Text(
+                      isLive ? AppStrings.callDuration.tr : '',
+                      style: AppTextStyles.bodyLarge.rc(AppColors.gray500),
+                    ),
+                  ],
+                );
+              }),
               AppSpacing.gapV(AppSpacing.base),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

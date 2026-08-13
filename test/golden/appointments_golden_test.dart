@@ -1,10 +1,13 @@
+import 'dart:async';
+
+import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:bienify_app/app.dart';
 import 'package:bienify_app/core/di/dependency_injection.dart';
 import 'package:bienify_app/core/localization/app_translations.dart';
+import 'package:bienify_app/core/services/video_call_service.dart';
 import 'package:bienify_app/core/theme/app_theme.dart';
 import 'package:bienify_app/features/Role/patient/appointments/data/static/appointment_mock_data.dart';
 import 'package:bienify_app/features/Role/patient/appointments/domain/entities/appointment.dart';
-import 'package:bienify_app/features/Role/patient/appointments/presentation/bindings/appointments_bindings.dart';
 import 'package:bienify_app/features/Role/patient/appointments/presentation/controllers/appointments_controller.dart';
 import 'package:bienify_app/features/Role/patient/appointments/presentation/controllers/video_call_controller.dart';
 import 'package:bienify_app/features/Role/patient/appointments/presentation/screens/consultation_history_screen.dart';
@@ -216,10 +219,19 @@ void main() {
   });
 
   testWidgets('Video call', (tester) async {
+    // A fake call rather than the Agora one: the real service asks for camera
+    // and microphone grants and initialises a native engine, neither of which
+    // exists under `flutter test`. The screen is what is being drawn here.
+    Get.put(
+      VideoCallController(
+        appointment: AppointmentMockData.upcoming().first,
+        service: _FakeVideoCallService(),
+      ),
+    );
+
     await pump(
       tester,
       const VideoCallScreen(),
-      binding: VideoCallBinding(),
       arguments: AppointmentMockData.upcoming().first,
       size: const Size(390, 852),
     );
@@ -246,4 +258,37 @@ void main() {
       matchesGoldenFile('consultation_history.png'),
     );
   });
+}
+
+/// A consultation that never reaches a video platform.
+///
+/// Reports itself as ringing — one side in the channel, nobody yet on the
+/// other — which is the state the call screen spends its first seconds in and
+/// the one worth holding a golden of.
+class _FakeVideoCallService implements VideoCallService {
+  final _states = StreamController<CallState>.broadcast();
+
+  @override
+  Stream<CallState> get states => _states.stream;
+
+  @override
+  CallState get state => const CallState(stage: CallStage.waiting);
+
+  @override
+  RtcEngine? get engine => null;
+
+  @override
+  Future<void> join(String appointmentId) async {}
+
+  @override
+  Future<void> setMuted(bool value) async {}
+
+  @override
+  Future<void> setCameraOff(bool value) async {}
+
+  @override
+  Future<void> switchCamera() async {}
+
+  @override
+  Future<void> dispose() async => _states.close();
 }

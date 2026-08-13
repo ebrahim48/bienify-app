@@ -271,6 +271,10 @@ class AppTranslations extends Translations {
 
     // Video consultation
     AppStrings.goodConnection: 'Good Connection',
+    AppStrings.callAskingPermission: 'Allow camera and microphone to continue',
+    AppStrings.callConnecting: 'Connecting…',
+    AppStrings.callWaitingForOther: 'Waiting for the other person to join…',
+    AppStrings.callRinging: 'Ringing…',
     AppStrings.doctorVideoFeed: 'Doctor’s video feed',
     AppStrings.you: 'You',
     AppStrings.callDuration: 'Call Duration',
@@ -1210,6 +1214,10 @@ class AppTranslations extends Translations {
 
     // Videoconsulta
     AppStrings.goodConnection: 'Buena conexión',
+    AppStrings.callAskingPermission: 'Permite la cámara y el micrófono para continuar',
+    AppStrings.callConnecting: 'Conectando…',
+    AppStrings.callWaitingForOther: 'Esperando a que se una la otra persona…',
+    AppStrings.callRinging: 'Llamando…',
     AppStrings.doctorVideoFeed: 'Vídeo del médico',
     AppStrings.you: 'Tú',
     AppStrings.callDuration: 'Duración de la llamada',

@@ -103,6 +103,11 @@ class ApiConstants {
       '$_v1/consultations/$id/follow-up';
   static String postConsultationsJoin(String id) =>
       '$_v1/consultations/$id/join';
+
+  /// Fresh credentials for a call already under way. Agora tokens expire, and
+  /// a consultation outliving the TTL drops both parties without this.
+  static String postConsultationsToken(String id) =>
+      '$_v1/consultations/$id/token';
   static String consultationsMessages(String id) =>
       '$_v1/consultations/$id/messages';
   static String postConsultationsMessages(String id) =>
