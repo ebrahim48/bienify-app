@@ -54,9 +54,9 @@ Ran against `http://localhost:3500` through `ApiClient`.
 | PASS | anon | GET | `/api/v1/doctors/6a7aaebd9edac194dd587765` | ok |
 | PASS | anon | GET | `/api/v1/appointments/slots` | ok |
 | PASS | anon | GET | `/api/v1/reviews/doctors/6a7aaebd9edac194dd587765` | ok |
-| PASS | patient | GET | `/api/v1/appointments/6a7aaebb68ba3172df927840` | ok |
-| PASS | patient | GET | `/api/v1/medicine-orders/6a7d9bd3ed769fc824197323` | ok |
-| PASS | patient | GET | `/api/v1/prescriptions/6a7d814bed769fc824194bc2` | ok |
+| PASS | patient | GET | `/api/v1/appointments/6a7aaebb68ba3172df92783e` | ok |
+| PASS | patient | GET | `/api/v1/medicine-orders/6a7da508ed769fc824197c03` | ok |
+| PASS | patient | GET | `/api/v1/prescriptions/6a7f446bed769fc824197f0a` | ok |
 | PASS | - | WRITE | `patient updates their profile` | ok |
 | PASS | - | WRITE | `patient asks for an avatar upload URL` | ok |
 | PASS | - | WRITE | `patient searches for free slots` | ok |

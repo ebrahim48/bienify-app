@@ -255,10 +255,14 @@ class _MedicationCard extends StatelessWidget {
             label: AppStrings.frequencyLabel.tr,
             value: medication.frequency,
           ),
-          _Detail(
-            label: AppStrings.instructionsLabel.tr,
-            value: medication.instructions,
-          ),
+          // Notes are optional on the prescribing form, so most lines have
+          // none. Printing a bare "Instructions:" with nothing after it reads
+          // as a line that failed to load.
+          if (medication.instructions.isNotEmpty)
+            _Detail(
+              label: AppStrings.instructionsLabel.tr,
+              value: medication.instructions,
+            ),
         ],
       ),
     );

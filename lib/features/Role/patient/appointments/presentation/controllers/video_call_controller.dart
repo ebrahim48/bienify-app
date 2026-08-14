@@ -52,15 +52,18 @@ class VideoCallController extends GetxController {
 
     _subscription = _service.states.listen((state) {
       call.value = state;
-      // The clock measures the consultation — the time the two of them were
-      // actually together — so it runs only while both are in the channel.
-      // Starting it on join instead would give each side a different figure,
-      // counting however long they each waited for the other.
+      // The clock starts when the two of them first meet, and then runs to the
+      // end of the call without pausing.
+      //
+      // It used to stop whenever this side lost the other, which sounds
+      // right and is not: a blink either side sees — a dropped frame of
+      // network, a re-join — pauses one clock and not the other, and the two
+      // never agree again. Measured across a real call, one screen read 02:40
+      // while the other read 03:38. A call timer that keeps counting through a
+      // reconnection is also what every phone does.
       if (state.stage == CallStage.live) {
         _hasConnected = true;
         _startClock();
-      } else {
-        _pauseClock();
       }
 
       // The other side hung up. A call only one person has left is not a call,
@@ -74,14 +77,6 @@ class VideoCallController extends GetxController {
   void _startClock() {
     if (_timer != null) return;
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => seconds.value++);
-  }
-
-  /// Holds the count where it is. If the other party drops and comes back the
-  /// consultation resumes rather than restarting, so the total still reflects
-  /// the time spent together.
-  void _pauseClock() {
-    _timer?.cancel();
-    _timer = null;
   }
 
   @override
