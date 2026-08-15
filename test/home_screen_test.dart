@@ -120,6 +120,10 @@ void main() {
 
     await tester.tap(find.text('Appointments'));
     await tester.pump();
+    // Switching tabs now also refreshes that tab's data (see
+    // MainNavController._refreshTab), which schedules the mock repository's
+    // own simulated latency — settle past it so no timer outlives the test.
+    await settleFeed(tester);
 
     expect(Get.find<MainNavController>().currentIndex.value, 1);
     // IndexedStack keeps every tab mounted; the shell just changes which one

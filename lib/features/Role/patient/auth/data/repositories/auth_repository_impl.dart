@@ -172,15 +172,15 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<UserEntity> saveCredentials({
+  Future<AuthSession> saveCredentials({
+    required String name,
     required String email,
     required String password,
   }) async {
-    final user = await _remote.saveCredentials(
-      token: _token,
-      body: {'email': email, 'password': password},
+    final session = await _remote.saveCredentials(
+      body: {'name': name, 'email': email, 'password': password},
     );
-    return _persistUser(user);
+    return _persist(session);
   }
 
   // ─── Password recovery ───────────────────────────────────────────────────

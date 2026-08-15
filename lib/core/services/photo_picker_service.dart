@@ -32,7 +32,9 @@ class PhotoPickerService {
         maxWidth: _maxSide.toDouble(),
         maxHeight: _maxSide.toDouble(),
         imageQuality: _quality,
-        preferredCameraDevice: CameraDevice.front,
+        // Every current caller is photographing a document (a prescription,
+        // a report) held up to the phone, not the patient's own face.
+        preferredCameraDevice: CameraDevice.rear,
       );
       return file == null ? null : File(file.path);
     } on Exception catch (error) {

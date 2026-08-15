@@ -36,10 +36,10 @@ abstract class AuthRemoteDataSource {
     required Map<String, dynamic> body,
   });
 
-  Future<UserModel> saveCredentials({
-    required String token,
-    required Map<String, dynamic> body,
-  });
+  /// `POST /auth/register` — a standalone, unauthenticated account creation,
+  /// not an update to whatever phone-verified session led here. It answers
+  /// with a full session, the same shape [loginWithEmail] does.
+  Future<AuthSessionModel> saveCredentials({required Map<String, dynamic> body});
 
   Future<Map<String, dynamic>> requestPasswordResetOtp(String phoneNumber);
 
@@ -143,16 +143,11 @@ class ApiAuthRemoteDataSource implements AuthRemoteDataSource {
   }
 
   @override
-  Future<UserModel> saveCredentials({
-    required String token,
+  Future<AuthSessionModel> saveCredentials({
     required Map<String, dynamic> body,
   }) async {
     final data = await _api.postMap(ApiConstants.postAuthRegister, body: body);
-    // Registration answers with a session; the caller wants the user out of it.
-    final user = data['user'];
-    return UserModel.fromJson(
-      user is Map ? user.cast<String, dynamic>() : data,
-    );
+    return AuthSessionModel.fromJson(data);
   }
 
   /// Texts a recovery code to [phoneNumber].

@@ -97,6 +97,7 @@ class ProfileSetupController extends GetxController
 
     final ok = await submit(() async {
       await _saveCredentials(
+        name: nameController.text.trim(),
         email: emailController.text.trim(),
         password: passwordController.text,
       );

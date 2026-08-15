@@ -25,6 +25,22 @@ class MockVaultRepository implements VaultRepository {
   }
 
   @override
+  Future<UploadedDocument> uploadDocument({
+    required List<int> bytes,
+    required String fileName,
+    required String contentType,
+    required String title,
+    required VaultRecordType type,
+  }) async {
+    return UploadedDocument(
+      id: 'mock-upload-${DateTime.now().microsecondsSinceEpoch}',
+      fileName: title,
+      kindLabel: 'Document',
+      uploadedOn: DateTime.now(),
+    );
+  }
+
+  @override
   Future<List<TestOrder>> testOrders() async {
     return MedicalMockData.testOrders;
   }

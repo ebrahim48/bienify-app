@@ -128,17 +128,17 @@ class MockAuthRemoteDataSource implements AuthRemoteDataSource {
   }
 
   @override
-  Future<UserModel> saveCredentials({
-    required String token,
+  Future<AuthSessionModel> saveCredentials({
     required Map<String, dynamic> body,
   }) {
     return _delayed(() {
       _user = UserModel.fromJson({
         ..._user.toJson(),
+        'name': body['name'] ?? _user.name,
         'email': body['email'],
         'is_profile_complete': true,
       });
-      return _user;
+      return _session;
     });
   }
 

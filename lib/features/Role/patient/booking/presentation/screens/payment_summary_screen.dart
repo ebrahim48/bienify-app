@@ -41,6 +41,7 @@ class PaymentSummaryScreen extends GetView<PaymentController> {
               onCamera: controller.captureFromCamera,
               attachments: controller.attachments.toList(),
               onRemove: controller.removeAttachment,
+              isBusy: controller.isUploadingAttachment.value,
             ),
             AppSpacing.gapV(AppSpacing.sm),
             AppointmentCard(

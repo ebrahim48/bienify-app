@@ -1,9 +1,24 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:logger/logger.dart';
 
 import '../constants/api_constants.dart';
 import '../exceptions/app_exceptions.dart';
 import 'auth_interceptor.dart';
 import 'token_store.dart';
+
+/// Every request and response Dio makes, printed as `[API] ...` in debug
+/// builds. `printer.lineLength` is wide so a JSON body does not get chopped
+/// mid-field.
+final _apiLogger = Logger(
+  printer: PrettyPrinter(
+    methodCount: 0,
+    lineLength: 120,
+    colors: false,
+    printEmojis: false,
+    dateTimeFormat: DateTimeFormat.none,
+  ),
+);
 
 /// The single entry point for talking to the Bienify API.
 ///
@@ -36,6 +51,17 @@ class ApiClient {
         onSessionExpired: onSessionExpired,
       ),
     );
+    if (kDebugMode) {
+      _dio.interceptors.add(
+        LogInterceptor(
+          requestHeader: false,
+          responseHeader: false,
+          requestBody: true,
+          responseBody: true,
+          logPrint: (obj) => _apiLogger.d('[API] $obj'),
+        ),
+      );
+    }
   }
 
   final Dio _dio;

@@ -1,20 +1,16 @@
-import 'dart:io';
+import 'package:dio/dio.dart';
 
 import '../../../../../../core/constants/api_constants.dart';
-import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/network/api_client.dart';
-import '../../../../../../core/network/attachment_uploader.dart';
-import '../../../../../../core/models/delivery_address.dart';
 import '../../../../../../core/network/mappers.dart';
 import '../../domain/entities/profile.dart';
 import '../../domain/repositories/account_repository.dart';
 
 /// The signed-in account, served by the API.
 class ApiAccountRepository implements AccountRepository {
-  const ApiAccountRepository(this._api, this._uploader);
+  const ApiAccountRepository(this._api);
 
   final ApiClient _api;
-  final AttachmentUploader _uploader;
 
   @override
   Future<PatientProfile> me() async {
@@ -32,81 +28,33 @@ class ApiAccountRepository implements AccountRepository {
   }
 
   @override
-  Future<DeliveryAddress?> savedAddress() async {
-    final data = await _api.getMap(ApiConstants.usersMe);
-    return addressFrom(Api.map(data['profile'])['address']);
-  }
-
-  @override
-  Future<void> saveAddress(DeliveryAddress? address) async {
-    // Explicit null clears it. Omitting the key would leave the old address
-    // in place, which is not what clearing means.
-    await _api.patch(
-      ApiConstants.updateUsersMe,
-      body: {'address': address?.toJson()},
-    );
-  }
-
-  @override
-  Future<String> uploadDoorImage({
-    required String path,
-    required String mimeType,
+  Future<void> uploadAvatar({
+    required List<int> bytes,
+    required String fileName,
+    required String contentType,
   }) async {
-    final file = File(path);
-    final issued = await _api.postMap(
-      ApiConstants.postUsersMeDoorImageUploadUrl,
-      body: {'contentType': mimeType},
-    );
-    final url = '${issued['url'] ?? ''}';
-    final key = '${issued['key'] ?? ''}';
-    if (url.isEmpty || key.isEmpty) {
-      throw UnknownException('The server did not issue an upload location');
-    }
-
-    await _uploader.putBytes(
-      url: url,
-      file: file,
-      mime: mimeType,
-      size: await file.length(),
-    );
-    // No confirm call: the key is filed by the save that stores the address.
-    return key;
-  }
-
-  @override
-  Future<String> uploadAvatar({
-    required String path,
-    required String mimeType,
-    void Function(double progress)? onProgress,
-  }) async {
-    final file = File(path);
-    final size = await file.length();
-
-    final issued = await _api.postMap(
+    final uploadUrl = await _api.postMap(
       ApiConstants.postUsersMeAvatarUploadUrl,
-      body: {'contentType': mimeType},
+      body: {'contentType': contentType},
     );
-    final url = '${issued['url'] ?? ''}';
-    final key = '${issued['key'] ?? ''}';
-    if (url.isEmpty || key.isEmpty) {
-      throw UnknownException('The server did not issue an upload location');
-    }
+    final url = Api.str(uploadUrl['url']);
+    final key = Api.str(uploadUrl['key']);
 
-    await _uploader.putBytes(
-      url: url,
-      file: file,
-      mime: mimeType,
-      size: size,
-      onProgress: onProgress,
+    // A raw PUT, not through [_api]: same reasoning as the vault upload —
+    // the presigned URL is its own auth, and its response isn't the app's
+    // envelope.
+    await Dio().put<void>(
+      url,
+      data: Stream.fromIterable([bytes]),
+      options: Options(
+        headers: {
+          Headers.contentLengthHeader: bytes.length,
+          'Content-Type': contentType,
+        },
+      ),
     );
 
-    // Confirming is what actually moves the profile onto the new object; the
-    // upload alone leaves an orphan in the bucket.
-    final updated = await _api.postMap(
-      ApiConstants.postUsersMeAvatarConfirm,
-      body: {'key': key},
-    );
-    return Api.avatarOf(updated) ?? '';
+    await _api.post(ApiConstants.postUsersMeAvatarConfirm, body: {'key': key});
   }
 }
 

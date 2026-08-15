@@ -67,6 +67,7 @@ import '../network/token_store.dart';
 import '../services/api_service.dart';
 import '../services/attachment_picker_service.dart';
 import '../services/connectivity_service.dart';
+import '../services/document_picker_service.dart';
 import '../services/photo_picker_service.dart';
 import '../services/storage_service.dart';
 
@@ -139,6 +140,7 @@ class DependencyInjection {
 
     Get.put<ConnectivityService>(ConnectivityService(), permanent: true);
     Get.put<PhotoPickerService>(PhotoPickerService(), permanent: true);
+    Get.put<DocumentPickerService>(DocumentPickerService(), permanent: true);
 
     // ─── Localization ──────────────────────────────────────────────────────
     Get.put<LocalizationController>(

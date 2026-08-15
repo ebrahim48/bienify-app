@@ -3,18 +3,25 @@ import 'package:get/get.dart';
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/routes/app_routes.dart';
+import '../../../../../../core/services/document_picker_service.dart';
+import '../../../../../../core/utils/mime_type.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../domain/entities/medical_record.dart';
 import '../../domain/repositories/vault_repository.dart';
 
 /// Backs My Health Profile and the two record lists behind it.
 class DocumentsController extends GetxController {
-  DocumentsController({VaultRepository? repository})
-    : _repository = repository ?? Get.find<VaultRepository>();
+  DocumentsController({
+    VaultRepository? repository,
+    DocumentPickerService? documentPicker,
+  }) : _repository = repository ?? Get.find<VaultRepository>(),
+       _documentPicker = documentPicker ?? DocumentPickerService();
 
   final VaultRepository _repository;
+  final DocumentPickerService _documentPicker;
 
   final RxBool isLoading = true.obs;
+  final RxBool isUploading = false.obs;
 
   /// Set when the vault cannot be read. An empty history and an unreachable
   /// server look identical on screen unless one of them says so.
@@ -92,18 +99,28 @@ class DocumentsController extends GetxController {
   void openPrescription(DigitalPrescription prescription) =>
       Get.toNamed<void>(AppRoutes.prescriptionDetails, arguments: prescription);
 
-  /// UI-only: file capture is a marked seam, so this adds a further copy of
-  /// the sample upload rather than opening a picker.
-  void uploadPrescription() {
-    final next = uploads.length + 1;
-    uploads.add(
-      UploadedDocument(
-        id: 'upload-$next',
-        fileName: 'image ($next).png',
-        kindLabel: AppStrings.labResult.tr,
-        uploadedOn: DateTime(2026, 4, 3),
-      ),
-    );
+  Future<void> uploadPrescription() async {
+    if (isUploading.value) return;
+    final file = await _documentPicker.pick();
+    if (file == null) return;
+
+    isUploading.value = true;
+    try {
+      final fileName = file.path.split('/').last;
+      final document = await _repository.uploadDocument(
+        bytes: await file.readAsBytes(),
+        fileName: fileName,
+        contentType: contentTypeForPath(fileName),
+        title: fileName,
+        type: VaultRecordType.other,
+      );
+      uploads.insert(0, document);
+      AppSnackbar.success(AppStrings.documentUploaded.tr);
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+    } finally {
+      isUploading.value = false;
+    }
   }
 
   void removeUpload(UploadedDocument document) {
