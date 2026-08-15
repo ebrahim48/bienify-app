@@ -9,6 +9,7 @@ import 'package:bienify_app/core/network/api_client.dart';
 import 'package:bienify_app/core/network/token_store.dart';
 import 'package:bienify_app/core/network/mappers.dart';
 import 'package:bienify_app/features/Role/doctor_role/data/repositories/api_doctor_practice_repository.dart';
+import 'package:bienify_app/features/Role/doctor_role/domain/entities/doctor_practice.dart';
 import 'package:bienify_app/features/Role/patient/doctors/data/repositories/api_doctor_repository.dart';
 import 'package:bienify_app/features/Role/patient/chat/data/repositories/api_conversation_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -388,7 +389,15 @@ void main() {
         if (!up) return;
         await live(() async {
           final appointments = await repository.appointments();
-          final id = appointments.first.id;
+          // An open booking, not simply the first one: the server refuses a
+          // message on a consultation that is closed, and whether the first
+          // in the list happens to be cancelled is a matter of what else has
+          // been done to the seed data.
+          final open = appointments
+              .where((a) => a.filter == DoctorApptFilter.fresh)
+              .toList();
+          if (open.isEmpty) return;
+          final id = open.first.id;
 
           final sent = await conversations.send(
             appointmentId: id,

@@ -45,6 +45,10 @@ class MockAppointmentRepository implements AppointmentRepository {
       Future<void>.delayed(_latency);
 
   @override
+  Future<void> complete(String appointmentId) async =>
+      Future<void>.delayed(_latency);
+
+  @override
   Future<void> cancel(String appointmentId, {String? reason}) async {
     await Future<void>.delayed(_latency);
     final index = _store.indexWhere((a) => a.id == appointmentId);

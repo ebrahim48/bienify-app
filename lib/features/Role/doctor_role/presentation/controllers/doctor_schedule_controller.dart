@@ -19,9 +19,39 @@ class DoctorScheduleController extends GetxController {
 
   final DoctorPracticeRepository _repository;
 
-  final RxString year = DoctorPracticeData.years.first.obs;
-  final RxString month = DoctorPracticeData.months[6].obs;
-  final RxString week = DoctorPracticeData.weeks[1].obs;
+  /// The pickers open on the week the doctor is actually in.
+  ///
+  /// These were fixed at July's second week whatever the date, so a doctor
+  /// editing their availability in August was shown — and would have saved
+  /// over — a week two months behind them.
+  final RxString year = _thisYear;
+  final RxString month = _thisMonth;
+  final RxString week = _thisWeek;
+
+  static RxString get _thisYear {
+    final now = DateTime.now().year.toString();
+    return (DoctorPracticeData.years.contains(now)
+            ? now
+            : DoctorPracticeData.years.first)
+        .obs;
+  }
+
+  static RxString get _thisMonth =>
+      DoctorPracticeData.months[DateTime.now().month - 1].obs;
+
+  /// The band in [DoctorPracticeData.weeks] that contains today.
+  static RxString get _thisWeek {
+    final today = DateTime.now().day;
+    for (final band in DoctorPracticeData.weeks) {
+      final parts = band.split('-');
+      final from = int.tryParse(parts.first);
+      final to = int.tryParse(parts.last);
+      if (from != null && to != null && today >= from && today <= to) {
+        return band.obs;
+      }
+    }
+    return DoctorPracticeData.weeks.first.obs;
+  }
 
   final RxList<ScheduleDay> days = <ScheduleDay>[].obs;
 

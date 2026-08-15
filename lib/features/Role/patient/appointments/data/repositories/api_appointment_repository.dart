@@ -54,6 +54,11 @@ class ApiAppointmentRepository implements AppointmentRepository {
   }
 
   @override
+  Future<void> complete(String appointmentId) async {
+    await _api.post(ApiConstants.postAppointmentsComplete(appointmentId));
+  }
+
+  @override
   Future<void> cancel(String appointmentId, {String? reason}) async {
     await _api.post(
       ApiConstants.postAppointmentsCancel(appointmentId),

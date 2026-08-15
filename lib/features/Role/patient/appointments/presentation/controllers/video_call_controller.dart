@@ -7,6 +7,7 @@ import '../../../../../../core/routes/app_routes.dart';
 import '../../../../../../core/services/video_call_service.dart';
 import '../../../chat/domain/entities/conversation.dart';
 import '../../domain/entities/appointment.dart';
+import '../../domain/repositories/appointment_repository.dart';
 
 /// Backs the video consultation.
 ///
@@ -18,7 +19,9 @@ class VideoCallController extends GetxController {
     required this.appointment,
     this.isDoctor = false,
     VideoCallService? service,
-  }) : _service = service ?? AgoraVideoCallService(Get.find<ApiClient>());
+    AppointmentRepository? appointments,
+  }) : _service = service ?? AgoraVideoCallService(Get.find<ApiClient>()),
+       _appointments = appointments;
 
   final Appointment appointment;
 
@@ -27,6 +30,10 @@ class VideoCallController extends GetxController {
   final bool isDoctor;
 
   final VideoCallService _service;
+
+  /// Only needed to close the consultation, which only the doctor does, so it
+  /// is resolved on use rather than required of every caller.
+  final AppointmentRepository? _appointments;
 
   VideoCallService get service => _service;
 
@@ -99,6 +106,18 @@ class VideoCallController extends GetxController {
 
   Future<void> switchCamera() => _service.switchCamera();
 
+  /// Closes the consultation, without letting a failure interrupt leaving the
+  /// call — the doctor is already on their way to the summary, and a booking
+  /// that will not close is not something they can act on from there.
+  Future<void> _completeQuietly() async {
+    try {
+      final repository = _appointments ?? Get.find<AppointmentRepository>();
+      await repository.complete(appointment.id);
+    } catch (_) {
+      // Deliberately silent; see above.
+    }
+  }
+
   /// The thread beside the call is the consultation's own, so it carries the
   /// appointment — which is what makes its messages real rather than the
   /// sample conversation.
@@ -136,6 +155,12 @@ class VideoCallController extends GetxController {
       Get.back<void>();
       return;
     }
+
+    // The consultation has been held, so close it. Nothing else moves a
+    // booking off `in_progress`, and one left there stays in the doctor's New
+    // list still offering to be joined. The doctor's action alone: the server
+    // refuses it from anyone else.
+    if (isDoctor) unawaited(_completeQuietly());
 
     Get.offNamed<void>(
       isDoctor

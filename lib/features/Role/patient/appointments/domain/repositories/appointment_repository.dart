@@ -24,6 +24,13 @@ abstract class AppointmentRepository {
 
   Future<void> cancel(String appointmentId, {String? reason});
 
+  /// Closes the consultation once it has been held.
+  ///
+  /// The doctor's own action: nothing else moves a booking off
+  /// `in_progress`, so without it a consultation already given sits in
+  /// their New list for ever, still offering to be joined.
+  Future<void> complete(String appointmentId);
+
   /// Rates the doctor seen at [appointmentId].
   ///
   /// Keyed by the appointment rather than the doctor so nobody can rate a
