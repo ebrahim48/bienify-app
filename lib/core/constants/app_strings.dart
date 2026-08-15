@@ -945,4 +945,5 @@ class AppStrings {
   static const String otpResent = 'otp_resent';
   static const String somethingWentWrong = 'something_went_wrong';
   static const String noInternetConnection = 'no_internet_connection';
+  static const String sessionExpired = 'session_expired';
 }

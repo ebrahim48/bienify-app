@@ -8,8 +8,13 @@ import 'token_store.dart';
 /// their own Dio, so every call shares the same session, the same token
 /// refresh, and the same error mapping.
 class BienifyApi {
-  BienifyApi({required TokenStore tokens, ApiClient? client})
-    : client = client ?? ApiClient(tokens: tokens);
+  BienifyApi({
+    required TokenStore tokens,
+    ApiClient? client,
+    Future<void> Function()? onSessionExpired,
+  }) : client =
+           client ??
+           ApiClient(tokens: tokens, onSessionExpired: onSessionExpired);
 
   final ApiClient client;
 

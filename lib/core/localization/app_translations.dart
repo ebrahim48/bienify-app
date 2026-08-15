@@ -963,6 +963,7 @@ class AppTranslations extends Translations {
     AppStrings.otpResent: 'A new code is on its way',
     AppStrings.somethingWentWrong: 'Something went wrong. Please try again.',
     AppStrings.noInternetConnection: 'No internet connection',
+    AppStrings.sessionExpired: 'Your session has expired. Please sign in again.',
   };
 
   static const Map<String, String> _es = {
@@ -1917,5 +1918,6 @@ class AppTranslations extends Translations {
     AppStrings.otpResent: 'Enviamos un nuevo código',
     AppStrings.somethingWentWrong: 'Algo salió mal. Inténtalo de nuevo.',
     AppStrings.noInternetConnection: 'Sin conexión a internet',
+    AppStrings.sessionExpired: 'Tu sesión ha expirado. Vuelve a iniciar sesión.',
   };
 }

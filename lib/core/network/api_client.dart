@@ -17,13 +17,23 @@ import 'token_store.dart';
 ///    tell "you are offline" from "the server said no" from "your input was
 ///    rejected", instead of matching on status-code integers everywhere.
 class ApiClient {
-  ApiClient({required TokenStore tokens, Dio? dio, Dio? refreshDio})
-    : _dio = dio ?? Dio(baseOptions()),
-      _tokens = tokens {
+  ApiClient({
+    required TokenStore tokens,
+    Dio? dio,
+    Dio? refreshDio,
+    Future<void> Function()? onSessionExpired,
+  }) : _dio = dio ?? Dio(baseOptions()),
+       _tokens = tokens {
     _dio.interceptors.add(
       AuthInterceptor(
         tokens: tokens,
         refreshClient: refreshDio ?? Dio(baseOptions()),
+        // Without this the interceptor clears the spent tokens and says
+        // nothing: every later request goes out with no Authorization header
+        // and the screen answers each tap with "Missing or malformed
+        // Authorization header". Nobody passed it, so that is what an expired
+        // session looked like.
+        onSessionExpired: onSessionExpired,
       ),
     );
   }

@@ -1,4 +1,8 @@
 import 'package:get/get.dart';
+import '../widgets/app_snackbar.dart';
+import '../utils/app_navigator.dart';
+import '../routes/app_routes.dart';
+import '../constants/app_strings.dart';
 
 import '../../features/Role/doctor_role/data/repositories/api_doctor_practice_repository.dart';
 import '../../features/Role/doctor_role/data/repositories/static_doctor_practice_repository.dart';
@@ -97,7 +101,19 @@ class DependencyInjection {
     // The whole app shares one session, so one token store and one client.
     final tokens = PrefsTokenStore(storage);
     Get.put<TokenStore>(tokens, permanent: true);
-    Get.put<BienifyApi>(BienifyApi(tokens: tokens), permanent: true);
+    Get.put<BienifyApi>(
+      BienifyApi(
+        tokens: tokens,
+        // A session that cannot be refreshed is over. Say so and return to the
+        // start, rather than leaving the screen answering every tap with
+        // "Missing or malformed Authorization header".
+        onSessionExpired: () async {
+          AppSnackbar.info(AppStrings.sessionExpired.tr);
+          AppNavigator.resetTo(AppRoutes.onboarding);
+        },
+      ),
+      permanent: true,
+    );
     Get.put<ApiClient>(Get.find<BienifyApi>().client, permanent: true);
     Get.put<ConnectivityService>(ConnectivityService(), permanent: true);
     Get.put<PhotoPickerService>(PhotoPickerService(), permanent: true);
