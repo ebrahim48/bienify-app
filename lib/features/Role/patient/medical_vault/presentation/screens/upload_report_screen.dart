@@ -47,18 +47,30 @@ class UploadReportScreen extends GetView<TestResultsController> {
           AppSpacing.gapV(AppSpacing.xs),
           Obx(
             () => controller.hasDocument.value
-                ? ReportThumbnail(onRemove: controller.removeDocument)
-                : _DropZone(onTap: controller.attachDocument),
+                ? ReportThumbnail(
+                    onRemove: controller.removeDocument,
+                    file: controller.document.value?.file,
+                    isImage:
+                        controller.document.value?.mime.startsWith('image/') ??
+                        true,
+                  )
+                : _DropZone(onTap: () => controller.attachDocument(context)),
           ),
           AppSpacing.gapV(AppSpacing.base),
-          AppButton(
-            label: AppStrings.uploadAndNotify.tr,
-            icon: Icon(
-              Icons.send_rounded,
-              size: AppSizes.buttonIcon.w,
-              color: AppColors.actionLabel,
+          // The button spins while the file is going up, and cannot be
+          // pressed again — a second tap used to be free because nothing was
+          // actually being uploaded.
+          Obx(
+            () => AppButton(
+              label: AppStrings.uploadAndNotify.tr,
+              icon: Icon(
+                Icons.send_rounded,
+                size: AppSizes.buttonIcon.w,
+                color: AppColors.actionLabel,
+              ),
+              isLoading: controller.uploadProgress.value != null,
+              onPressed: controller.upload,
             ),
-            onPressed: controller.upload,
           ),
           AppSpacing.gapV(AppSpacing.md),
         ],

@@ -28,6 +28,18 @@ class AppointmentsApi {
   Future<dynamic> createCancel({required String id, Object? body}) =>
       _c.post(ApiConstants.postAppointmentsCancel(id), body: body);
 
+  /// `POST /api/v1/appointments/:id/refund`
+  Future<dynamic> createRefund({required String id, Object? body}) =>
+      _c.post(ApiConstants.postAppointmentsRefund(id), body: body);
+
+  /// `POST /api/v1/appointments/:id/request-refund`
+  Future<dynamic> createRequestRefund({required String id, Object? body}) =>
+      _c.post(ApiConstants.postAppointmentsRequestRefund(id), body: body);
+
+  /// `POST /api/v1/appointments/:id/reschedule`
+  Future<dynamic> createReschedule({required String id, Object? body}) =>
+      _c.post(ApiConstants.postAppointmentsReschedule(id), body: body);
+
   /// `POST /api/v1/appointments/:id/complete`
   Future<dynamic> createComplete({required String id, Object? body}) =>
       _c.post(ApiConstants.postAppointmentsComplete(id), body: body);

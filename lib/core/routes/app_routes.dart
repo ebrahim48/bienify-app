@@ -57,8 +57,15 @@ abstract class AppRoutes {
   static const String videoCall = '/video-call';
   static const String consultationHistory = '/consultation-history';
 
+  // ─── Notifications ───────────────────────────────────────────────────────
+  /// The patient's feed, behind the Home header's bell.
+  static const String notifications = '/notifications';
+
   // ─── Messaging ───────────────────────────────────────────────────────────
+  /// The patient's thread list, behind the Home header's message icon.
+  static const String messages = '/messages';
   static const String chat = '/chat';
+  static const String mediaViewer = '/chat/media';
 
   // ─── Profile ─────────────────────────────────────────────────────────────
   static const String profile = '/profile';
@@ -89,6 +96,7 @@ abstract class AppRoutes {
   static const String doctorConsultationDone = '/doctor/consultation-done';
   static const String doctorEarnings = '/doctor/earnings';
   static const String doctorEditProfile = '/doctor/edit-profile';
+  static const String doctorNotifications = '/doctor/notifications';
 
   /// Results to Review, and the ordering / reviewing flow behind it.
   static const String doctorResultsToReview = '/doctor/results-to-review';

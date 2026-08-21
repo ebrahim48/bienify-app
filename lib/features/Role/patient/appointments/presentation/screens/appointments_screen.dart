@@ -22,42 +22,52 @@ class AppointmentsScreen extends GetView<AppointmentsController> {
 
   @override
   Widget build(BuildContext context) {
-    return AppScaffold(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AppSpacing.gapV(AppSpacing.md),
-          Text(
-            AppStrings.navAppointments.tr,
-            style: AppTextStyles.headlineMedium.rc(AppColors.authInk),
-          ),
-          AppSpacing.gapV(AppSpacing.base),
-          NeedCareBanner(onBook: controller.bookAppointment),
-          AppSpacing.gapV(AppSpacing.lg),
-          Text(
-            AppStrings.appointmentHistory.tr,
-            style: AppTextStyles.titleMedium.rc(AppColors.authInk),
-          ),
-          AppSpacing.gapV(AppSpacing.sm),
-          // Observables are read inside the closures and handed down as
-          // values; passing `controller` alone would leave the `Obx` with
-          // nothing to track, so a tab change would never repaint.
-          Obx(
-            () => _TabChips(
-              selected: controller.tab.value,
-              onSelected: controller.selectTab,
+    // `AppointmentsController` is kept alive for the whole signed-in session
+    // (`Get.put`, not `fenix`), so its list is only ever as fresh as the last
+    // `load()` — nothing re-fetches it when a booking, payment or cancellation
+    // elsewhere changes what this screen should show. Pull-to-refresh is the
+    // patient's own way to force it, the same escape hatch Home already has.
+    return RefreshIndicator(
+      onRefresh: controller.load,
+      color: AppColors.primary800,
+      backgroundColor: AppColors.surface,
+      child: AppScaffold(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppSpacing.gapV(AppSpacing.md),
+            Text(
+              AppStrings.navAppointments.tr,
+              style: AppTextStyles.headlineMedium.rc(AppColors.authInk),
             ),
-          ),
-          AppSpacing.gapV(AppSpacing.base),
-          Obx(
-            () => _History(
-              controller: controller,
-              groups: controller.groups,
-              isLoading: controller.isLoading.value,
+            AppSpacing.gapV(AppSpacing.base),
+            NeedCareBanner(onBook: controller.bookAppointment),
+            AppSpacing.gapV(AppSpacing.lg),
+            Text(
+              AppStrings.appointmentHistory.tr,
+              style: AppTextStyles.titleMedium.rc(AppColors.authInk),
             ),
-          ),
-          AppSpacing.gapV(AppSpacing.md),
-        ],
+            AppSpacing.gapV(AppSpacing.sm),
+            // Observables are read inside the closures and handed down as
+            // values; passing `controller` alone would leave the `Obx` with
+            // nothing to track, so a tab change would never repaint.
+            Obx(
+              () => _TabChips(
+                selected: controller.tab.value,
+                onSelected: controller.selectTab,
+              ),
+            ),
+            AppSpacing.gapV(AppSpacing.base),
+            Obx(
+              () => _History(
+                controller: controller,
+                groups: controller.groups,
+                isLoading: controller.isLoading.value,
+              ),
+            ),
+            AppSpacing.gapV(AppSpacing.md),
+          ],
+        ),
       ),
     );
   }
@@ -146,11 +156,14 @@ class _History extends StatelessWidget {
               appointment: appointment,
               isJoinable: controller.isJoinable(appointment),
               onJoin: () => controller.join(appointment),
+              onPayNow: () => controller.payNow(appointment),
               onBookAgain: () => controller.bookAgain(appointment),
               onReview: appointment.status == AppointmentStatus.completed
                   ? () => _review(context, appointment)
                   : null,
               onReschedule: () => controller.reschedule(appointment),
+              onRequestRefund: () => controller.requestRefund(appointment),
+              isResolving: controller.resolvingId.value == appointment.id,
               onCancel: () => _cancel(context, appointment),
             ),
             AppSpacing.gapV(AppSpacing.sm),

@@ -129,6 +129,18 @@
  ],
  [
   "POST",
+  "/api/v1/appointments/:id/refund"
+ ],
+ [
+  "POST",
+  "/api/v1/appointments/:id/request-refund"
+ ],
+ [
+  "POST",
+  "/api/v1/appointments/:id/reschedule"
+ ],
+ [
+  "POST",
   "/api/v1/appointments/:id/start"
  ],
  [
@@ -198,6 +210,10 @@
  [
   "POST",
   "/api/v1/cash-intents/confirm"
+ ],
+ [
+  "POST",
+  "/api/v1/consultations/:id/attachments/upload-url"
  ],
  [
   "POST",

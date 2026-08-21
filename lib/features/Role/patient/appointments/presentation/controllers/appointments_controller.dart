@@ -32,7 +32,11 @@ class AppointmentsController extends GetxController {
   final Rx<AppointmentTab> tab = AppointmentTab.upcoming.obs;
   final RxBool isLoading = true.obs;
 
-  /// A visit can be joined on the day it is scheduled.
+  /// A visit can be joined on the day it is scheduled — but never one still
+  /// awaiting payment. That used to fall through this check by accident,
+  /// since an unpaid booking and a confirmed one were the same status; the
+  /// server was the only thing that ever caught it, after the patient tapped
+  /// a "Join Visit" button that was never going to work.
   bool isJoinable(Appointment appointment) {
     if (appointment.status != AppointmentStatus.upcoming) return false;
     final now = _clock();
@@ -40,14 +44,29 @@ class AppointmentsController extends GetxController {
     return at.year == now.year && at.month == now.month && at.day == now.day;
   }
 
+  bool needsPayment(Appointment appointment) =>
+      appointment.status == AppointmentStatus.pendingPayment;
+
   List<Appointment> get _visible => switch (tab.value) {
+    // An unpaid booking is still something to act on, not history — it stays
+    // in Upcoming, with Pay Now standing in for Join until it clears.
     AppointmentTab.upcoming =>
       appointments
-          .where((a) => a.status == AppointmentStatus.upcoming)
+          .where(
+            (a) =>
+                a.status == AppointmentStatus.upcoming ||
+                a.status == AppointmentStatus.pendingPayment,
+          )
           .toList(),
+    // A lapsed consultation belongs with history, not with cancellations —
+    // nobody called it off, so filing it under Cancelled would misdescribe it.
     AppointmentTab.past =>
       appointments
-          .where((a) => a.status == AppointmentStatus.completed)
+          .where(
+            (a) =>
+                a.status == AppointmentStatus.completed ||
+                a.status == AppointmentStatus.closed,
+          )
           .toList(),
     AppointmentTab.cancelled =>
       appointments
@@ -121,12 +140,54 @@ class AppointmentsController extends GetxController {
   void join(Appointment appointment) =>
       Get.toNamed<void>(AppRoutes.videoCall, arguments: appointment);
 
+  /// Finishes a booking that was left unpaid, at the same Payment Summary
+  /// screen booking itself uses.
+  void payNow(Appointment appointment) =>
+      Get.toNamed<void>(AppRoutes.paymentSummary, arguments: appointment);
+
+  /// True while one of the two lapse remedies is in flight.
+  final RxnString resolvingId = RxnString();
+
+  /// Asks the doctor for the fee back on a consultation that never happened.
+  ///
+  /// Reloads rather than patching in place: the request is the doctor's to
+  /// settle, so the card should show what the server now holds rather than
+  /// what this device hopes.
+  Future<void> requestRefund(Appointment appointment) async {
+    if (resolvingId.value != null) return;
+    resolvingId.value = appointment.id;
+    try {
+      await _repository.requestRefund(appointment.id);
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    } finally {
+      resolvingId.value = null;
+    }
+    await load();
+    AppSnackbar.success(AppStrings.refundRequested.tr);
+  }
+
+  /// Opens the doctor's calendar to pick a new time for a lapsed booking.
+  ///
+  /// Reuses Doctor Details, which is where every other slot is chosen — a
+  /// second calendar would be a second set of availability rules to keep in
+  /// step with the first.
+  void reschedule(Appointment appointment) {
+    if (!appointment.needsLapseChoice) {
+      bookAppointment();
+      return;
+    }
+    Get.toNamed<void>(
+      AppRoutes.doctorDetails,
+      arguments: RescheduleRequest(appointment: appointment),
+    );
+  }
+
   /// Booking and re-booking both start at the doctor directory.
   void bookAppointment() => Get.find<MainNavController>().select(2);
 
   void bookAgain(Appointment appointment) => bookAppointment();
-
-  void reschedule(Appointment appointment) => bookAppointment();
 
   /// Cancels [appointment] and moves it into the Cancelled tab.
   ///

@@ -28,6 +28,15 @@ class ConsultationsApi {
     Map<String, dynamic>? query,
   }) => _c.get(ApiConstants.consultationsMessages(id), query: query);
 
+  /// `POST /api/v1/consultations/:id/attachments/upload-url`
+  Future<dynamic> createAttachmentUploadUrl({
+    required String id,
+    Object? body,
+  }) => _c.post(
+    ApiConstants.postConsultationsAttachmentUploadUrl(id),
+    body: body,
+  );
+
   /// `POST /api/v1/consultations/:id/messages`
   Future<dynamic> createMessages({required String id, Object? body}) =>
       _c.post(ApiConstants.postConsultationsMessages(id), body: body);

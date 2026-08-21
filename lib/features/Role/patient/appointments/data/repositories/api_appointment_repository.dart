@@ -67,6 +67,26 @@ class ApiAppointmentRepository implements AppointmentRepository {
   }
 
   @override
+  Future<void> requestRefund(String appointmentId) async {
+    await _api.post(ApiConstants.postAppointmentsRequestRefund(appointmentId));
+  }
+
+  @override
+  Future<Appointment> reschedule({
+    required String appointmentId,
+    required DateTime slotStart,
+  }) async {
+    final data = await _api.postMap(
+      ApiConstants.postAppointmentsReschedule(appointmentId),
+      // UTC, like every other slot the app sends: the server matches the
+      // instant against the doctor's calendar, and a local-time string would
+      // land on a slot they never offered.
+      body: {'slotStart': slotStart.toUtc().toIso8601String()},
+    );
+    return appointmentFrom(Api.map(data['replacement']));
+  }
+
+  @override
   Future<void> review({
     required String appointmentId,
     required int rating,

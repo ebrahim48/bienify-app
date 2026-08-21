@@ -65,6 +65,63 @@ class MockAppointmentRepository implements AppointmentRepository {
   }
 
   @override
+  Future<void> requestRefund(String appointmentId) async {
+    await Future<void>.delayed(_latency);
+    final index = _store.indexWhere((a) => a.id == appointmentId);
+    if (index == -1) return;
+    final existing = _store[index];
+    _store[index] = Appointment(
+      id: existing.id,
+      doctorName: existing.doctorName,
+      specialty: existing.specialty,
+      scheduledAt: existing.scheduledAt,
+      status: existing.status,
+      doctorPhotoUrl: existing.doctorPhotoUrl,
+      consultationFee: existing.consultationFee,
+      doctorProfileId: existing.doctorProfileId,
+      lapseChoice: 'refund',
+    );
+  }
+
+  @override
+  Future<Appointment> reschedule({
+    required String appointmentId,
+    required DateTime slotStart,
+  }) async {
+    await Future<void>.delayed(_latency);
+    final index = _store.indexWhere((a) => a.id == appointmentId);
+    final existing = index == -1 ? null : _store[index];
+
+    if (existing != null) {
+      // The lapsed one is settled by being moved, not by being refunded.
+      _store[index] = Appointment(
+        id: existing.id,
+        doctorName: existing.doctorName,
+        specialty: existing.specialty,
+        scheduledAt: existing.scheduledAt,
+        status: existing.status,
+        doctorPhotoUrl: existing.doctorPhotoUrl,
+        consultationFee: existing.consultationFee,
+        doctorProfileId: existing.doctorProfileId,
+        lapseChoice: 'reschedule',
+        isRescheduled: true,
+      );
+    }
+
+    final replacement = Appointment(
+      id: 'resched-${DateTime.now().microsecondsSinceEpoch}',
+      doctorName: existing?.doctorName ?? 'Doctor',
+      specialty: existing?.specialty ?? 'Consultation',
+      scheduledAt: slotStart,
+      doctorPhotoUrl: existing?.doctorPhotoUrl,
+      consultationFee: existing?.consultationFee ?? 0,
+      doctorProfileId: existing?.doctorProfileId ?? '',
+    );
+    _store.add(replacement);
+    return replacement;
+  }
+
+  @override
   Future<void> review({
     required String appointmentId,
     required int rating,

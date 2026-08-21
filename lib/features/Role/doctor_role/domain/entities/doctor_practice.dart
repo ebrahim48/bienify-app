@@ -211,10 +211,14 @@ class PatientVisit {
     required this.reason,
     required this.timeLabel,
     required this.status,
+    this.photoUrl,
   });
 
   final String patientName;
   final String initials;
+
+  /// Falls back to [initials] when absent or the network image fails to load.
+  final String? photoUrl;
 
   /// `General Consultation`.
   final String reason;
@@ -245,6 +249,10 @@ class DoctorAppointment {
     this.age,
     this.summary,
     this.fee,
+    this.isClosed = false,
+    this.isRefunded = false,
+    this.isRefundRequested = false,
+    this.isRescheduled = false,
   });
 
   final String id;
@@ -266,6 +274,23 @@ class DoctorAppointment {
 
   /// What the consultation earned.
   final double? fee;
+
+  /// The slot passed with neither side acting. Grouped with completed work —
+  /// it is over either way — but it did not happen, and the fee is still the
+  /// patient's until the doctor sends it back.
+  final bool isClosed;
+
+  final bool isRefunded;
+
+  /// The patient asked for their money back, rather than taking a new slot.
+  final bool isRefundRequested;
+
+  /// The patient took a new slot instead, so the fee carried across and there
+  /// is nothing left to refund.
+  final bool isRescheduled;
+
+  /// Only a lapsed consultation that has not already been settled either way.
+  bool get canRefund => isClosed && !isRefunded && !isRescheduled;
 
   /// `General Consultation • Age 34`.
   String get complaintLine => age == null ? complaint : '$complaint • Age $age';
@@ -432,11 +457,24 @@ class PatientThread {
     required this.preview,
     required this.timeLabel,
     required this.unreadCount,
+    this.patientUserId = '',
     this.photoAsset,
     this.photoUrl,
   });
 
+  /// The consultation this thread belongs to. Threads are keyed by
+  /// appointment on the server, so this is also the room to join.
   final String id;
+
+  /// The patient's own user id, which is *not* [id].
+  ///
+  /// Presence is published per user, so the two must not be confused: the
+  /// doctor's thread used to pass the appointment id as the peer's id, and
+  /// every presence lookup then asked about a user that does not exist and
+  /// came back offline. Empty only when the appointment behind the thread
+  /// could not be read.
+  final String patientUserId;
+
   final String patientName;
 
   /// The last message, truncated by the row.

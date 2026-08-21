@@ -20,6 +20,12 @@ abstract class DoctorPracticeRepository {
 
   Future<void> cancelAppointment(String appointmentId, {String? reason});
 
+  /// Sends the fee back for a consultation that lapsed without happening.
+  ///
+  /// Only valid on a `closed` booking the practitioner is the doctor for, and
+  /// only once — the server refuses a second attempt.
+  Future<void> refundAppointment(String appointmentId);
+
   Future<DoctorEarnings> earnings();
 
   Future<List<PayoutAccount>> payoutAccounts();
@@ -82,4 +88,17 @@ abstract class DoctorPracticeRepository {
     String? notes,
     String? appointmentId,
   });
+
+  /// The lab orders this practitioner requested, newest first.
+  ///
+  /// `GET /lab-orders` answers "orders I am the subject of" by default; a
+  /// doctor asks the same endpoint the opposite question with `role=doctor`.
+  Future<List<TestRequest>> labRequests();
+
+  /// Leaves [message] for the patient and marks [labOrderId] reviewed.
+  ///
+  /// Only valid once the lab has actually finished the order — there is
+  /// nothing to review before that — and only for an order this practitioner
+  /// requested themselves.
+  Future<void> reviewLabOrder({required String labOrderId, required String message});
 }

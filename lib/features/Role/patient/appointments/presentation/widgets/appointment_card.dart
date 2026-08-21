@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
-import '../../../../../../core/constants/app_icons.dart';
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_radius.dart';
@@ -10,12 +9,12 @@ import '../../../../../../core/theme/app_sizes.dart';
 import '../../../../../../core/theme/app_spacing.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/utils/responsive.dart';
+import '../../../../../../core/widgets/app_avatar.dart';
 import '../../../../../../core/widgets/app_card.dart';
-import '../../../../../../core/widgets/app_svg_icon.dart';
 import '../../domain/entities/appointment.dart';
 
-/// A booked consultation: tinted heart badge, doctor, specialty, schedule and
-/// an optional Join pill.
+/// A booked consultation: the doctor's photo, their name, specialty, schedule
+/// and an optional Join pill.
 ///
 /// Shared by the Home feed, the Appointments tab and the payment summary —
 /// the summary hides the action with `showJoin: false`.
@@ -65,19 +64,16 @@ class AppointmentCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: _badgeSize.w,
-            height: _badgeSize.w,
-            decoration: const BoxDecoration(
-              color: AppColors.accentSurface,
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: AppSvgIcon(
-              AppIcons.heart,
-              size: AppSizes.xl3,
-              color: AppColors.primary500,
-            ),
+          // The doctor's own picture, not a heart. This drew the same static
+          // glyph for every booking, so the card never said who the
+          // consultation was with beyond the name — even though the server
+          // sends their avatar and the mapper already reads it.
+          AppAvatar(
+            imageUrl: appointment.doctorPhotoUrl,
+            name: appointment.doctorName,
+            size: _badgeSize,
+            backgroundColor: AppColors.accentSurface,
+            foregroundColor: AppColors.primary500,
           ),
           AppSpacing.gapH(AppSpacing.sm),
           Expanded(

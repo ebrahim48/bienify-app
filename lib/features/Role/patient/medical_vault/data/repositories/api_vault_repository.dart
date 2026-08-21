@@ -1,14 +1,22 @@
+import 'dart:io';
+
 import '../../../../../../core/constants/api_constants.dart';
+import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/network/api_client.dart';
+import '../../../../../../core/network/attachment_uploader.dart';
 import '../../../../../../core/network/mappers.dart';
 import '../../domain/entities/medical_record.dart';
 import '../../domain/repositories/vault_repository.dart';
 
 /// The medical vault, served by the API.
 class ApiVaultRepository implements VaultRepository {
-  const ApiVaultRepository(this._api);
+  const ApiVaultRepository(this._api, this._uploader);
 
   final ApiClient _api;
+
+  /// Shared with chat attachments: the same bucket, the same presigned PUT,
+  /// the same streaming and expiry handling.
+  final AttachmentUploader _uploader;
 
   static const int _pageSize = 100;
 
@@ -110,6 +118,55 @@ class ApiVaultRepository implements VaultRepository {
     await _api.delete(
       ApiConstants.deleteVaultRecordsShareDoctoruserid(recordId, doctorUserId),
     );
+  }
+
+  @override
+  Future<UploadedDocument> uploadDocument({
+    required String path,
+    required String fileName,
+    required String mimeType,
+    required VaultRecordType type,
+    String? notes,
+    void Function(double progress)? onProgress,
+  }) async {
+    final file = File(path);
+    final size = await file.length();
+
+    // The server signs a key of its own choosing, scoped to the caller — a
+    // client cannot pick where its upload lands.
+    final issued = await _api.postMap(
+      ApiConstants.postVaultRecordsUploadUrl,
+      body: {'contentType': mimeType},
+    );
+
+    final url = '${issued['url'] ?? ''}';
+    final key = '${issued['key'] ?? ''}';
+    if (url.isEmpty || key.isEmpty) {
+      throw UnknownException('The server did not issue an upload location');
+    }
+
+    await _uploader.putBytes(
+      url: url,
+      file: file,
+      mime: mimeType,
+      size: size,
+      onProgress: onProgress,
+    );
+
+    // Only now is the record created. Doing it the other way round would file
+    // a document in the patient's vault that points at bytes which may never
+    // have arrived.
+    final created = await _api.postMap(
+      ApiConstants.postVaultRecords,
+      body: {
+        'type': type.wireName,
+        'title': fileName,
+        's3Key': key,
+        if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+      },
+    );
+
+    return vaultRecordFrom(created);
   }
 
   static List<String> _strings(dynamic v) =>

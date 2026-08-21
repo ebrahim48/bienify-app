@@ -12,6 +12,7 @@ import '../controllers/doctor_profile_controller.dart';
 import '../controllers/earnings_controller.dart';
 import '../controllers/doctor_messages_controller.dart';
 import '../controllers/doctor_schedule_controller.dart';
+import '../controllers/doctor_notifications_controller.dart';
 import '../controllers/doctor_shell_controller.dart';
 import '../controllers/write_prescription_controller.dart';
 
@@ -113,6 +114,13 @@ class ResultsToReviewBinding extends Bindings {
 
 /// The wizard is built for the order being placed, so its controller is
 /// replaced on every entry rather than reused with stale answers.
+class DoctorNotificationsBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(DoctorNotificationsController.new);
+  }
+}
+
 class TestRequestBinding extends Bindings {
   @override
   void dependencies() {

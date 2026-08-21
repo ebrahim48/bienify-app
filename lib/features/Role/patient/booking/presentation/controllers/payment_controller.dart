@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 
 import '../../../../../../core/base/base_controller.dart';
@@ -7,6 +9,9 @@ import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../appointments/domain/entities/appointment.dart';
 import '../../../appointments/domain/repositories/appointment_repository.dart';
+import '../../../appointments/presentation/controllers/appointments_controller.dart';
+import '../../../../../../core/services/attachment_picker_service.dart';
+import '../../../medical_vault/domain/repositories/vault_repository.dart';
 import '../../../wallet/domain/repositories/wallet_repository.dart';
 import '../../domain/entities/payment_method.dart';
 
@@ -19,12 +24,18 @@ class PaymentController extends GetxController with SubmissionMixin {
     required this.appointment,
     AppointmentRepository? appointments,
     WalletRepository? wallets,
+    VaultRepository? vault,
+    AttachmentPickerService? picker,
   }) : _appointments = appointments ?? Get.find<AppointmentRepository>(),
-       _wallets = wallets ?? Get.find<WalletRepository>();
+       _wallets = wallets ?? Get.find<WalletRepository>(),
+       _vault = vault ?? Get.find<VaultRepository>(),
+       _picker = picker ?? Get.find<AttachmentPickerService>();
 
   final Appointment appointment;
   final AppointmentRepository _appointments;
   final WalletRepository _wallets;
+  final VaultRepository _vault;
+  final AttachmentPickerService _picker;
 
   /// Balance available to offset the total.
   ///
@@ -78,24 +89,84 @@ class PaymentController extends GetxController with SubmissionMixin {
     if (method == PaymentMethod.cashOnLocation) _openCashPayment();
   }
 
+  /// Hands the cash flow the amount itself, not `payableLabel` — that label is
+  /// rounded to whole units for display, so passing it charged $75 for a $74.89
+  /// consultation.
   void _openCashPayment() =>
-      Get.toNamed<void>(AppRoutes.howToPay, arguments: breakdown.payableLabel);
+      Get.toNamed<void>(AppRoutes.howToPay, arguments: breakdown.payable);
 
   void toggleWallet(bool value) => useWallet.value = value;
 
-  /// Document capture needs a platform picker; until one is wired the tiles
-  /// record the intent so the flow stays walkable.
-  void addAttachment() {
-    attachments.add('document_${attachments.length + 1}.pdf');
-    AppSnackbar.success(AppStrings.attachmentAdded.tr);
+  /// True while a document is being stored.
+  final RxBool isAttaching = false.obs;
+
+  /// Vault record ids for what has been attached, so a removal can revoke the
+  /// doctor's access rather than only hiding the row.
+  final Map<String, String> _recordIds = {};
+
+  Future<void> addAttachment() => _attach(AttachmentSource.document);
+
+  Future<void> captureFromCamera() => _attach(AttachmentSource.camera);
+
+  /// Picks a document, files it in the patient's vault and shares it with the
+  /// consulting doctor.
+  ///
+  /// Both tiles used to append a made-up filename — `document_1.pdf`,
+  /// `photo_1.jpg` — and show a success message. Nothing was picked, nothing
+  /// was stored, and the doctor received nothing. Sharing is the point of
+  /// attaching a document at booking, so the upload is only half the job.
+  Future<void> _attach(AttachmentSource source) async {
+    if (isAttaching.value) return;
+
+    isAttaching.value = true;
+    try {
+      final picked = await _picker.pick(source);
+      if (picked == null) return;
+
+      final record = await _vault.uploadDocument(
+        path: picked.file.path,
+        fileName: picked.name,
+        mimeType: picked.mime,
+        type: VaultRecordType.other,
+      );
+
+      // Sharing is per-record and per-doctor. An appointment whose payload
+      // carried only the doctor's profile has no user to share with; the
+      // document is still stored, and saying so is better than failing the
+      // whole attachment.
+      if (appointment.doctorUserId.isNotEmpty) {
+        await _vault.shareRecord(
+          recordId: record.id,
+          doctorUserId: appointment.doctorUserId,
+        );
+      }
+
+      _recordIds[picked.name] = record.id;
+      attachments.add(picked.name);
+      AppSnackbar.success(AppStrings.attachmentAdded.tr);
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+    } finally {
+      isAttaching.value = false;
+    }
   }
 
-  void captureFromCamera() {
-    attachments.add('photo_${attachments.length + 1}.jpg');
-    AppSnackbar.success(AppStrings.attachmentAdded.tr);
-  }
+  /// Removes a document from the list and takes the doctor's access back.
+  Future<void> removeAttachment(String name) async {
+    final recordId = _recordIds.remove(name);
+    attachments.remove(name);
 
-  void removeAttachment(String name) => attachments.remove(name);
+    if (recordId == null || appointment.doctorUserId.isEmpty) return;
+    try {
+      await _vault.revokeShare(
+        recordId: recordId,
+        doctorUserId: appointment.doctorUserId,
+      );
+    } on AppException {
+      // The row is already gone from the patient's view. A failed revoke is
+      // worth retrying on the vault screen, not worth blocking a payment for.
+    }
+  }
 
   Future<void> pay() async {
     // Cash is settled at an agent, not here.
@@ -106,6 +177,20 @@ class PaymentController extends GetxController with SubmissionMixin {
 
     final ok = await submit(() => _appointments.pay(appointment.id));
 
-    if (ok) Get.offNamed<void>(AppRoutes.appointmentBooked);
+    if (!ok) return;
+
+    // The Appointments tab keeps one `AppointmentsController` alive for the
+    // whole signed-in session (`Get.put`, not `fenix`), so its list is
+    // whatever `load()` fetched once at startup. Without this, a booking
+    // paid for here — via "Pay Now" on an appointment that started out
+    // pending — kept showing "Pay Now" after paying, because the row in
+    // memory never learned the server had moved it to `confirmed`. Tapping
+    // it again resent the same payment, which the server correctly refused
+    // with a transition error: `confirmed` cannot become `confirmed`.
+    if (Get.isRegistered<AppointmentsController>()) {
+      unawaited(Get.find<AppointmentsController>().load());
+    }
+
+    Get.offNamed<void>(AppRoutes.appointmentBooked);
   }
 }

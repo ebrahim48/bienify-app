@@ -3,19 +3,24 @@
   Debug builds only.
 
   Android 9 and later block cleartext HTTP by default, so a debug build talking
-  to a backend on http://localhost:3500 fails every request before it leaves
-  the device. Rather than switching cleartext on for the whole app, this
-  permits it for the handful of hosts a development backend actually runs on.
+  to a development backend over http:// fails every request before it leaves
+  the device. The failure is silent and misleading: Dio reports a connection
+  error, which the app maps to `NoInternetException`, so a blocked request
+  looks identical to a phone with no signal.
 
-  Release builds never see this file, so shipped traffic stays HTTPS-only.
+  This used to list three hosts by name — localhost, 127.0.0.1 and 10.0.2.2 —
+  which covered the emulator and an `adb reverse` tunnel but nothing else. A
+  physical phone reaching this machine over Wi-Fi uses a private LAN address
+  instead, and that address changes with the network, so a fixed list is wrong
+  again as soon as someone joins a different Wi-Fi.
+
+  Debug builds are never shipped, so permitting cleartext for the whole debug
+  variant is the honest trade: it removes a recurring, hard-to-read failure at
+  no cost to production traffic.
+
+  Release builds never see this file. `usesCleartextTraffic` stays absent from
+  the main manifest, so shipped traffic remains HTTPS-only.
 -->
 <network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <!-- Reached over `adb reverse tcp:3500 tcp:3500`, which tunnels the
-             phone's localhost back to this machine. -->
-        <domain includeSubdomains="true">localhost</domain>
-        <domain includeSubdomains="true">127.0.0.1</domain>
-        <!-- The host machine, as seen from the Android emulator. -->
-        <domain includeSubdomains="true">10.0.2.2</domain>
-    </domain-config>
+    <base-config cleartextTrafficPermitted="true" />
 </network-security-config>

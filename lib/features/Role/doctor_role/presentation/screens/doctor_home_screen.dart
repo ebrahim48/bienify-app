@@ -33,7 +33,7 @@ class DoctorHomeScreen extends GetView<DoctorHomeController> {
             () => _Masthead(
               practitioner: controller.practitioner.value,
               onWithdraw: controller.withdraw,
-              onNotifications: controller.exitDoctorRole,
+              onNotifications: controller.openNotifications,
             ),
           ),
           Padding(
@@ -80,6 +80,7 @@ class DoctorHomeScreen extends GetView<DoctorHomeController> {
                   () => _UpcomingCard(
                     visits: controller.visits.toList(),
                     statusLabelFor: controller.statusLabel,
+                    onSeeAll: controller.openAppointments,
                   ),
                 ),
                 AppSpacing.gapV(AppSpacing.md),
@@ -569,10 +570,15 @@ class _ChartHeader extends StatelessWidget {
 
 /// Today's list, with a hairline between rows inside one card.
 class _UpcomingCard extends StatelessWidget {
-  const _UpcomingCard({required this.visits, required this.statusLabelFor});
+  const _UpcomingCard({
+    required this.visits,
+    required this.statusLabelFor,
+    required this.onSeeAll,
+  });
 
   final List<PatientVisit> visits;
   final String Function(VisitStatus) statusLabelFor;
+  final VoidCallback onSeeAll;
 
   @override
   Widget build(BuildContext context) {
@@ -594,14 +600,23 @@ class _UpcomingCard extends StatelessWidget {
                     style: AppTextStyles.titleSmall.rc(AppColors.gray900),
                   ),
                 ),
-                Text(
-                  AppStrings.seeAll.tr,
-                  style: AppTextStyles.bodyLarge.rc(AppColors.link),
-                ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: AppSizes.xl.w,
-                  color: AppColors.link,
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onSeeAll,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        AppStrings.seeAll.tr,
+                        style: AppTextStyles.bodyLarge.rc(AppColors.link),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: AppSizes.xl.w,
+                        color: AppColors.link,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -643,18 +658,12 @@ class _VisitRow extends StatelessWidget {
       padding: EdgeInsets.all(AppSpacing.sm.w),
       child: Row(
         children: [
-          Container(
-            width: _avatar.w,
-            height: _avatar.w,
-            decoration: BoxDecoration(
-              color: _avatarTint,
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              visit.initials,
-              style: AppTextStyles.labelLarge.rc(AppColors.gray900),
-            ),
+          AppAvatar(
+            imageUrl: visit.photoUrl,
+            name: visit.patientName,
+            size: _avatar,
+            backgroundColor: _avatarTint,
+            foregroundColor: AppColors.gray900,
           ),
           AppSpacing.gapH(AppSpacing.sm),
           Expanded(

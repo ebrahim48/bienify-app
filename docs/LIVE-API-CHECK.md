@@ -4,8 +4,8 @@ Ran against `http://localhost:3500` through `ApiClient`.
 
 | Metric | Result |
 |---|---|
-| Calls | 68 |
-| Passed | 68 |
+| Calls | 69 |
+| Passed | 69 |
 | Failed | 0 |
 
 | Result | Role | Method | Path | Detail |
@@ -55,7 +55,7 @@ Ran against `http://localhost:3500` through `ApiClient`.
 | PASS | anon | GET | `/api/v1/appointments/slots` | ok |
 | PASS | anon | GET | `/api/v1/reviews/doctors/6a7aaebd9edac194dd587765` | ok |
 | PASS | patient | GET | `/api/v1/appointments/6a7aaebb68ba3172df92783e` | ok |
-| PASS | patient | GET | `/api/v1/medicine-orders/6a802da917b1d5bb7292c2fb` | ok |
+| PASS | patient | GET | `/api/v1/medicine-orders/6a8832a4fb4a44b7feb600d6` | ok |
 | PASS | patient | GET | `/api/v1/prescriptions/6a7f446bed769fc824197f0a` | ok |
 | PASS | - | WRITE | `patient updates their profile` | ok |
 | PASS | - | WRITE | `patient asks for an avatar upload URL` | ok |
@@ -69,6 +69,7 @@ Ran against `http://localhost:3500` through `ApiClient`.
 | PASS | - | WRITE | `patient lists vault records` | ok |
 | PASS | - | WRITE | `doctor sees the records shared with them` | ok |
 | PASS | - | WRITE | `a patient may not read the doctor-only shared list` | 403 Insufficient permissions |
+| PASS | - | WRITE | `patient marks one notification read` | ok |
 | PASS | - | WRITE | `patient marks everything read` | ok |
 | PASS | - | WRITE | `pharmacy reviews its orders` | ok |
 | PASS | - | WRITE | `rider lists deliveries it could claim` | ok |

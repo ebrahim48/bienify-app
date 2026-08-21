@@ -171,6 +171,61 @@ void main() {
     );
   });
 
+  // The two lapse remedies, on the narrowest phone the app supports.
+  //
+  // This is the case that overflowed: `Reschedule` and `Request refund` were
+  // laid out in a `Row`, which cannot shrink, so at 320pt the second button
+  // ran past the edge and Flutter painted the overflow stripe over it. A
+  // golden at the design width would never have caught it — 390pt is wide
+  // enough for both — so this one is deliberately narrower.
+  testWidgets('Lapsed consultation offers both remedies without overflowing', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      const MainShellScreen(),
+      binding: MainBinding(clock: fixedNow),
+      size: const Size(320, 800),
+    );
+    Get.find<MainNavController>().select(1);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    final controller = Get.find<AppointmentsController>();
+    // The only thing in the Past tab, so the golden actually shows the buttons
+    // it is asserting about rather than pushing them below the fold.
+    controller.appointments.removeWhere(
+      (a) => a.status == AppointmentStatus.completed,
+    );
+    // A paid consultation whose slot passed with neither side acting.
+    controller.appointments.add(
+      Appointment(
+        id: 'lapsed-1',
+        doctorName: 'Dr. Kwame Mensah',
+        specialty: 'Pediatrician',
+        scheduledAt: fixedNow().subtract(const Duration(days: 3)),
+        status: AppointmentStatus.closed,
+        consultationFee: 50,
+        doctorProfileId: 'doc-1',
+      ),
+    );
+    controller.selectTab(AppointmentTab.past);
+    await tester.pump();
+
+    expect(find.text('Reschedule'), findsOneWidget);
+    expect(find.text('Request refund'), findsOneWidget);
+
+    // The assertion that matters: any RenderFlex overflow marks the test
+    // failed, so this cannot regress silently the way it arrived.
+    expect(tester.takeException(), isNull);
+
+    await settleImages(tester);
+    await expectLater(
+      find.byType(MainShellScreen),
+      matchesGoldenFile('appointments_lapsed_narrow.png'),
+    );
+  });
+
   testWidgets('Cancel Reason dialog blurs the page and moves the booking', (
     tester,
   ) async {

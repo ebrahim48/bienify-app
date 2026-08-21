@@ -90,6 +90,7 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
       status: Api.str(json['status']) == 'confirmed'
           ? VisitStatus.confirmed
           : VisitStatus.pending,
+      photoUrl: Api.avatarOf(json['patientId']),
     );
   }
 
@@ -119,6 +120,11 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
       ApiConstants.postAppointmentsCancel(appointmentId),
       body: {if (reason != null && reason.isNotEmpty) 'reason': reason},
     );
+  }
+
+  @override
+  Future<void> refundAppointment(String appointmentId) async {
+    await _api.post(ApiConstants.postAppointmentsRefund(appointmentId));
   }
 
   // ─── Earnings ────────────────────────────────────────────────────────────
@@ -486,6 +492,7 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
 
       return PatientThread(
         id: appointmentId,
+        patientUserId: Api.id(booking['patientId']),
         patientName: name,
         preview: Api.str(last['body']),
         timeLabel: _threadTimeLabel(Api.date(last['createdAt'])),
@@ -557,6 +564,32 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
         if (appointmentId != null && appointmentId.isNotEmpty)
           'appointmentId': appointmentId,
       },
+    );
+  }
+
+  /// `GET /lab-orders` answers "orders I am the subject of" by default;
+  /// `role: doctor` is what turns that into "orders I requested" — the same
+  /// switch `_asDoctor` already makes for `GET /appointments`.
+  @override
+  Future<List<TestRequest>> labRequests() async {
+    final rows = await _api.getList(
+      ApiConstants.labOrders,
+      query: {'role': 'doctor', 'limit': _pageSize},
+    );
+    return rows
+        .where((row) => Api.str(row['status']) != 'cancelled')
+        .map(testRequestFrom)
+        .toList();
+  }
+
+  @override
+  Future<void> reviewLabOrder({
+    required String labOrderId,
+    required String message,
+  }) async {
+    await _api.patch(
+      ApiConstants.updateLabOrdersReview(labOrderId),
+      body: {'message': message},
     );
   }
 }

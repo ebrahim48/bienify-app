@@ -209,6 +209,37 @@ class PharmacyCartController extends GetxController {
 
   void proceedToPayment() => Get.toNamed<void>(AppRoutes.pharmacyPayment);
 
+  /// A real catalogue id, as the server assigns them. The prescription flow
+  /// (`PharmacyMockData.prescribed`) hands out placeholder ids like `rx-1`
+  /// that this pattern rejects, which is the signal to resolve them below.
+  static final RegExp _objectId = RegExp(r'^[a-f0-9]{24}$');
+
+  /// Maps this basket's lines to real, orderable medicine ids.
+  ///
+  /// A line added from the catalogue already carries the server's id. A line
+  /// that came from the prescription screen carries a placeholder id instead
+  /// — that screen is UI-only and was never wired to the pharmacy's actual
+  /// stock — so its medicine is looked up by name at [pharmacyId] here. A
+  /// name with no match at that pharmacy is dropped rather than sent, since
+  /// the server would otherwise reject the whole order for one bad id.
+  Future<Map<String, int>> _resolveQuantities(String pharmacyId) async {
+    final quantities = <String, int>{};
+    for (final line in lines) {
+      if (_objectId.hasMatch(line.medicine.id)) {
+        quantities[line.medicine.id] = line.quantity;
+        continue;
+      }
+      final matches = await _pharmacy.searchMedicines(
+        query: line.medicine.name,
+        pharmacyId: pharmacyId,
+      );
+      final match = matches.isEmpty ? null : matches.first;
+      if (match == null) continue;
+      quantities[match.id] = (quantities[match.id] ?? 0) + line.quantity;
+    }
+    return quantities;
+  }
+
   /// Files the order with the server, then shows its tracking screen.
   ///
   /// This used to navigate and nothing else: the patient saw "order placed"
@@ -239,13 +270,19 @@ class PharmacyCartController extends GetxController {
     }
 
     isPlacingOrder.value = true;
+
+    final quantitiesByMedicineId = await _resolveQuantities(pharmacyId);
+    if (quantitiesByMedicineId.isEmpty) {
+      AppSnackbar.error(AppStrings.somethingWentWrong.tr);
+      isPlacingOrder.value = false;
+      return;
+    }
+
     String orderId;
     try {
       orderId = await _pharmacy.placeOrder(
         pharmacyId: pharmacyId,
-        quantitiesByMedicineId: {
-          for (final line in lines) line.medicine.id: line.quantity,
-        },
+        quantitiesByMedicineId: quantitiesByMedicineId,
         deliveryAddress: '${address.value.line1}, ${address.value.line2}',
       );
     } on AppException catch (e) {

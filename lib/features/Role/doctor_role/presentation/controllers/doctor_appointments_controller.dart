@@ -134,6 +134,30 @@ class DoctorAppointmentsController extends GetxController {
   /// The row only moves once the server agrees — cancelling can be refused,
   /// and moving the card first would tell the doctor a consultation was off
   /// when it is still on the patient's calendar.
+  /// True while a refund is in flight, so the button cannot be tapped twice.
+  final RxnString refundingId = RxnString();
+
+  /// Sends the fee back for a consultation that lapsed without happening.
+  ///
+  /// Reloads rather than patching the row in memory: the refund changes the
+  /// doctor's own earnings as well as this card, and the list is the cheapest
+  /// place to pick both up.
+  Future<void> refund(DoctorAppointment appointment) async {
+    if (refundingId.value != null) return;
+    refundingId.value = appointment.id;
+    try {
+      await _repository.refundAppointment(appointment.id);
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    } finally {
+      refundingId.value = null;
+    }
+
+    await load();
+    AppSnackbar.success(AppStrings.refundSent.tr);
+  }
+
   Future<void> cancel(DoctorAppointment appointment, String reason) async {
     try {
       await _repository.cancelAppointment(appointment.id, reason: reason);

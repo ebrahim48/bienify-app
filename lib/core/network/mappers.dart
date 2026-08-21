@@ -1,5 +1,9 @@
 import '../constants/api_constants.dart';
 import '../../features/Role/doctor_role/domain/entities/doctor_practice.dart';
+// Prefixed: `OrderStage` names both a pharmacy delivery step and a lab-order
+// step, and this file maps both.
+import '../../features/Role/doctor_role/domain/entities/test_request.dart'
+    as orders;
 import '../../features/Role/patient/appointments/domain/entities/appointment.dart';
 import '../../features/Role/patient/cash_payment_process/domain/entities/cash_payment.dart';
 import '../../features/Role/patient/cash_payment_process/domain/repositories/cash_payment_repository.dart';
@@ -8,6 +12,7 @@ import '../../features/Role/patient/doctors/domain/entities/doctor.dart';
 import '../../features/Role/patient/home/domain/entities/home_feed.dart';
 import '../../features/Role/patient/home/domain/entities/lab_request.dart';
 import '../../features/Role/patient/medical_vault/domain/entities/medical_record.dart';
+import '../../features/Role/patient/notifications/domain/entities/app_notification.dart';
 import '../../features/Role/patient/pharmacy/domain/entities/pharmacy.dart';
 import '../../features/Role/patient/profile/domain/entities/profile.dart';
 import '../../features/Role/pharmacy_owner_role/domain/entities/pharmacy_shop.dart';
@@ -152,10 +157,13 @@ Doctor doctorFrom(Map<String, dynamic> json) {
   );
 }
 
-/// The server's appointment states, collapsed to the three the UI groups by.
+/// The server's appointment states, collapsed to the four the UI groups by.
 AppointmentStatus appointmentStatusFrom(String raw) => switch (raw) {
   'completed' => AppointmentStatus.completed,
   'cancelled' || 'no_show' || 'refunded' => AppointmentStatus.cancelled,
+  'pending_payment' => AppointmentStatus.pendingPayment,
+  // Lapsed, not cancelled: nobody called it off, the time simply passed.
+  'closed' => AppointmentStatus.closed,
   _ => AppointmentStatus.upcoming,
 };
 
@@ -178,6 +186,13 @@ Appointment appointmentFrom(Map<String, dynamic> json) {
     status: appointmentStatusFrom(Api.str(json['status'])),
     doctorPhotoUrl: Api.avatarOf(doctorRef),
     consultationFee: Api.majorUnits(json['feeMinor']),
+    doctorProfileId: Api.id(json['doctorProfileId']),
+    doctorUserId: Api.id(doctorRef),
+    lapseChoice: json['lapseChoice'] == null
+        ? null
+        : Api.str(json['lapseChoice']),
+    isRefunded: json['refundedAt'] != null,
+    isRescheduled: json['rescheduledToId'] != null,
   );
 }
 
@@ -216,12 +231,18 @@ DoctorAppointment doctorAppointmentFrom(Map<String, dynamic> json) {
         DateTime.now().isBefore(Api.date(json['slotEnd'])),
     photoUrl: Api.avatarOf(patientRef),
     fee: fee == 0 ? null : fee,
+    isClosed: status == 'closed',
+    isRefunded: json['refundedAt'] != null,
+    isRefundRequested: Api.str(json['lapseChoice']) == 'refund',
+    isRescheduled: json['rescheduledToId'] != null,
   );
 }
 
 /// The server's appointment states, collapsed to the doctor's three chips.
 DoctorApptFilter doctorApptFilterFrom(String raw) => switch (raw) {
-  'completed' => DoctorApptFilter.completed,
+  // `closed` sits with completed work rather than with cancellations: it is
+  // finished, and nobody called it off. The card tells the two apart.
+  'completed' || 'closed' => DoctorApptFilter.completed,
   'cancelled' || 'no_show' || 'refunded' => DoctorApptFilter.cancelled,
   _ => DoctorApptFilter.fresh,
 };
@@ -247,6 +268,66 @@ LabRequest labRequestFrom(Map<String, dynamic> json) {
     status: labStatusFrom(Api.str(json['status'])),
   );
 }
+
+/// `GET /lab-orders?role=doctor` — one row of Results to Review.
+///
+/// The server models a lab order as five states; the design draws a five-step
+/// tracker and a three-value pill, so one status maps onto both. `completed`
+/// means the lab is finished but nobody has read it — which is exactly the
+/// design's "Awaiting review".
+orders.TestRequest testRequestFrom(Map<String, dynamic> json) {
+  final status = Api.str(json['status']);
+  final tests = json['tests'];
+  final names = tests is List && tests.isNotEmpty
+      ? tests.map(Api.str).toList()
+      : const <String>[];
+  final patientRef = json['patientId'];
+  final orderedOn = Api.date(json['createdAt']);
+
+  return orders.TestRequest(
+    id: Api.id(json),
+    kind: orders.OrderKind.lab,
+    title: names.isEmpty ? 'Lab test' : names.first,
+    // The design prints the subtest under the title; a single-test order has
+    // nothing to put there rather than repeating itself.
+    subtitle: names.length > 1 ? names.skip(1).join(', ') : '',
+    // Neither priority nor criticality exists on a lab order server-side, so
+    // every row reads as routine instead of inventing an urgency. See
+    // docs/API-GAPS.md.
+    priority: orders.OrderPriority.routine,
+    status: requestStatusFrom(status),
+    stage: orderStageFrom(status),
+    patient: orders.ReviewPatient(
+      id: Api.id(patientRef),
+      name: Api.nameOf(patientRef, 'Patient'),
+      code: '',
+      age: 0,
+      gender: '',
+      complaint: Api.str(json['notes'], 'Lab order'),
+      seenOn: orderedOn,
+      photoUrl: Api.avatarOf(patientRef),
+    ),
+    orderedOn: orderedOn,
+    clinicalNotes: Api.str(json['notes']),
+  );
+}
+
+/// The pill on a Results to Review row.
+orders.RequestStatus requestStatusFrom(String raw) => switch (raw) {
+  'reviewed' => orders.RequestStatus.reviewed,
+  // The lab is done and the result is sitting there unread.
+  'completed' => orders.RequestStatus.awaitingReview,
+  _ => orders.RequestStatus.requestSent,
+};
+
+/// How far the detail screen's five-circle tracker is filled.
+orders.OrderStage orderStageFrom(String raw) => switch (raw) {
+  'sample_collected' => orders.OrderStage.facilitySelected,
+  'processing' => orders.OrderStage.testCompleted,
+  'completed' => orders.OrderStage.resultsReceived,
+  'reviewed' => orders.OrderStage.reviewed,
+  _ => orders.OrderStage.ordered,
+};
 
 /// `GET /home/feed` — the whole patient home screen in one payload.
 HomeFeed homeFeedFrom(Map<String, dynamic> json) => HomeFeed(
@@ -487,6 +568,26 @@ ShopNotification shopNotificationFrom(Map<String, dynamic> json) {
     body: Api.str(json['body']),
     reference: Api.str(data['reference'], Api.str(data['orderId'])),
     ageLabel: relativeAge(Api.date(json['createdAt'])),
+  );
+}
+
+/// `GET /notifications` — a row of the patient's feed.
+///
+/// Shares the endpoint with [shopNotificationFrom]; the two differ in what
+/// they keep, not where they come from — the shop prints an order reference,
+/// the patient a read state and a typed icon.
+AppNotification appNotificationFrom(Map<String, dynamic> json) {
+  final createdAt = Api.date(json['createdAt']);
+  return AppNotification(
+    id: Api.id(json),
+    kind: NotificationKind.from(Api.str(json['type'])),
+    title: Api.str(json['title'], 'Notification'),
+    body: Api.str(json['body']),
+    createdAt: createdAt,
+    ageLabel: relativeAge(createdAt),
+    // The server carries a `readAt` timestamp, not a boolean — its presence is
+    // the flag.
+    isRead: json['readAt'] != null,
   );
 }
 
@@ -734,6 +835,59 @@ ChatMessage chatMessageFrom(Map<String, dynamic> json, String myUserId) =>
       author: Api.id(json['senderId']) == myUserId
           ? MessageAuthor.patient
           : MessageAuthor.doctor,
+      // Nullable on purpose: absent means "not yet", which is what the single
+      // tick versus double tick is drawn from.
+      deliveredAt: json['deliveredAt'] == null
+          ? null
+          : Api.date(json['deliveredAt']),
+      readAt: json['readAt'] == null ? null : Api.date(json['readAt']),
+      clientId: json['clientId'] == null ? null : Api.str(json['clientId']),
+      kind: messageKindFrom(Api.str(json['kind'], 'text')),
+      attachment: json['attachment'] == null
+          ? null
+          : messageAttachmentFrom(Api.map(json['attachment'])),
+      reactions: Api.rows(json['reactions'])
+          .map(messageReactionFrom)
+          .whereType<MessageReaction>()
+          .toList(),
+    );
+
+/// Reactions are emoji now, not names from a fixed list, so there is no longer
+/// an unknown kind to drop — only an empty one.
+///
+/// Rows written while the server stored names still come back as `love` or
+/// `haha`; [QuickReactions.resolve] maps those forward to the glyph they used
+/// to mean, so an old thread draws hearts rather than the word "love".
+MessageReaction? messageReactionFrom(Map<String, dynamic> json) {
+  final wire = Api.str(json['kind']);
+  if (wire.isEmpty) return null;
+  return MessageReaction(
+    userId: Api.id(json['userId']),
+    emoji: QuickReactions.resolve(wire),
+  );
+}
+
+MessageKind messageKindFrom(String raw) => switch (raw) {
+  'image' => MessageKind.image,
+  'video' => MessageKind.video,
+  'audio' => MessageKind.audio,
+  'file' => MessageKind.file,
+  _ => MessageKind.text,
+};
+
+MessageAttachment messageAttachmentFrom(Map<String, dynamic> json) =>
+    MessageAttachment(
+      name: Api.str(json['name'], 'Attachment'),
+      mime: Api.str(json['mime']),
+      size: Api.integer(json['size']),
+      // Absent when the server could not sign it; the bubble says so rather
+      // than rendering a broken image.
+      url: json['url'] == null ? null : Api.str(json['url']),
+      width: json['width'] == null ? null : Api.integer(json['width']),
+      height: json['height'] == null ? null : Api.integer(json['height']),
+      durationMs: json['durationMs'] == null
+          ? null
+          : Api.integer(json['durationMs']),
     );
 
 /// `GET /vault` — a stored document.

@@ -100,9 +100,12 @@ void main() {
       expect(appointmentStatusFrom('no_show'), AppointmentStatus.cancelled);
       expect(appointmentStatusFrom('refunded'), AppointmentStatus.cancelled);
       expect(appointmentStatusFrom('confirmed'), AppointmentStatus.upcoming);
+      // Was collapsed onto AppointmentStatus.upcoming — indistinguishable from
+      // a paid, confirmed booking — which is what let a patient tap a live
+      // "Join Visit" button on an appointment nobody had paid for yet.
       expect(
         appointmentStatusFrom('pending_payment'),
-        AppointmentStatus.upcoming,
+        AppointmentStatus.pendingPayment,
       );
     });
 

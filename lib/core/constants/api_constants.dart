@@ -68,6 +68,18 @@ class ApiConstants {
   static const String appointments = '$_v1/appointments';
   static const String postAppointments = '$_v1/appointments';
   static String appointments2(String id) => '$_v1/appointments/$id';
+  /// The doctor's refund for a lapsed consultation. Distinct from
+  /// `postPaymentsAppointmentsRefund`, which is the operator's settlement of
+  /// a cancellation.
+  static String postAppointmentsRefund(String id) =>
+      '$_v1/appointments/$id/refund';
+
+  /// The patient's two remedies for a lapsed consultation. Mutually exclusive:
+  /// rescheduling carries the fee across, so nothing is left to refund.
+  static String postAppointmentsRequestRefund(String id) =>
+      '$_v1/appointments/$id/request-refund';
+  static String postAppointmentsReschedule(String id) =>
+      '$_v1/appointments/$id/reschedule';
   static String postAppointmentsCancel(String id) =>
       '$_v1/appointments/$id/cancel';
   static String postAppointmentsComplete(String id) =>
@@ -108,6 +120,10 @@ class ApiConstants {
   /// a consultation outliving the TTL drops both parties without this.
   static String postConsultationsToken(String id) =>
       '$_v1/consultations/$id/token';
+  /// A presigned PUT for a chat attachment. The device uploads straight to
+  /// storage with it; the bytes never pass through this API.
+  static String postConsultationsAttachmentUploadUrl(String id) =>
+      '$_v1/consultations/$id/attachments/upload-url';
   static String consultationsMessages(String id) =>
       '$_v1/consultations/$id/messages';
   static String postConsultationsMessages(String id) =>

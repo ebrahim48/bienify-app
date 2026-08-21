@@ -15,10 +15,40 @@ import '../../domain/entities/conversation.dart';
 /// The `primary500` bar at the top of a thread: back, photo, name over
 /// specialty, and the online pill.
 class ChatHeader extends StatelessWidget {
-  const ChatHeader({super.key, required this.peer, required this.onBack});
+  const ChatHeader({
+    super.key,
+    required this.peer,
+    required this.onBack,
+    this.isOnline,
+    this.lastSeen,
+    this.isTyping = false,
+  });
 
   final ConversationPeer peer;
   final VoidCallback onBack;
+
+  /// Live presence. Null while unknown — before the socket has answered — so
+  /// the line can stay on the specialty rather than claim someone is offline
+  /// on no evidence.
+  final bool? isOnline;
+  final DateTime? lastSeen;
+
+  /// Replaces the subtitle while it is true, as a chat header does.
+  final bool isTyping;
+
+  /// `Online`, `typing…`, `last seen 14:32`, or the specialty when nothing is
+  /// known yet.
+  String get _subtitle {
+    if (isTyping) return AppStrings.typingNow.tr;
+    if (isOnline == true) return AppStrings.online.tr;
+    final seen = lastSeen;
+    if (isOnline == false && seen != null) {
+      final hh = seen.hour.toString().padLeft(2, '0');
+      final mm = seen.minute.toString().padLeft(2, '0');
+      return AppStrings.lastSeenAt.trParams({'time': '$hh:$mm'});
+    }
+    return peer.specialty;
+  }
 
   static const double height = 72;
   static const double _avatar = 44;
@@ -66,7 +96,7 @@ class ChatHeader extends StatelessWidget {
                       style: AppTextStyles.titleMedium.rc(AppColors.white),
                     ),
                     Text(
-                      peer.specialty,
+                      _subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.bodyMedium.rc(AppColors.primary100),
@@ -74,7 +104,9 @@ class ChatHeader extends StatelessWidget {
                   ],
                 ),
               ),
-              if (peer.isOnline) ...[
+              // Driven by live presence when the socket has told us, and by
+              // the seeded flag only until then.
+              if (isOnline ?? peer.isOnline) ...[
                 AppSpacing.gapH(AppSpacing.xs),
                 const _OnlinePill(),
               ],

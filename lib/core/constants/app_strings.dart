@@ -239,7 +239,35 @@ class AppStrings {
 
   // ─── Chat ────────────────────────────────────────────────────────────────
   static const String online = 'online';
+  static const String typingNow = 'typing_now';
+  static const String attachmentsNeedConsultation =
+      'attachments_need_consultation';
+  static const String fileTooLarge = 'file_too_large';
+  static const String attachPhoto = 'attach_photo';
+  static const String attachCamera = 'attach_camera';
+  static const String attachVideo = 'attach_video';
+  static const String attachDocument = 'attach_document';
+  static const String seenLabel = 'seen_label';
+  static const String attachmentUnavailable = 'attachment_unavailable';
+  static const String lastSeenAt = 'last_seen_at';
   static const String typeYourMessage = 'type_your_message';
+  static const String offline = 'offline';
+
+  // ─── Media viewer ────────────────────────────────────────────────────────
+  static const String fitContain = 'fit_contain';
+  static const String fitCover = 'fit_cover';
+  static const String fitFill = 'fit_fill';
+  static const String fitWidth = 'fit_width';
+  static const String fitHeight = 'fit_height';
+  static const String openWith = 'open_with';
+  static const String openingFile = 'opening_file';
+  static const String cannotOpenFile = 'cannot_open_file';
+  static const String noAppForFile = 'no_app_for_file';
+
+  // ─── Reactions ───────────────────────────────────────────────────────────
+  static const String reactToMessage = 'react_to_message';
+  static const String removeReaction = 'remove_reaction';
+  static const String moreEmoji = 'more_emoji';
 
   // ─── Appointments ────────────────────────────────────────────────────────
   static const String needCare = 'need_care';
@@ -251,6 +279,17 @@ class AppStrings {
   static const String cancelledAppointmentTab = 'cancelled_appointment_tab';
   static const String today = 'today';
   static const String joinVisit = 'join_visit';
+  static const String payNow = 'pay_now';
+  static const String statusClosed = 'status_closed';
+  static const String refundPatient = 'refund_patient';
+  static const String refunded = 'refunded';
+  static const String refundSent = 'refund_sent';
+  static const String didNotTakePlace = 'did_not_take_place';
+  static const String requestRefund = 'request_refund';
+  static const String refundRequested = 'refund_requested';
+  static const String refundAwaitingDoctor = 'refund_awaiting_doctor';
+  static const String appointmentRescheduled = 'appointment_rescheduled';
+  static const String chooseRescheduleOrRefund = 'choose_reschedule_or_refund';
   static const String bookAgain = 'book_again';
   static const String review = 'review';
   static const String reschedule = 'reschedule';
@@ -642,6 +681,10 @@ class AppStrings {
   static const String notesHint = 'notes_hint';
   static const String searchPatientName = 'search_patient_name';
   static const String messageTitle = 'message_title';
+  static const String searchMessages = 'search_messages';
+  static const String noMessagesYet = 'no_messages_yet';
+  static const String noMessagesMatch = 'no_messages_match';
+  static const String doctorFallback = 'doctor_fallback';
   static const String navMessage = 'nav_message';
   static const String navProfile = 'nav_profile';
   static const String goodMorning = 'good_morning';
@@ -760,6 +803,9 @@ class AppStrings {
   static const String writeYourOption = 'write_your_option';
   static const String referOptionHint = 'refer_option_hint';
   static const String sentToPatient = 'sent_to_patient';
+  static const String radiologyReviewUnavailable =
+      'radiology_review_unavailable';
+  static const String resultNotReadyToReview = 'result_not_ready_to_review';
 
   // ─── Pharmacy owner ──────────────────────────────────────────────────────
   static const String navOrders = 'nav_orders';
@@ -792,6 +838,8 @@ class AppStrings {
   static const String noOrdersHere = 'no_orders_here';
 
   static const String notifications = 'notifications';
+  static const String markAllRead = 'mark_all_read';
+  static const String unreadCount = 'unread_count';
   static const String seeMore = 'see_more';
 
   static const String medicinesTitle = 'medicines_title';

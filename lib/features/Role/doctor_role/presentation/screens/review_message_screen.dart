@@ -7,7 +7,6 @@ import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/widgets/app_scaffold.dart';
-import '../../../../../core/widgets/app_snackbar.dart';
 import '../../../../../core/widgets/app_top_bar.dart';
 import '../../domain/entities/test_request.dart';
 import '../controllers/results_to_review_controller.dart';
@@ -48,10 +47,13 @@ class ReviewMessageScreen extends GetView<ResultsToReviewController> {
                 : controller.messageBody.value = value,
           ),
           AppSpacing.gapV(AppSpacing.base),
-          AppButton(
-            label: AppStrings.submitPatients.tr,
-            radius: AppRadius.xl,
-            onPressed: _submit,
+          Obx(
+            () => AppButton(
+              label: AppStrings.submitPatients.tr,
+              radius: AppRadius.xl,
+              isLoading: controller.isSubmitting.value,
+              onPressed: _submit,
+            ),
           ),
           AppSpacing.gapV(AppSpacing.md),
         ],
@@ -59,11 +61,17 @@ class ReviewMessageScreen extends GetView<ResultsToReviewController> {
     );
   }
 
-  /// Back to Results to Review rather than through the review options again.
-  /// `isFirst` is the safety net: a predicate that never matches would empty
-  /// the whole stack.
-  void _submit() {
-    AppSnackbar.success(AppStrings.sentToPatient.tr);
+  /// Sends the note, then returns to Results to Review rather than back
+  /// through the review options.
+  ///
+  /// Only navigates once the server has taken it — this used to pop with a
+  /// success snackbar unconditionally, so a failed or never-attempted send
+  /// looked identical to a delivered one. `isFirst` is the safety net: a
+  /// predicate that never matches would empty the whole stack.
+  Future<void> _submit() async {
+    final sent = await controller.submitReview(isReferral: _isReferral);
+    if (!sent) return;
+
     Get.until(
       (route) =>
           route.settings.name == AppRoutes.doctorResultsToReview ||

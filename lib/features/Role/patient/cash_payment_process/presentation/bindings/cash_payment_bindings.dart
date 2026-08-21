@@ -16,9 +16,10 @@ class HowToPayBinding extends Bindings {
   void dependencies() {
     Get.lazyPut(
       () => CashPaymentController(
-        amountLabel: Get.arguments is String
-            ? Get.arguments as String
-            : '\$74.89',
+        // The amount arrives as a number, not as the previous screen's label:
+        // a label has already been rounded to whole units, and parsing one back
+        // depends on the locale's decimal separator.
+        amount: Get.arguments is num ? (Get.arguments as num).toDouble() : 74.89,
       ),
       fenix: true,
     );

@@ -5,6 +5,7 @@ import '../../../appointments/domain/entities/appointment.dart';
 import '../../../chat/data/static/chat_mock_data.dart';
 import '../../../chat/domain/entities/conversation.dart';
 import '../../../chat/presentation/controllers/chat_controller.dart';
+import '../../../chat/presentation/controllers/messages_controller.dart';
 import '../../data/static/doctor_mock_data.dart';
 import '../../domain/entities/doctor.dart';
 import '../../domain/entities/doctor_category.dart';
@@ -46,20 +47,46 @@ class DoctorListBinding extends Bindings {
 class DoctorDetailsBinding extends Bindings {
   @override
   void dependencies() {
+    // Two ways in: a `Doctor` to book with, or a `RescheduleRequest` carrying
+    // the lapsed consultation to move. The screen is the same; the argument
+    // decides what confirming does.
+    final args = Get.arguments;
+    final rescheduling = args is RescheduleRequest ? args : null;
+
     Get.put(
       DoctorDetailsController(
-        doctor: Get.arguments as Doctor,
+        doctor: rescheduling == null
+            ? args as Doctor
+            : _doctorFor(rescheduling.appointment),
         getDetails: Get.find<GetDoctorDetails>(),
         getAvailability: Get.find<GetDoctorAvailability>(),
+        rescheduling: rescheduling,
       ),
     );
   }
+
+  /// The lapsed booking names its doctor but is not a `Doctor`, so this builds
+  /// the minimum the details screen needs while it loads the rest.
+  static Doctor _doctorFor(Appointment appointment) => Doctor(
+    id: appointment.doctorProfileId,
+    name: appointment.doctorName,
+    specialty: appointment.specialty,
+    photoUrl: appointment.doctorPhotoUrl,
+    consultationFee: appointment.consultationFee,
+  );
 }
 
 class PaymentBinding extends Bindings {
   @override
   void dependencies() {
     Get.put(PaymentController(appointment: Get.arguments as Appointment));
+  }
+}
+
+class MessagesBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(MessagesController.new);
   }
 }
 

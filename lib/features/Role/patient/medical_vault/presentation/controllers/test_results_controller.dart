@@ -1,9 +1,12 @@
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/routes/app_routes.dart';
+import '../../../../../../core/services/attachment_picker_service.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
+import '../../../chat/presentation/widgets/attachment_sheet.dart';
 import '../../data/static/medical_mock_data.dart';
 import '../../domain/entities/medical_record.dart';
 import '../../domain/repositories/vault_repository.dart';
@@ -14,10 +17,14 @@ import '../../domain/repositories/vault_repository.dart';
 /// One controller across those screens because the chosen order and the
 /// chosen testing centre follow the patient through all of them.
 class TestResultsController extends GetxController {
-  TestResultsController({VaultRepository? repository})
-    : _repository = repository ?? Get.find<VaultRepository>();
+  TestResultsController({
+    VaultRepository? repository,
+    AttachmentPickerService? picker,
+  }) : _repository = repository ?? Get.find<VaultRepository>(),
+       _picker = picker ?? Get.find<AttachmentPickerService>();
 
   final VaultRepository _repository;
+  final AttachmentPickerService _picker;
 
   final RxList<TestOrder> allOrders = <TestOrder>[].obs;
 
@@ -163,21 +170,74 @@ class TestResultsController extends GetxController {
 
   // ─── Upload ──────────────────────────────────────────────────────────────
 
-  /// UI-only: file capture is a marked seam, so this attaches the bundled
-  /// report image and lets the rest of the flow proceed.
-  void attachDocument() => hasDocument.value = true;
+  /// The report the patient picked, held until they press Upload.
+  ///
+  /// This used to be `hasDocument.value = true` and nothing else: the screen
+  /// said a report was attached, the success screen said it was submitted, and
+  /// no file was ever chosen or stored. The boolean is kept only because the
+  /// review screen renders a thumbnail for orders that are already past this
+  /// step and have no local file to show.
+  final Rxn<PickedAttachment> document = Rxn<PickedAttachment>();
 
-  void removeDocument() => hasDocument.value = false;
+  /// 0–1 while the upload runs, null when idle.
+  final RxnDouble uploadProgress = RxnDouble();
 
-  bool get canUpload => hasDocument.value;
+  /// Asks what to attach, then holds it. A camera shot and a PDF are both
+  /// normal here — a lab hands over paper as often as a file.
+  Future<void> attachDocument(BuildContext context) async {
+    final source = await AttachmentSheet.show(context);
+    if (source == null) return;
 
-  void upload() {
-    if (!canUpload) {
+    try {
+      final picked = await _picker.pick(source);
+      if (picked == null) return;
+      document.value = picked;
+      hasDocument.value = true;
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+    }
+  }
+
+  void removeDocument() {
+    document.value = null;
+    hasDocument.value = false;
+  }
+
+  bool get canUpload => hasDocument.value && uploadProgress.value == null;
+
+  /// Stores the report in the vault, then moves on.
+  ///
+  /// The navigation happens only after the record exists. Announcing success
+  /// first and uploading afterwards is what made the old version look like it
+  /// worked.
+  Future<void> upload() async {
+    final picked = document.value;
+    if (picked == null) {
       AppSnackbar.info(AppStrings.addReportDocument.tr);
       return;
     }
-    outcome.value = ReviewOutcome.pending;
-    Get.toNamed<void>(AppRoutes.resultsSubmitted);
+
+    uploadProgress.value = 0;
+    try {
+      await _repository.uploadDocument(
+        path: picked.file.path,
+        fileName: picked.name,
+        mimeType: picked.mime,
+        // Radiology films and lab printouts are filed differently, and the
+        // screen already knows which list the patient came from.
+        type: discipline.value == ResultDiscipline.radiology
+            ? VaultRecordType.imaging
+            : VaultRecordType.labReport,
+        notes: note.value,
+        onProgress: (value) => uploadProgress.value = value,
+      );
+      outcome.value = ReviewOutcome.pending;
+      Get.toNamed<void>(AppRoutes.resultsSubmitted);
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+    } finally {
+      uploadProgress.value = null;
+    }
   }
 
   /// From the success screen into the review, which is where the patient

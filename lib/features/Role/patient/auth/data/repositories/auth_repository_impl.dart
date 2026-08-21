@@ -23,11 +23,24 @@ class AuthRepositoryImpl implements AuthRepository {
     required AuthRemoteDataSource remote,
     required AuthLocalDataSource local,
     TokenStore? tokens,
+    this.onSessionStarted,
+    this.onSessionEnded,
   }) : _remote = remote,
        _local = local,
        _tokens = tokens {
     _session = _local.readSession();
   }
+
+  /// Called once a session exists and its token has been stored.
+  ///
+  /// Callbacks rather than a direct dependency, so this layer stays unaware of
+  /// the socket: every sign-in path funnels through `_persist`, which makes
+  /// this the one place a connection can be opened without repeating it in
+  /// login, OTP, social and registration.
+  final void Function()? onSessionStarted;
+
+  /// Called once the session is gone, so anything holding it can let go.
+  final void Function()? onSessionEnded;
 
   final AuthRemoteDataSource _remote;
   final AuthLocalDataSource _local;
@@ -67,6 +80,10 @@ class AuthRepositoryImpl implements AuthRepository {
         accessToken: session.accessToken,
         refreshToken: session.refreshToken ?? '',
       );
+      // After the token is stored, never before: the socket handshake reads
+      // it from the same store, so connecting first would authenticate with
+      // whatever the previous session left there.
+      onSessionStarted?.call();
     }
     return session;
   }
@@ -211,6 +228,9 @@ class AuthRepositoryImpl implements AuthRepository {
       _session = null;
       await _local.clear();
       await _tokens?.clear();
+      // The socket authenticated as the user who just left; leaving it open
+      // would keep them present and still delivering their messages.
+      onSessionEnded?.call();
     }
   }
 }

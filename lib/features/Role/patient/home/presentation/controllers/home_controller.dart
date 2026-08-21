@@ -90,11 +90,21 @@ class HomeController extends GetxController {
       Get.toNamed<void>(AppRoutes.doctorDetails, arguments: doctor);
 
   /// Header message shortcut opens the most recent thread.
-  void openMessages() => Get.toNamed<void>(AppRoutes.chat);
+  /// Opens the thread list, not a thread.
+  ///
+  /// This went straight to `AppRoutes.chat`, which — with no peer argument —
+  /// dropped the patient into the sample conversation with whichever doctor
+  /// `ChatMockData.peer` names, no matter who they had actually messaged.
+  void openMessages() => Get.toNamed<void>(AppRoutes.messages);
 
   void seeAllDoctors() => _nav.select(2);
 
-  void openNotifications() => _nav.select(1);
+  /// Opens the feed.
+  ///
+  /// This switched to the Appointments tab, so a notification about an order,
+  /// a lab result or a payment took the patient somewhere unrelated to it —
+  /// and looked deliberate rather than unfinished.
+  void openNotifications() => Get.toNamed<void>(AppRoutes.notifications);
 
   void openCart() => _nav.select(3);
 
@@ -119,12 +129,22 @@ class HomeController extends GetxController {
   }
 
   /// A consultation room opens shortly before the slot.
+  ///
+  /// This used to open `/chat` unconditionally — joining a video consultation
+  /// landed the patient in messaging, never the call. It also had no separate
+  /// answer for a booking still awaiting payment, which `canJoin` already
+  /// excludes, so it silently read as "come back later" instead of "you still
+  /// need to pay for this".
   void joinAppointment(Appointment appointment) {
+    if (appointment.status == AppointmentStatus.pendingPayment) {
+      Get.toNamed<void>(AppRoutes.paymentSummary, arguments: appointment);
+      return;
+    }
     if (!appointment.canJoin) {
       AppSnackbar.info(AppStrings.joinOpensSoon.tr);
       return;
     }
-    Get.toNamed<void>(AppRoutes.chat);
+    Get.toNamed<void>(AppRoutes.videoCall, arguments: appointment);
   }
 
   MainNavController get _nav => Get.find<MainNavController>();

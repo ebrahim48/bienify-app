@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_spacing.dart';
 import '../controllers/chat_controller.dart';
+import '../widgets/attachment_sheet.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/chat_composer.dart';
 import '../widgets/chat_header.dart';
@@ -30,7 +31,18 @@ class ChatScreen extends GetView<ChatController> {
         backgroundColor: AppColors.authBackground,
         body: Column(
           children: [
-            ChatHeader(peer: controller.peer, onBack: Get.back<void>),
+            // Presence and typing are read inside the `Obx` so the header
+            // repaints when they change; handing the controller down would
+            // leave nothing for it to track.
+            Obx(
+              () => ChatHeader(
+                peer: controller.peer,
+                onBack: Get.back<void>,
+                isOnline: controller.peerPresence.value?.isOnline,
+                lastSeen: controller.peerPresence.value?.lastSeen,
+                isTyping: controller.isPeerTyping.value,
+              ),
+            ),
             Expanded(
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
@@ -46,7 +58,23 @@ class ChatScreen extends GetView<ChatController> {
                     itemCount: controller.messages.length,
                     separatorBuilder: (_, _) => AppSpacing.gapV(AppSpacing.sm),
                     itemBuilder: (context, index) =>
-                        ChatBubble(message: controller.messages[index]),
+                        ChatBubble(
+                          message: controller.messages[index],
+                          // Messenger draws the reader's face against one
+                          // bubble, not a tick on every one.
+                          isLastSeenByPeer:
+                              controller.messages[index].id ==
+                              controller.lastReadByPeerId,
+                          peerName: controller.peer.name,
+                          peerPhotoUrl: controller.peer.photoUrl,
+                          onReact: (kind) =>
+                              controller.react(controller.messages[index], kind),
+                          onCancelUpload: () => controller.cancelUpload(
+                            controller.messages[index],
+                          ),
+                          onOpenMedia: () =>
+                              controller.openMedia(controller.messages[index]),
+                        ),
                   ),
                 ),
               ),
@@ -56,7 +84,12 @@ class ChatScreen extends GetView<ChatController> {
                 controller: controller.inputController,
                 canSend: controller.canSend.value,
                 onSend: controller.send,
-                onAttach: controller.attach,
+                // Ask what to attach first: one paperclip that only ever
+                // picked a photo made sending a PDF impossible.
+                onAttach: () async {
+                  final source = await AttachmentSheet.show(context);
+                  if (source != null) await controller.attach(source);
+                },
               ),
             ),
           ],

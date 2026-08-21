@@ -8,6 +8,7 @@ import '../../../../../core/widgets/app_snackbar.dart';
 import '../../data/static/doctor_practice_data.dart';
 import '../../domain/entities/doctor_practice.dart';
 import '../../domain/repositories/doctor_practice_repository.dart';
+import 'doctor_shell_controller.dart';
 
 /// Backs the practitioner dashboard: balance, statistics, quick actions, the
 /// appointments chart and today's list.
@@ -134,6 +135,15 @@ class DoctorHomeController extends GetxController {
 
   void withdraw() => Get.toNamed<void>(AppRoutes.doctorEarnings);
 
+  /// "See all" on the Upcoming Appointments card.
+  ///
+  /// The row it sits in used to be a bare `Text`/`Icon` pair with nothing
+  /// wrapping them, so the tap had nowhere to go. The full list is a shell tab
+  /// (`DoctorAppointmentsScreen`), not a pushed route, so this switches tabs
+  /// the same way the patient Home's "See all" switches to Doctors.
+  void openAppointments() =>
+      Get.find<DoctorShellController>().select(DoctorTab.appointments);
+
   void selectCurrency(String value) => currency.value = value;
 
   /// Refuses an unparseable fee rather than posting a zero, which would make
@@ -157,6 +167,12 @@ class DoctorHomeController extends GetxController {
     AppSnackbar.success(AppStrings.consultationFeeSaved.tr);
   }
 
-  /// Leaving the practitioner role returns to the patient app.
+  /// Leaving the practitioner role returns to the patient app. Not currently
+  /// wired to anything — the bell used to call this by mistake, which reset
+  /// the whole app to patient Home on every tap instead of opening the feed.
   void exitDoctorRole() => AppNavigator.resetTo(AppRoutes.home);
+
+  /// Opens the practitioner's notification feed.
+  void openNotifications() =>
+      Get.toNamed<void>(AppRoutes.doctorNotifications);
 }

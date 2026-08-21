@@ -36,6 +36,9 @@ import '../../features/Role/patient/cash_payment_process/data/repositories/mock_
 import '../../features/Role/patient/cash_payment_process/domain/repositories/cash_payment_repository.dart';
 import '../../features/Role/patient/chat/data/repositories/api_conversation_repository.dart';
 import '../../features/Role/patient/chat/data/repositories/mock_conversation_repository.dart';
+import '../../features/Role/patient/notifications/data/repositories/api_notification_repository.dart';
+import '../../features/Role/patient/notifications/data/repositories/mock_notification_repository.dart';
+import '../../features/Role/patient/notifications/domain/repositories/notification_repository.dart';
 import '../../features/Role/patient/chat/domain/repositories/conversation_repository.dart';
 import '../../features/Role/patient/doctors/data/repositories/api_doctor_repository.dart';
 import '../../features/Role/patient/doctors/data/repositories/doctor_repository_impl.dart';
@@ -57,8 +60,11 @@ import '../constants/api_constants.dart';
 import '../network/api_client.dart';
 import '../network/mappers.dart';
 import '../network/bienify_api.dart';
+import '../network/attachment_uploader.dart';
+import '../network/socket_service.dart';
 import '../network/token_store.dart';
 import '../services/api_service.dart';
+import '../services/attachment_picker_service.dart';
 import '../services/connectivity_service.dart';
 import '../services/photo_picker_service.dart';
 import '../services/storage_service.dart';
@@ -115,6 +121,21 @@ class DependencyInjection {
       permanent: true,
     );
     Get.put<ApiClient>(Get.find<BienifyApi>().client, permanent: true);
+
+    // One socket for the whole app, not one per thread: the connection is the
+    // expensive part, and rooms are what scope it to a conversation. Not
+    // connected here — that waits until there is a session to authenticate
+    // with, since the handshake carries the access token.
+    Get.put<SocketService>(SocketService(tokens: tokens), permanent: true);
+
+    // Attachments: one picker and one uploader for the whole app, so every
+    // attach button behaves the same and the plugins are referenced once.
+    Get.put<AttachmentPickerService>(AttachmentPickerService(), permanent: true);
+    Get.put<AttachmentUploader>(
+      AttachmentUploader(Get.find<ApiClient>()),
+      permanent: true,
+    );
+
     Get.put<ConnectivityService>(ConnectivityService(), permanent: true);
     Get.put<PhotoPickerService>(PhotoPickerService(), permanent: true);
 
@@ -141,9 +162,20 @@ class DependencyInjection {
         // Signing in writes the bearer token every other repository's calls
         // are authenticated with.
         tokens: Get.find<TokenStore>(),
+        // The socket follows the session: open once there is a token to
+        // authenticate the handshake with, closed the moment there is not.
+        onSessionStarted: () => Get.find<SocketService>().connect(),
+        onSessionEnded: () => Get.find<SocketService>().disconnect(),
       ),
       permanent: true,
     );
+
+    // A session restored from storage never passes through `_persist`, so it
+    // would otherwise leave the app signed in with no socket until the next
+    // sign-in.
+    if (Get.find<TokenStore>().accessToken?.isNotEmpty ?? false) {
+      Get.find<SocketService>().connect();
+    }
 
     _registerAuthUseCases(Get.find<AuthRepository>());
     _registerHome(mock);
@@ -157,6 +189,16 @@ class DependencyInjection {
     _registerAccount(mock);
     _registerCashPayment(mock);
     _registerConversations(mock);
+    _registerNotifications(mock);
+  }
+
+  static void _registerNotifications(bool mock) {
+    Get.put<NotificationRepository>(
+      mock
+          ? MockNotificationRepository()
+          : ApiNotificationRepository(Get.find<ApiClient>()),
+      permanent: true,
+    );
   }
 
   static void _registerConversations(bool mock) {
@@ -250,7 +292,12 @@ class DependencyInjection {
 
   static void _registerVault(bool mock) {
     Get.put<VaultRepository>(
-      mock ? MockVaultRepository() : ApiVaultRepository(Get.find<ApiClient>()),
+      mock
+          ? MockVaultRepository()
+          : ApiVaultRepository(
+              Get.find<ApiClient>(),
+              Get.find<AttachmentUploader>(),
+            ),
       permanent: true,
     );
   }

@@ -24,6 +24,22 @@ abstract class AppointmentRepository {
 
   Future<void> cancel(String appointmentId, {String? reason});
 
+  /// Asks the doctor for the fee back on a consultation that never happened.
+  ///
+  /// Queues the request; it does not move money. The doctor settles it, which
+  /// is why the patient's card then reads "refund requested" rather than
+  /// "refunded".
+  Future<void> requestRefund(String appointmentId);
+
+  /// Takes a new slot instead of the money back, and returns the replacement.
+  ///
+  /// The fee carries across from the lapsed booking, so nothing is charged
+  /// again and the replacement starts confirmed.
+  Future<Appointment> reschedule({
+    required String appointmentId,
+    required DateTime slotStart,
+  });
+
   /// Closes the consultation once it has been held.
   ///
   /// The doctor's own action: nothing else moves a booking off

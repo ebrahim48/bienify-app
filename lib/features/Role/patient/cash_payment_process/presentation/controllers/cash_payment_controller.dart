@@ -22,7 +22,7 @@ import '../../domain/repositories/cash_payment_repository.dart';
 /// nearest point. Choosing a different one on the Nearby screen re-issues.
 class CashPaymentController extends GetxController {
   CashPaymentController({
-    this.amountLabel = r'$74.89',
+    this.amount = 74.89,
     PaymentCode? code,
     CashPaymentRepository? repository,
   }) : _repository = repository ?? Get.find<CashPaymentRepository>(),
@@ -30,8 +30,18 @@ class CashPaymentController extends GetxController {
 
   final CashPaymentRepository _repository;
 
-  /// What the patient is paying, as the screen before this one formatted it.
-  final String amountLabel;
+  /// What the patient is paying, as a number.
+  ///
+  /// This used to arrive as the caller's formatted label and be parsed back
+  /// into a number here, which lost money twice over: `payableLabel` rounds to
+  /// whole units, so a $74.89 consultation issued a code for $75; and stripping
+  /// non-digits reads a comma decimal separator as a thousands group, turning
+  /// `74,89` into 7489. The amount now travels as the value it is, and the
+  /// label is derived from it rather than the other way round.
+  final double amount;
+
+  /// The amount as the screens print it, to the cent.
+  String get amountLabel => '\$${amount.toStringAsFixed(2)}';
 
   /// A code supplied by the caller instead of issued.
   ///
@@ -77,10 +87,6 @@ class CashPaymentController extends GetxController {
     return '$hours:$minutes:$seconds';
   }
 
-  /// The amount as a number, parsed back out of the label the caller passed.
-  double get _amount =>
-      double.tryParse(amountLabel.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0;
-
   @override
   void onInit() {
     super.onInit();
@@ -114,7 +120,7 @@ class CashPaymentController extends GetxController {
       }
       issued.value = await _repository.issueCode(
         paymentPointId: id,
-        amount: _amount,
+        amount: amount,
       );
       _resetCountdown();
     } on AppException catch (e) {

@@ -55,4 +55,24 @@ class MockVaultRepository implements VaultRepository {
     required String recordId,
     required String doctorUserId,
   }) async {}
+
+  @override
+  Future<UploadedDocument> uploadDocument({
+    required String path,
+    required String fileName,
+    required String mimeType,
+    required VaultRecordType type,
+    String? notes,
+    void Function(double progress)? onProgress,
+  }) async {
+    // Reports the file the caller actually picked rather than a fixture, so a
+    // golden or a demo shows the real name the patient chose.
+    onProgress?.call(1);
+    return UploadedDocument(
+      id: 'mock-${DateTime.now().microsecondsSinceEpoch}',
+      fileName: fileName,
+      kindLabel: type.name,
+      uploadedOn: DateTime.now(),
+    );
+  }
 }

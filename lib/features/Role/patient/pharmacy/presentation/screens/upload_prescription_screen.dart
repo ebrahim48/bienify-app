@@ -69,7 +69,7 @@ class UploadPrescriptionScreen extends GetView<PrescriptionController> {
                     style: AppTextStyles.bodyMedium.rc(AppColors.gray400),
                   ),
                   AppSpacing.gapV(AppSpacing.base),
-                  _BrowseButton(onTap: controller.browseFile),
+                  _BrowseButton(onTap: () => controller.browseFile(context)),
                 ],
               ),
             ),

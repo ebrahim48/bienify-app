@@ -19,11 +19,19 @@ class DoctorDetailsController extends GetxController with SubmissionMixin {
     required GetDoctorDetails getDetails,
     required GetDoctorAvailability getAvailability,
     AppointmentRepository? appointments,
+    this.rescheduling,
   }) : _getDetails = getDetails,
        _getAvailability = getAvailability,
        _appointments = appointments ?? Get.find<AppointmentRepository>();
 
   final Doctor doctor;
+
+  /// Set when this screen was opened to move a lapsed consultation rather than
+  /// book a new one. The slot picker is identical either way; only what the
+  /// confirm button does at the end differs.
+  final RescheduleRequest? rescheduling;
+
+  bool get isRescheduling => rescheduling != null;
   final GetDoctorDetails _getDetails;
   final GetDoctorAvailability _getAvailability;
   final AppointmentRepository _appointments;
@@ -111,12 +119,32 @@ class DoctorDetailsController extends GetxController with SubmissionMixin {
 
     final day = selectedDay.value!;
     final slot = selectedSlot.value!;
+    final slotStart = slot.startsAt ?? _combine(day.date, slot.label);
+
+    // Moving a lapsed consultation, not booking a new one. The fee carried
+    // across with it, so this skips payment entirely — sending the patient to
+    // Payment Summary would ask them to pay a second time for a consultation
+    // they have already paid for and did not receive.
+    final lapsed = rescheduling?.appointment;
+    if (lapsed != null) {
+      final ok = await submit(() async {
+        await _appointments.reschedule(
+          appointmentId: lapsed.id,
+          slotStart: slotStart,
+        );
+      });
+      if (!ok) return;
+
+      AppSnackbar.success(AppStrings.appointmentRescheduled.tr);
+      Get.until((route) => route.settings.name == AppRoutes.home || route.isFirst);
+      return;
+    }
 
     Appointment? booked;
     final ok = await submit(() async {
       booked = await _appointments.book(
         doctorProfileId: doctor.id,
-        slotStart: slot.startsAt ?? _combine(day.date, slot.label),
+        slotStart: slotStart,
         type: _consultationType,
       );
     });

@@ -18,11 +18,17 @@ import '../../features/Role/patient/cash_payment_process/presentation/screens/ho
 import '../../features/Role/patient/cash_payment_process/presentation/screens/nearby_payment_points_screen.dart';
 import '../../features/Role/patient/cash_payment_process/presentation/screens/payment_confirmed_screen.dart';
 import '../../features/Role/patient/cash_payment_process/presentation/screens/payment_pending_screen.dart';
+import '../../features/Role/patient/chat/presentation/controllers/media_viewer_controller.dart';
 import '../../features/Role/patient/chat/presentation/screens/chat_screen.dart';
+import '../../features/Role/patient/chat/presentation/screens/media_viewer_screen.dart';
+import '../../features/Role/patient/chat/presentation/screens/messages_screen.dart';
+import '../../features/Role/patient/notifications/presentation/bindings/notifications_bindings.dart';
+import '../../features/Role/patient/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/Role/doctor_role/presentation/bindings/doctor_bindings.dart';
 import '../../features/Role/doctor_role/presentation/screens/doctor_appointment_details_screen.dart';
 import '../../features/Role/doctor_role/presentation/screens/choose_review_option_screen.dart';
 import '../../features/Role/doctor_role/presentation/screens/doctor_edit_profile_screen.dart';
+import '../../features/Role/doctor_role/presentation/screens/doctor_notifications_screen.dart';
 import '../../features/Role/doctor_role/presentation/screens/earning_withdraw_screen.dart';
 import '../../features/Role/doctor_role/presentation/screens/order_detail_screen.dart';
 import '../../features/Role/doctor_role/presentation/screens/request_follow_up_screen.dart';
@@ -327,12 +333,47 @@ abstract class AppPages {
       transition: Transition.fadeIn,
     ),
 
+    // ─── Notifications ─────────────────────────────────────────────────────
+    GetPage(
+      name: AppRoutes.notifications,
+      page: () => const NotificationsScreen(),
+      binding: NotificationsBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+
     // ─── Messaging ─────────────────────────────────────────────────────────
+    GetPage(
+      name: AppRoutes.messages,
+      page: () => const MessagesScreen(),
+      binding: MessagesBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
     GetPage(
       name: AppRoutes.chat,
       page: () => const ChatScreen(),
       binding: ChatBinding(),
       transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.mediaViewer,
+      page: () => const MediaViewerScreen(),
+      // Bound here rather than in a `Bindings` class: the controller needs the
+      // arguments, which a binding cannot see until the page is being built.
+      binding: BindingsBuilder(() {
+        final args = Get.arguments as MediaViewerArgs;
+        Get.put(
+          MediaViewerController(
+            items: args.items,
+            initialIndex: args.initialIndex,
+          ),
+        );
+      }),
+      // Fades in from the bubble rather than sliding, which is what a photo
+      // opening full screen is expected to do.
+      transition: Transition.fadeIn,
       transitionDuration: _transitionDuration,
     ),
 
@@ -468,6 +509,13 @@ abstract class AppPages {
       name: AppRoutes.doctorEditProfile,
       page: () => const DoctorEditProfileScreen(),
       binding: DoctorProfileBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.doctorNotifications,
+      page: () => const DoctorNotificationsScreen(),
+      binding: DoctorNotificationsBinding(),
       transition: _transition,
       transitionDuration: _transitionDuration,
     ),

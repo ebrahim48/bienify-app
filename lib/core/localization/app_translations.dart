@@ -242,7 +242,35 @@ class AppTranslations extends Translations {
 
     // Chat
     AppStrings.online: 'Online',
+    AppStrings.typingNow: 'typing…',
+    AppStrings.attachmentsNeedConsultation:
+        'Attachments need an active consultation',
+    AppStrings.fileTooLarge: 'That file is too large to send',
+    AppStrings.attachPhoto: 'Photo',
+    AppStrings.attachCamera: 'Camera',
+    AppStrings.attachVideo: 'Video',
+    AppStrings.attachDocument: 'Document',
+    AppStrings.seenLabel: 'Seen',
+    AppStrings.attachmentUnavailable: 'Attachment unavailable',
+    AppStrings.lastSeenAt: 'last seen @time',
     AppStrings.typeYourMessage: 'Type your message...',
+    AppStrings.offline: 'Offline',
+
+    // Media viewer
+    AppStrings.fitContain: 'Fit',
+    AppStrings.fitCover: 'Fill screen',
+    AppStrings.fitFill: 'Stretch',
+    AppStrings.fitWidth: 'Fit width',
+    AppStrings.fitHeight: 'Fit height',
+    AppStrings.openWith: 'Open',
+    AppStrings.openingFile: 'Opening…',
+    AppStrings.cannotOpenFile: 'That file could not be opened',
+    AppStrings.noAppForFile: 'No app on this device can open this file',
+
+    // Reactions
+    AppStrings.reactToMessage: 'React',
+    AppStrings.removeReaction: 'Remove reaction',
+    AppStrings.moreEmoji: 'More',
 
     // Appointments
     AppStrings.needCare: 'Need Care?',
@@ -254,6 +282,18 @@ class AppTranslations extends Translations {
     AppStrings.cancelledAppointmentTab: 'Cancelled Appointment',
     AppStrings.today: 'Today',
     AppStrings.joinVisit: 'Join Visit',
+    AppStrings.payNow: 'Pay Now',
+    AppStrings.statusClosed: 'Closed',
+    AppStrings.refundPatient: 'Refund',
+    AppStrings.refunded: 'Refunded',
+    AppStrings.refundSent: 'Refund sent to the patient',
+    AppStrings.didNotTakePlace: 'This consultation did not take place',
+    AppStrings.requestRefund: 'Request refund',
+    AppStrings.refundRequested: 'Refund requested',
+    AppStrings.refundAwaitingDoctor: 'Waiting for the doctor to refund you',
+    AppStrings.appointmentRescheduled: 'Appointment rescheduled',
+    AppStrings.chooseRescheduleOrRefund:
+        'Reschedule it, or ask for your money back',
     AppStrings.bookAgain: 'Book Again',
     AppStrings.review: 'Review',
     AppStrings.reschedule: 'Reschedule',
@@ -645,6 +685,10 @@ class AppTranslations extends Translations {
     AppStrings.notesHint: 'Anything else the patient should know',
     AppStrings.searchPatientName: 'Search patient Name',
     AppStrings.messageTitle: 'Message',
+    AppStrings.searchMessages: 'Search messages',
+    AppStrings.noMessagesYet: 'No messages yet',
+    AppStrings.noMessagesMatch: 'No messages match that name',
+    AppStrings.doctorFallback: 'Doctor',
     AppStrings.navMessage: 'Message',
     AppStrings.navProfile: 'Profile',
     AppStrings.goodMorning: 'Good morning,',
@@ -767,6 +811,10 @@ class AppTranslations extends Translations {
     AppStrings.writeYourOption: 'Write your option',
     AppStrings.referOptionHint: 'You can visit india andtest the chennai hosp',
     AppStrings.sentToPatient: 'Sent to the patient',
+    AppStrings.radiologyReviewUnavailable:
+        'Radiology results cannot be reviewed yet',
+    AppStrings.resultNotReadyToReview:
+        'This result is not ready to review yet',
 
     // Pharmacy owner
     AppStrings.navOrders: 'Orders',
@@ -799,6 +847,8 @@ class AppTranslations extends Translations {
     AppStrings.noOrdersHere: 'No orders under this chip yet',
 
     AppStrings.notifications: 'Notifications',
+    AppStrings.markAllRead: 'Mark all read',
+    AppStrings.unreadCount: '@count unread',
     AppStrings.seeMore: 'See More',
 
     AppStrings.medicinesTitle: 'Medicines',
@@ -1198,6 +1248,31 @@ class AppTranslations extends Translations {
 
     // Chat
     AppStrings.online: 'En línea',
+    AppStrings.typingNow: 'escribiendo…',
+    AppStrings.attachmentsNeedConsultation:
+        'Los adjuntos requieren una consulta activa',
+    AppStrings.fileTooLarge: 'El archivo es demasiado grande',
+    AppStrings.attachPhoto: 'Foto',
+    AppStrings.attachCamera: 'Cámara',
+    AppStrings.attachVideo: 'Vídeo',
+    AppStrings.attachDocument: 'Documento',
+    AppStrings.seenLabel: 'Visto',
+    AppStrings.attachmentUnavailable: 'Adjunto no disponible',
+    AppStrings.offline: 'Desconectado',
+    AppStrings.fitContain: 'Ajustar',
+    AppStrings.fitCover: 'Llenar pantalla',
+    AppStrings.fitFill: 'Estirar',
+    AppStrings.fitWidth: 'Ajustar al ancho',
+    AppStrings.fitHeight: 'Ajustar al alto',
+    AppStrings.openWith: 'Abrir',
+    AppStrings.openingFile: 'Abriendo…',
+    AppStrings.cannotOpenFile: 'No se pudo abrir el archivo',
+    AppStrings.noAppForFile:
+        'Ningún programa de este dispositivo puede abrir este archivo',
+    AppStrings.reactToMessage: 'Reaccionar',
+    AppStrings.removeReaction: 'Quitar reacción',
+    AppStrings.moreEmoji: 'Más',
+    AppStrings.lastSeenAt: 'últ. vez @time',
     AppStrings.typeYourMessage: 'Escribe tu mensaje...',
 
     // Citas
@@ -1210,6 +1285,18 @@ class AppTranslations extends Translations {
     AppStrings.cancelledAppointmentTab: 'Citas canceladas',
     AppStrings.today: 'Hoy',
     AppStrings.joinVisit: 'Unirse',
+    AppStrings.payNow: 'Pagar ahora',
+    AppStrings.statusClosed: 'Cerrada',
+    AppStrings.refundPatient: 'Reembolsar',
+    AppStrings.refunded: 'Reembolsada',
+    AppStrings.refundSent: 'Reembolso enviado al paciente',
+    AppStrings.didNotTakePlace: 'Esta consulta no se realizó',
+    AppStrings.requestRefund: 'Solicitar reembolso',
+    AppStrings.refundRequested: 'Reembolso solicitado',
+    AppStrings.refundAwaitingDoctor: 'Esperando el reembolso del médico',
+    AppStrings.appointmentRescheduled: 'Cita reprogramada',
+    AppStrings.chooseRescheduleOrRefund:
+        'Reprográmala o solicita tu reembolso',
     AppStrings.bookAgain: 'Reservar otra vez',
     AppStrings.review: 'Reseñar',
     AppStrings.reschedule: 'Reprogramar',
@@ -1598,6 +1685,10 @@ class AppTranslations extends Translations {
     AppStrings.notesHint: 'Cualquier otra indicación para el paciente',
     AppStrings.searchPatientName: 'Buscar paciente',
     AppStrings.messageTitle: 'Mensajes',
+    AppStrings.searchMessages: 'Buscar mensajes',
+    AppStrings.noMessagesYet: 'Aún no hay mensajes',
+    AppStrings.noMessagesMatch: 'Ningún mensaje coincide con ese nombre',
+    AppStrings.doctorFallback: 'Médico',
     AppStrings.navMessage: 'Mensajes',
     AppStrings.navProfile: 'Perfil',
     AppStrings.goodMorning: 'Buenos días,',
@@ -1721,6 +1812,10 @@ class AppTranslations extends Translations {
     AppStrings.referOptionHint:
         'Puedes viajar a la India y hacerte la prueba en Chennai',
     AppStrings.sentToPatient: 'Enviado al paciente',
+    AppStrings.radiologyReviewUnavailable:
+        'Los resultados de radiología aún no se pueden revisar',
+    AppStrings.resultNotReadyToReview:
+        'Este resultado aún no está listo para revisar',
 
     // Farmacia
     AppStrings.navOrders: 'Pedidos',
@@ -1753,6 +1848,8 @@ class AppTranslations extends Translations {
     AppStrings.noOrdersHere: 'Todavía no hay pedidos aquí',
 
     AppStrings.notifications: 'Notificaciones',
+    AppStrings.markAllRead: 'Marcar todo como leído',
+    AppStrings.unreadCount: '@count sin leer',
     AppStrings.seeMore: 'Ver más',
 
     AppStrings.medicinesTitle: 'Medicinas',

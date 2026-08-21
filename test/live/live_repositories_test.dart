@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:bienify_app/core/constants/api_constants.dart';
 import 'package:bienify_app/core/exceptions/app_exceptions.dart';
 import 'package:bienify_app/core/network/api_client.dart';
+import 'package:bienify_app/core/network/attachment_uploader.dart';
 import 'package:bienify_app/core/network/token_store.dart';
 import 'package:bienify_app/features/Role/patient/appointments/data/repositories/api_appointment_repository.dart';
 import 'package:bienify_app/features/Role/patient/appointments/domain/entities/appointment.dart';
@@ -247,7 +248,9 @@ void main() {
           reason: 'Live check',
         );
         expect(booked.id, isNotEmpty);
-        expect(booked.status, AppointmentStatus.upcoming);
+        // A booking is unpaid until `pay()` below — the server creates it as
+        // `pending_payment`, never `confirmed`.
+        expect(booked.status, AppointmentStatus.pendingPayment);
 
         await appointments.pay(booked.id);
 
@@ -364,7 +367,7 @@ void main() {
     test('lists prescriptions with their medications', () async {
       if (!up) return;
       await live(() async {
-        final items = await ApiVaultRepository(client).prescriptions();
+        final items = await ApiVaultRepository(client, AttachmentUploader(client)).prescriptions();
 
         expect(
           items,
@@ -382,7 +385,7 @@ void main() {
     test('lists the lab orders across their stages', () async {
       if (!up) return;
       await live(() async {
-        final orders = await ApiVaultRepository(client).testOrders();
+        final orders = await ApiVaultRepository(client, AttachmentUploader(client)).testOrders();
 
         expect(orders, isNotEmpty);
         expect(orders.map((o) => o.title), everyElement(isNot('Test')));
@@ -395,7 +398,7 @@ void main() {
     test('lists testing centres with an address', () async {
       if (!up) return;
       await live(() async {
-        final centres = await ApiVaultRepository(client).testingCentres();
+        final centres = await ApiVaultRepository(client, AttachmentUploader(client)).testingCentres();
         expect(centres, isNotEmpty);
         expect(centres.first.name, isNot('Testing centre'));
       });
@@ -404,7 +407,7 @@ void main() {
     test('reads stored documents without failing on an empty vault', () async {
       if (!up) return;
       await live(() async {
-        final documents = await ApiVaultRepository(client).documents();
+        final documents = await ApiVaultRepository(client, AttachmentUploader(client)).documents();
         // The seed stores none; an empty list is the correct answer, not an error.
         expect(documents, isA<List<UploadedDocument>>());
       });
@@ -413,7 +416,7 @@ void main() {
     test('round-trips the health profile', () async {
       if (!up) return;
       await live(() async {
-        final repo = ApiVaultRepository(client);
+        final repo = ApiVaultRepository(client, AttachmentUploader(client));
 
         await repo.saveHealthProfile(
           const HealthProfile(
@@ -439,6 +442,7 @@ void main() {
         // the server's enum check.
         await ApiVaultRepository(
           client,
+          AttachmentUploader(client),
         ).saveHealthProfile(const HealthProfile());
       });
     });

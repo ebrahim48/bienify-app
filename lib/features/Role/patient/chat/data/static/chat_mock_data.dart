@@ -24,6 +24,41 @@ class ChatMockData {
       'I understand your concern. Let me help you with that. Would you like '
       'to schedule a video consultation?';
 
+  /// The list's peers carry an `appointmentId`, unlike [peer], so tapping a row
+  /// opens a thread that behaves like a real consultation. [peer] deliberately
+  /// has none — it backs the header shortcut, which has no consultation behind
+  /// it and so falls back to the read-only sample.
+  static const ConversationPeer _listedPeer = ConversationPeer(
+    id: 'doc-2',
+    appointmentId: 'appt-mock-1',
+    name: 'Dr. Emmanuel Okafor',
+    specialty: 'Cardiologist',
+    isOnline: true,
+  );
+
+  /// A doctor the patient has consulted before, so the list is not one row.
+  static const ConversationPeer _pastPeer = ConversationPeer(
+    id: 'doc-5',
+    appointmentId: 'appt-mock-2',
+    name: 'Dr. Linda Chen',
+    specialty: 'Pediatric Dentist',
+  );
+
+  /// The message list's sample content.
+  static List<ConversationThread> threads() => [
+    ConversationThread(
+      peer: _listedPeer,
+      preview: 'I understand your concern. Let me help you with that.',
+      lastMessageAt: DateTime(2026, 4, 1, 12, 38),
+      unreadCount: 2,
+    ),
+    ConversationThread(
+      peer: _pastPeer,
+      preview: 'Your results look good — no follow-up needed.',
+      lastMessageAt: DateTime(2026, 3, 28, 9, 12),
+    ),
+  ];
+
   static List<ChatMessage> thread() {
     final day = DateTime(2026, 4, 1);
     DateTime at(int hour, int minute) =>

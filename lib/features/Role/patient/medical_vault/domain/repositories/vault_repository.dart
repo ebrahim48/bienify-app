@@ -32,6 +32,39 @@ abstract class VaultRepository {
     required String recordId,
     required String doctorUserId,
   });
+
+  /// Stores a file the patient picked and files it in the vault.
+  ///
+  /// Two steps behind one call, because that is one operation from the
+  /// caller's side and a half-done version of it is a bug: the bytes go
+  /// straight to S3 against a presigned URL, then the record is created
+  /// against the key that came back. The API never sees the file itself.
+  Future<UploadedDocument> uploadDocument({
+    required String path,
+    required String fileName,
+    required String mimeType,
+    required VaultRecordType type,
+    String? notes,
+    void Function(double progress)? onProgress,
+  });
+}
+
+/// What kind of document is being filed, matching the server's record types.
+///
+/// A closed set rather than a free string: the server rejects anything else,
+/// and a typo here would only surface as a validation failure at the end of
+/// an upload the patient already waited for.
+enum VaultRecordType {
+  labReport('lab_report'),
+  imaging('imaging'),
+  prescriptionScan('prescription_scan'),
+  dischargeSummary('discharge_summary'),
+  vaccination('vaccination'),
+  other('other');
+
+  const VaultRecordType(this.wireName);
+
+  final String wireName;
 }
 
 /// Standing clinical facts about the patient.

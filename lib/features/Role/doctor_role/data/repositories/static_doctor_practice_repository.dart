@@ -44,6 +44,9 @@ class StaticDoctorPracticeRepository implements DoctorPracticeRepository {
   }) async {}
 
   @override
+  Future<void> refundAppointment(String appointmentId) async {}
+
+  @override
   Future<DoctorEarnings> earnings() async => DoctorEarnings(
     availableLabel: DoctorPracticeData.availableBalanceLabel,
     totalEarnedLabel: DoctorPracticeData.totalEarnedLabel,
@@ -139,5 +142,15 @@ class StaticDoctorPracticeRepository implements DoctorPracticeRepository {
     required List<String> tests,
     String? notes,
     String? appointmentId,
+  }) async {}
+
+  @override
+  Future<List<TestRequest>> labRequests() async =>
+      List.of(DoctorOrdersData.requests);
+
+  @override
+  Future<void> reviewLabOrder({
+    required String labOrderId,
+    required String message,
   }) async {}
 }

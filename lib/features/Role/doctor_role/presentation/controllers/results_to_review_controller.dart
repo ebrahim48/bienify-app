@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../../../core/constants/app_strings.dart';
 import '../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../core/routes/app_routes.dart';
+import '../../../../../core/widgets/app_snackbar.dart';
 import '../../data/static/doctor_orders_data.dart';
 import '../../domain/entities/test_request.dart';
 import '../../domain/repositories/doctor_practice_repository.dart';
@@ -13,11 +14,14 @@ import '../../domain/repositories/doctor_practice_repository.dart';
 /// same patient and the same order — the list picks them, and the detail,
 /// review options and their four destinations all read them back.
 ///
-/// The Patients segment is served by the API. The Lab and Radiology segments
-/// are not: `GET /lab-orders` filters by `patientId`, so it answers "the
-/// orders I am the subject of", and the backend has no route that answers
-/// "the orders I requested". Until it does, those two segments show
-/// [DoctorOrdersData] — see the note in `docs/API-GAPS.md`.
+/// The Patients and Lab segments are served by the API — `GET /lab-orders`
+/// answers "the orders I requested" when asked with `role=doctor`, and
+/// `PATCH /lab-orders/:id/review` is what actually sends the doctor's note and
+/// moves the order to `reviewed`.
+///
+/// Radiology still shows [DoctorOrdersData]: the backend models every order as
+/// a lab order and has no imaging equivalent, so there is nothing to read.
+/// See the note in `docs/API-GAPS.md`.
 class ResultsToReviewController extends GetxController {
   ResultsToReviewController({DoctorPracticeRepository? repository})
     : _repository = repository ?? Get.find<DoctorPracticeRepository>();
@@ -51,7 +55,6 @@ class ResultsToReviewController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    requests.value = List.of(DoctorOrdersData.requests);
     load();
   }
 
@@ -59,7 +62,12 @@ class ResultsToReviewController extends GetxController {
     isLoading.value = true;
     error.value = null;
     try {
-      patients.value = await _repository.reviewPatients();
+      final results = await Future.wait([
+        _repository.reviewPatients(),
+        _repository.labRequests(),
+      ]);
+      patients.value = results[0] as List<ReviewPatient>;
+      requests.value = results[1] as List<TestRequest>;
     } on AppException catch (e) {
       error.value = e.message;
     } finally {
@@ -138,6 +146,76 @@ class ResultsToReviewController extends GetxController {
   void chooseReview() => Get.toNamed<void>(AppRoutes.doctorChooseReview);
 
   void selectReviewOption(ReviewOption value) => reviewOption.value = value;
+
+  /// True while a review is in flight, so the button can guard a double tap.
+  final RxBool isSubmitting = false.obs;
+
+  /// A real server id, as opposed to a placeholder from the static data.
+  static final RegExp _objectId = RegExp(r'^[a-f0-9]{24}$');
+
+  static bool _isServerId(String id) => _objectId.hasMatch(id);
+
+  /// Sends the doctor's note to the patient and marks the order reviewed.
+  ///
+  /// This whole flow used to end at a snackbar: the text was captured into
+  /// [messageBody] / [referralBody] and then dropped, nothing was sent, and
+  /// the order kept whatever status it already had. Returns true when the
+  /// server accepted it, so the screen only navigates away on success.
+  Future<bool> submitReview({required bool isReferral}) async {
+    if (isSubmitting.value) return false;
+
+    final order = request.value;
+    if (order == null) {
+      AppSnackbar.error(AppStrings.somethingWentWrong.tr);
+      return false;
+    }
+
+    // Radiology is still [DoctorOrdersData] — the backend models every order
+    // as a lab order and has none of its own — so those rows carry ids like
+    // `rad-r-1`. Sending one reached the server and came back "Validation
+    // failed", which reads as a bug in the message rather than a feature that
+    // does not exist yet. Refuse it here, and say which it is.
+    if (order.kind == OrderKind.radiology || !_isServerId(order.id)) {
+      AppSnackbar.info(AppStrings.radiologyReviewUnavailable.tr);
+      return false;
+    }
+
+    // Only a finished result can be reviewed; the server enforces this too,
+    // but its transition error names internal states the doctor never sees.
+    if (order.status != RequestStatus.awaitingReview) {
+      AppSnackbar.info(AppStrings.resultNotReadyToReview.tr);
+      return false;
+    }
+
+    final message = (isReferral ? referralBody.value : messageBody.value).trim();
+    if (message.isEmpty) {
+      AppSnackbar.info(AppStrings.writeYourMessage.tr);
+      return false;
+    }
+
+    isSubmitting.value = true;
+    try {
+      await _repository.reviewLabOrder(
+        labOrderId: order.id,
+        message: message,
+      );
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return false;
+    } finally {
+      isSubmitting.value = false;
+    }
+
+    // Clear the drafts so the next order does not open with this one's text.
+    messageBody.value = '';
+    referralBody.value = '';
+
+    // The list holds the pre-review status, so without this the row still
+    // reads "Awaiting review" after the server has moved it on.
+    await load();
+    AppSnackbar.success(AppStrings.sentToPatient.tr);
+    return true;
+  }
 
   /// The four options are four different screens; Order Additional Test
   /// re-enters the request flow at the patient screen it started from.

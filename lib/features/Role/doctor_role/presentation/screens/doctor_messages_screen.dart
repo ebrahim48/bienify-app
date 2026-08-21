@@ -7,8 +7,8 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/utils/responsive.dart';
-import '../../../../../core/widgets/app_avatar.dart';
 import '../../../../../core/widgets/app_card.dart';
+import '../../../../../core/widgets/presence_avatar.dart';
 import '../../../../../core/widgets/app_empty_state.dart';
 import '../../../../../core/widgets/app_scaffold.dart';
 import '../../../patient/doctors/presentation/widgets/doctor_search_field.dart';
@@ -55,9 +55,14 @@ class DoctorMessagesScreen extends GetView<DoctorMessagesController> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 for (final thread in threads) ...[
-                  _ThreadRow(
-                    thread: thread,
-                    onTap: () => controller.openThread(thread),
+                  // Scoped per row, so one patient connecting does not
+                  // rebuild the whole list.
+                  Obx(
+                    () => _ThreadRow(
+                      thread: thread,
+                      isOnline: controller.isPatientOnline(thread),
+                      onTap: () => controller.openThread(thread),
+                    ),
                   ),
                   AppSpacing.gapV(AppSpacing.xs),
                 ],
@@ -72,10 +77,17 @@ class DoctorMessagesScreen extends GetView<DoctorMessagesController> {
 }
 
 class _ThreadRow extends StatelessWidget {
-  const _ThreadRow({required this.thread, required this.onTap});
+  const _ThreadRow({
+    required this.thread,
+    required this.onTap,
+    this.isOnline,
+  });
 
   final PatientThread thread;
   final VoidCallback onTap;
+
+  /// Null while presence is unknown, which draws no dot.
+  final bool? isOnline;
 
   static const double _avatar = 44;
   static const double _badge = 24;
@@ -88,7 +100,8 @@ class _ThreadRow extends StatelessWidget {
       padding: EdgeInsets.all(AppSpacing.xs.w),
       child: Row(
         children: [
-          AppAvatar(
+          PresenceAvatar(
+            isOnline: isOnline,
             imageUrl: thread.photoUrl,
             name: thread.patientName,
             size: _avatar,

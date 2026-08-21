@@ -34,9 +34,14 @@ import 'package:bienify_app/features/Role/patient/profile/presentation/screens/w
 import 'package:bienify_app/features/Role/patient/profile/presentation/screens/wallet_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:bienify_app/core/services/attachment_picker_service.dart';
+import 'package:bienify_app/features/Role/patient/chat/presentation/widgets/attachment_sheet.dart';
 
 import '../support/test_fonts.dart';
 
@@ -540,6 +545,10 @@ void main() {
   });
 
   testWidgets('Upload report, empty then attached', (tester) async {
+    // Registered before the binding runs, which then finds it already there:
+    // the picker seam is the whole point of the test and the default one has
+    // no plugin behind it here.
+    Get.put(TestResultsController(picker: _StubPicker()));
     await pump(
       tester,
       const UploadReportScreen(),
@@ -551,8 +560,16 @@ void main() {
       matchesGoldenFile('upload_report.png'),
     );
 
+    // The drop zone now opens a real chooser rather than flipping a boolean,
+    // so the golden drives it the way a patient does: pick a source, then a
+    // file. `_StubPicker` stands in for the platform plugin, which does not
+    // exist under `flutter test`.
     await tester.tap(find.text('Add report document'));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    expect(find.byType(AttachmentSheet), findsOneWidget);
+
+    await tester.tap(find.text('Document'));
+    await tester.pumpAndSettle();
     await settleImages(tester);
     await expectLater(
       find.byType(UploadReportScreen),
@@ -632,4 +649,23 @@ void main() {
       matchesGoldenFile('report_review_request.png'),
     );
   });
+}
+
+/// Stands in for the platform picker, which has no plugin under
+/// `flutter test`.
+///
+/// Returns a PDF deliberately. A picked *image* is drawn with `Image.file`,
+/// whose decode does not reliably complete inside a golden's fake clock, so a
+/// golden of it would be a blank rectangle that proves nothing about layout.
+/// The PDF path draws the bundled artwork, which is deterministic — and the
+/// image path is asserted in `test/features/vault_upload_test.dart`, where
+/// the widget tree can be inspected directly instead of photographed.
+class _StubPicker implements AttachmentPickerService {
+  @override
+  Future<PickedAttachment?> pick(AttachmentSource source) async => PickedAttachment(
+    file: File('report.pdf'),
+    name: 'report.pdf',
+    mime: 'application/pdf',
+    size: 2048,
+  );
 }

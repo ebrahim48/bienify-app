@@ -25,73 +25,88 @@ class DoctorAppointmentsScreen extends GetView<DoctorAppointmentsController> {
 
   @override
   Widget build(BuildContext context) {
-    return AppScaffold(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const ScreenTopGap(),
-          Text(
-            AppStrings.navAppointments.tr,
-            style: AppTextStyles.headlineLarge.rc(AppColors.authInk),
-          ),
-          AppSpacing.gapV(AppSpacing.base),
-          DoctorSearchField(
-            initialText: controller.query.value,
-            onChanged: (value) => controller.query.value = value,
-          ),
-          AppSpacing.gapV(AppSpacing.base),
-          // The active chip is read here so the row repaints.
-          Obx(
-            () => AppPillSelector(
-              labels: [
-                for (final value in DoctorApptFilter.values)
-                  controller.filterLabel(value),
-              ],
-              selectedIndex: DoctorApptFilter.values.indexOf(
-                controller.filter.value,
-              ),
-              onSelected: (index) =>
-                  controller.selectFilter(DoctorApptFilter.values[index]),
-              isLarge: true,
+    // `DoctorAppointmentsController` is put once in `DoctorShellBinding` and
+    // kept alive for the shell's whole `IndexedStack` lifetime, so this list
+    // is only as fresh as the one `load()` in its `onInit`. Nothing tells it
+    // a patient booked or paid for a new consultation elsewhere. Pull to
+    // refresh is the only way to see it without restarting the app.
+    return RefreshIndicator(
+      onRefresh: controller.load,
+      color: AppColors.primary800,
+      backgroundColor: AppColors.surface,
+      child: AppScaffold(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const ScreenTopGap(),
+            Text(
+              AppStrings.navAppointments.tr,
+              style: AppTextStyles.headlineLarge.rc(AppColors.authInk),
             ),
-          ),
-          AppSpacing.gapV(AppSpacing.base),
-          Obx(() {
-            final appointments = controller.visible;
-            if (appointments.isEmpty) {
-              return AppEmptyState(
-                icon: Icons.event_busy_outlined,
-                title: AppStrings.noUpcomingAppointments.tr,
-              );
-            }
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (final appointment in appointments) ...[
-                  // A finished consultation has nothing left to join or
-                  // cancel, so it shows what it was worth instead.
-                  if (appointment.filter == DoctorApptFilter.fresh)
-                    _AppointmentCard(
-                      appointment: appointment,
-                      onOpen: () => controller.openDetails(appointment),
-                      onJoin: () => controller.join(appointment),
-                      onCancel: () => _cancel(context, appointment),
-                    )
-                  else
-                    _CompletedCard(
-                      appointment: appointment,
-                      statusLabel: controller.cardStatusLabel(
-                        appointment.filter,
-                      ),
-                      onOpen: () => controller.openDetails(appointment),
-                    ),
-                  AppSpacing.gapV(AppSpacing.sm),
+            AppSpacing.gapV(AppSpacing.base),
+            DoctorSearchField(
+              initialText: controller.query.value,
+              onChanged: (value) => controller.query.value = value,
+            ),
+            AppSpacing.gapV(AppSpacing.base),
+            // The active chip is read here so the row repaints.
+            Obx(
+              () => AppPillSelector(
+                labels: [
+                  for (final value in DoctorApptFilter.values)
+                    controller.filterLabel(value),
                 ],
-              ],
-            );
-          }),
-          AppSpacing.gapV(AppSpacing.md),
-        ],
+                selectedIndex: DoctorApptFilter.values.indexOf(
+                  controller.filter.value,
+                ),
+                onSelected: (index) =>
+                    controller.selectFilter(DoctorApptFilter.values[index]),
+                isLarge: true,
+              ),
+            ),
+            AppSpacing.gapV(AppSpacing.base),
+            Obx(() {
+              final appointments = controller.visible;
+              if (appointments.isEmpty) {
+                return AppEmptyState(
+                  icon: Icons.event_busy_outlined,
+                  title: AppStrings.noUpcomingAppointments.tr,
+                );
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final appointment in appointments) ...[
+                    // A finished consultation has nothing left to join or
+                    // cancel, so it shows what it was worth instead.
+                    if (appointment.filter == DoctorApptFilter.fresh)
+                      _AppointmentCard(
+                        appointment: appointment,
+                        onOpen: () => controller.openDetails(appointment),
+                        onJoin: () => controller.join(appointment),
+                        onCancel: () => _cancel(context, appointment),
+                      )
+                    else
+                      _CompletedCard(
+                        appointment: appointment,
+                        statusLabel: appointment.isClosed
+                            ? AppStrings.statusClosed.tr
+                            : controller.cardStatusLabel(appointment.filter),
+                        onOpen: () => controller.openDetails(appointment),
+                        onRefund: appointment.canRefund
+                            ? () => controller.refund(appointment)
+                            : null,
+                        isRefunding:
+                            controller.refundingId.value == appointment.id,
+                      ),
+                    AppSpacing.gapV(AppSpacing.sm),
+                  ],
+                ],
+              );
+            }),
+            AppSpacing.gapV(AppSpacing.md),
+          ],
+        ),
       ),
     );
   }
@@ -250,16 +265,70 @@ class _JoinPill extends StatelessWidget {
 
 /// A finished consultation: initials disc, patient, complaint and age, the
 /// presenting summary, then the date, time and fee.
+/// Sends the fee back for a consultation that never happened. Outlined rather
+/// than filled — it undoes a payment, so it should not read as the obvious
+/// next step the way a primary action does.
+class _RefundButton extends StatelessWidget {
+  const _RefundButton({required this.isLoading, required this.onTap});
+
+  final bool isLoading;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Material(
+        color: AppColors.transparent,
+        borderRadius: AppRadius.rFull,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: isLoading ? null : onTap,
+          child: Ink(
+            decoration: BoxDecoration(
+              borderRadius: AppRadius.rFull,
+              border: Border.all(
+                color: AppColors.actionFill,
+                width: AppSizes.borderWidth,
+              ),
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.base.w,
+                vertical: AppSpacing.xs.h,
+              ),
+              child: isLoading
+                  ? SizedBox(
+                      width: AppSizes.xl.w,
+                      height: AppSizes.xl.w,
+                      child: const CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(
+                      AppStrings.refundPatient.tr,
+                      style: AppTextStyles.bodyMedium.rc(AppColors.actionFill),
+                    ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _CompletedCard extends StatelessWidget {
   const _CompletedCard({
     required this.appointment,
     required this.statusLabel,
     required this.onOpen,
+    this.onRefund,
+    this.isRefunding = false,
   });
 
   final DoctorAppointment appointment;
   final String statusLabel;
   final VoidCallback onOpen;
+  final VoidCallback? onRefund;
+  final bool isRefunding;
 
   static const double _disc = 44;
 
@@ -353,6 +422,43 @@ class _CompletedCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                // A lapsed consultation earned nothing — the fee is still the
+                // patient's money until it is sent back.
+                if (appointment.isClosed) ...[
+                  AppSpacing.gapV(AppSpacing.xs),
+                  Text(
+                    // The patient asking is what turns this from a note into
+                    // something waiting on the doctor.
+                    appointment.isRefundRequested && !appointment.isRefunded
+                        ? AppStrings.refundRequested.tr
+                        : AppStrings.didNotTakePlace.tr,
+                    style: AppTextStyles.bodyMedium.rc(
+                      appointment.isRefundRequested && !appointment.isRefunded
+                          ? AppColors.warning500
+                          : AppColors.gray500,
+                    ),
+                  ),
+                  AppSpacing.gapV(AppSpacing.xs),
+                  if (appointment.isRefunded)
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle_outline_rounded,
+                          size: AppSizes.lg.w,
+                          color: AppColors.success400,
+                        ),
+                        AppSpacing.gapH(AppSpacing.xs2),
+                        Text(
+                          AppStrings.refunded.tr,
+                          style: AppTextStyles.bodyMedium.rc(
+                            AppColors.success400,
+                          ),
+                        ),
+                      ],
+                    )
+                  else if (onRefund != null)
+                    _RefundButton(isLoading: isRefunding, onTap: onRefund!),
+                ],
               ],
             ),
           ),

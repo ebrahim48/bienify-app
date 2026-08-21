@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -13,11 +15,24 @@ import '../../../../../../core/theme/app_spacing.dart';
 /// one is placed over it at the same inset — otherwise the page would show
 /// two, one of them dead.
 class ReportThumbnail extends StatelessWidget {
-  const ReportThumbnail({super.key, this.onRemove});
+  const ReportThumbnail({super.key, this.onRemove, this.file, this.isImage = true});
 
   /// Omitted on the review screen, where the report is no longer the
   /// patient's to withdraw.
   final VoidCallback? onRemove;
+
+  /// The file the patient actually picked.
+  ///
+  /// Null on the review screen, which shows a report already submitted and
+  /// has no local copy of it. When it is present the patient sees their own
+  /// document rather than the bundled artwork — showing stock cover art for
+  /// the file someone just chose is how a picker that did nothing managed to
+  /// look like one that worked.
+  final File? file;
+
+  /// False for a PDF or anything else with no preview to draw, which falls
+  /// back to the artwork rather than a broken image.
+  final bool isImage;
 
   static const double height = 146;
   static const double _button = 28;
@@ -31,7 +46,14 @@ class ReportThumbnail extends StatelessWidget {
           child: SizedBox(
             width: double.infinity,
             height: height.h,
-            child: Image.asset(AppAssets.reportDocument, fit: BoxFit.cover),
+            child: file != null && isImage
+                ? Image.file(
+                    file!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) =>
+                        Image.asset(AppAssets.reportDocument, fit: BoxFit.cover),
+                  )
+                : Image.asset(AppAssets.reportDocument, fit: BoxFit.cover),
           ),
         ),
         Positioned(

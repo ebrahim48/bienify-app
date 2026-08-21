@@ -7,6 +7,9 @@ class MockConversationRepository implements ConversationRepository {
   const MockConversationRepository();
 
   @override
+  Future<List<ConversationThread>> threads() async => ChatMockData.threads();
+
+  @override
   Future<List<ChatMessage>> messages(String appointmentId) async =>
       ChatMockData.thread();
 
@@ -14,6 +17,8 @@ class MockConversationRepository implements ConversationRepository {
   Future<ChatMessage> send({
     required String appointmentId,
     required String body,
+    String? clientId,
+    Map<String, dynamic>? attachment,
   }) async => ChatMessage(
     id: 'local-${DateTime.now().microsecondsSinceEpoch}',
     text: body,

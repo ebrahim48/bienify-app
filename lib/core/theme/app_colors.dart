@@ -273,6 +273,16 @@ class AppColors {
   /// `log-out.svg` is stroked with it and the two must match exactly.
   static const Color logoutFill = Color(0xFFD00416);
 
+  /// The softer half of a two-action choice — "Request refund" beside
+  /// "Reschedule".
+  ///
+  /// Pink rather than a second blue so the pair reads as one decision with a
+  /// preferred answer, and pink rather than [logoutFill] because asking for
+  /// your own money back is not destructive: a red button would make the
+  /// patient hesitate over the option that is entirely theirs to take.
+  static const Color secondaryActionFill = Color(0xFFFFE4EC);
+  static const Color secondaryActionInk = Color(0xFFB3245B);
+
   /// Muted indigo of the profile menu labels. Lighter than [authInk]: the
   /// rows are navigation, not content.
   static const Color menuLabel = Color(0xFF888AAF);
