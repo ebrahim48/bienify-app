@@ -1,3 +1,4 @@
+import '../../../../../../core/models/chat_thread.dart';
 import '../../domain/entities/conversation.dart';
 
 /// The sample thread shown in the Message design.
@@ -30,7 +31,7 @@ class ChatMockData {
   /// it and so falls back to the read-only sample.
   static const ConversationPeer _listedPeer = ConversationPeer(
     id: 'doc-2',
-    appointmentId: 'appt-mock-1',
+    thread: ChatThread.consultation('appt-mock-1'),
     name: 'Dr. Emmanuel Okafor',
     specialty: 'Cardiologist',
     isOnline: true,
@@ -39,7 +40,7 @@ class ChatMockData {
   /// A doctor the patient has consulted before, so the list is not one row.
   static const ConversationPeer _pastPeer = ConversationPeer(
     id: 'doc-5',
-    appointmentId: 'appt-mock-2',
+    thread: ChatThread.consultation('appt-mock-2'),
     name: 'Dr. Linda Chen',
     specialty: 'Pediatric Dentist',
   );
@@ -59,6 +60,39 @@ class ChatMockData {
     ),
   ];
 
+  /// The courier's sample conversation.
+  ///
+  /// Separate from [thread] because that one is a consultation: shown under a
+  /// courier's name it had them quoting a consultation fee and offering to
+  /// book a video call, which is not a thing a courier does.
+  static List<ChatMessage> deliveryThread() {
+    final day = DateTime(2026, 4, 1);
+    DateTime at(int hour, int minute) =>
+        DateTime(day.year, day.month, day.day, hour, minute);
+
+    return [
+      ChatMessage(
+        id: 'd1',
+        text: 'I have collected your order and I am on the way.',
+        sentAt: at(12, 37),
+        author: MessageAuthor.peer,
+      ),
+      ChatMessage(
+        id: 'd2',
+        text: 'Thank you. Please use the side gate, the front bell is broken.',
+        sentAt: at(12, 38),
+        author: MessageAuthor.me,
+        readAt: at(12, 38),
+      ),
+      ChatMessage(
+        id: 'd3',
+        text: 'Noted. Around ten minutes away.',
+        sentAt: at(12, 39),
+        author: MessageAuthor.peer,
+      ),
+    ];
+  }
+
   static List<ChatMessage> thread() {
     final day = DateTime(2026, 4, 1);
     DateTime at(int hour, int minute) =>
@@ -69,31 +103,31 @@ class ChatMockData {
         id: 'm1',
         text: 'Hello! How can I help you today?',
         sentAt: at(12, 37),
-        author: MessageAuthor.doctor,
+        author: MessageAuthor.peer,
       ),
       ChatMessage(
         id: 'm2',
         text: 'ok',
         sentAt: at(12, 37),
-        author: MessageAuthor.patient,
+        author: MessageAuthor.me,
       ),
       ChatMessage(
         id: 'm3',
         text: _reply,
         sentAt: at(12, 37),
-        author: MessageAuthor.doctor,
+        author: MessageAuthor.peer,
       ),
       ChatMessage(
         id: 'm4',
         text: 'consultation fee ?',
         sentAt: at(12, 38),
-        author: MessageAuthor.patient,
+        author: MessageAuthor.me,
       ),
       ChatMessage(
         id: 'm5',
         text: _reply,
         sentAt: at(12, 38),
-        author: MessageAuthor.doctor,
+        author: MessageAuthor.peer,
       ),
       ChatMessage(
         id: 'm6',
@@ -101,7 +135,7 @@ class ChatMockData {
             "I've set the consultation fee at 12 XAF for a 30-minute video "
             'consultation. This includes follow-up messages for 24 hours.',
         sentAt: at(12, 38),
-        author: MessageAuthor.doctor,
+        author: MessageAuthor.peer,
       ),
     ];
   }
@@ -111,6 +145,6 @@ class ChatMockData {
     id: 'auto-${DateTime.now().microsecondsSinceEpoch}',
     text: _reply,
     sentAt: DateTime.now(),
-    author: MessageAuthor.doctor,
+    author: MessageAuthor.peer,
   );
 }

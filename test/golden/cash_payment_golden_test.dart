@@ -1,8 +1,8 @@
+import 'package:bienify_app/features/Role/patient/cash_payment_process/presentation/controllers/payment_confirmed_controller.dart';
 import 'package:bienify_app/app.dart';
 import 'package:bienify_app/core/di/dependency_injection.dart';
 import 'package:bienify_app/core/localization/app_translations.dart';
 import 'package:bienify_app/core/theme/app_theme.dart';
-import 'package:bienify_app/features/Role/patient/cash_payment_process/presentation/bindings/cash_payment_bindings.dart';
 import 'package:bienify_app/features/Role/patient/cash_payment_process/domain/entities/cash_payment.dart';
 import 'package:bienify_app/features/Role/patient/cash_payment_process/presentation/controllers/cash_payment_controller.dart';
 import 'package:bienify_app/features/Role/patient/cash_payment_process/presentation/controllers/payment_points_controller.dart';
@@ -140,10 +140,16 @@ void main() {
   });
 
   testWidgets('Payment Confirmed', (tester) async {
+    // The confirmation names the code the server issued. It fell back to the
+    // design's sample when there was none, so a patient could be shown — and
+    // quote at a counter — a payment reference nobody had issued them.
+    Get.put(
+      PaymentConfirmedController(totalLabel: r'$74.89', code: '#BIE12345'),
+    );
+
     await pump(
       tester,
       const PaymentConfirmedScreen(),
-      binding: PaymentConfirmedBinding(),
       size: const Size(390, 1160),
     );
     await settleImages(tester);

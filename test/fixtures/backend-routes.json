@@ -212,6 +212,10 @@
   "/api/v1/cash-intents/confirm"
  ],
  [
+  "GET",
+  "/api/v1/config"
+ ],
+ [
   "POST",
   "/api/v1/consultations/:id/attachments/upload-url"
  ],
@@ -257,6 +261,10 @@
  ],
  [
   "POST",
+  "/api/v1/deliveries/:id/attachments/upload-url"
+ ],
+ [
+  "POST",
   "/api/v1/deliveries/:id/claim"
  ],
  [
@@ -266,6 +274,14 @@
  [
   "PATCH",
   "/api/v1/deliveries/:id/location"
+ ],
+ [
+  "GET",
+  "/api/v1/deliveries/:id/messages"
+ ],
+ [
+  "POST",
+  "/api/v1/deliveries/:id/messages"
  ],
  [
   "PATCH",
@@ -308,6 +324,10 @@
   "/api/v1/doctors/me/credentials"
  ],
  [
+  "POST",
+  "/api/v1/doctors/me/credentials/upload-url"
+ ],
+ [
   "GET",
   "/api/v1/doctors/me/stats"
  ],
@@ -324,8 +344,20 @@
   "/api/v1/lab-orders"
  ],
  [
+  "PATCH",
+  "/api/v1/lab-orders/:id/facility"
+ ],
+ [
   "POST",
   "/api/v1/lab-orders/:id/respond"
+ ],
+ [
+  "POST",
+  "/api/v1/lab-orders/:id/result"
+ ],
+ [
+  "POST",
+  "/api/v1/lab-orders/:id/result/upload-url"
  ],
  [
   "PATCH",
@@ -429,6 +461,10 @@
  ],
  [
   "GET",
+  "/api/v1/pharmacies/me/stats"
+ ],
+ [
+  "GET",
   "/api/v1/pharmacies/stock-alerts"
  ],
  [
@@ -480,6 +516,10 @@
   "/api/v1/riders/me/documents"
  ],
  [
+  "POST",
+  "/api/v1/riders/me/documents/upload-url"
+ ],
+ [
   "GET",
   "/api/v1/testing-centres"
  ],
@@ -490,6 +530,10 @@
  [
   "PATCH",
   "/api/v1/users/me"
+ ],
+ [
+  "POST",
+  "/api/v1/users/me/address/door-image/upload-url"
  ],
  [
   "POST",

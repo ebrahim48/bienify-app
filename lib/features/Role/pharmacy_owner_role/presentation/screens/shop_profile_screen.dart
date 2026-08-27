@@ -24,38 +24,52 @@ class ShopProfileScreen extends GetView<ShopProfileController> {
       // Not scrollable, so the log-out bar sits at the foot of the page the
       // way the design places it.
       scrollable: false,
+      // The content scrolls while the log-out bar stays pinned to the foot.
+      //
+      // It used to be a trailing `Spacer`, which assumes the content always
+      // fits and cannot shrink when it does not: the equivalent doctor screen
+      // overflowed by 34px on a short viewport.
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const ScreenTopGap(),
-          Text(
-            AppStrings.profileTitle.tr,
-            style: AppTextStyles.headlineLarge.rc(AppColors.authInk),
-          ),
-          AppSpacing.gapV(AppSpacing.sm),
-          Obx(
-            () => RoleProfileCard(
-              name: controller.shop.value.ownerName,
-              phone: controller.shop.value.phone,
-              photoUrl: controller.shop.value.photoUrl,
-              onEdit: controller.edit,
-              onChangePhoto: controller.changePhoto,
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                const ScreenTopGap(),
+                Text(
+                  AppStrings.profileTitle.tr,
+                  style: AppTextStyles.headlineLarge.rc(AppColors.authInk),
+                ),
+                AppSpacing.gapV(AppSpacing.sm),
+                Obx(
+                  () => RoleProfileCard(
+                    name: controller.shop.value.ownerName,
+                    phone: controller.shop.value.phone,
+                    photoUrl: controller.shop.value.photoUrl,
+                    onEdit: controller.edit,
+                    onChangePhoto: () => controller.changePhoto(context),
+                  ),
+                ),
+                AppSpacing.gapV(AppSpacing.sm),
+                // Payments and Credit is the patient app's own wallet — a shop
+                // keeps its money in the same place, so it is navigated to.
+                AppMenuRow(
+                  label: AppStrings.paymentsAndCredit.tr,
+                  labelColor: AppColors.authInk,
+                  onTap: controller.openPayments,
+                ),
+                AppMenuRow(
+                  label: AppStrings.settings.tr,
+                  labelColor: AppColors.authInk,
+                  onTap: controller.openSettings,
+                ),
+                ],
+              ),
             ),
           ),
-          AppSpacing.gapV(AppSpacing.sm),
-          // Payments and Credit is the patient app's own wallet — a shop
-          // keeps its money in the same place, so it is navigated to.
-          AppMenuRow(
-            label: AppStrings.paymentsAndCredit.tr,
-            labelColor: AppColors.authInk,
-            onTap: controller.openPayments,
-          ),
-          AppMenuRow(
-            label: AppStrings.settings.tr,
-            labelColor: AppColors.authInk,
-            onTap: controller.openSettings,
-          ),
-          const Spacer(),
           DestructiveBar(
             iconAsset: AppIcons.logout,
             label: AppStrings.logOut.tr,

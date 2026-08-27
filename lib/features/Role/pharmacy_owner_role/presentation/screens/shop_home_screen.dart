@@ -11,7 +11,6 @@ import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/utils/responsive.dart';
 import '../../../../../core/widgets/app_scaffold.dart';
 import '../../../../../core/widgets/app_avatar.dart';
-import '../../data/static/pharmacy_shop_data.dart';
 import '../../domain/entities/pharmacy_shop.dart';
 import '../controllers/shop_home_controller.dart';
 import '../controllers/shop_orders_controller.dart';
@@ -38,7 +37,7 @@ class ShopHomeScreen extends GetView<ShopHomeController> {
             ),
           ),
           AppSpacing.gapV(AppSpacing.sm),
-          const _Stats(),
+          _Stats(controller: controller),
           AppSpacing.gapV(AppSpacing.base),
           _RecentOrders(onSeeAll: controller.openAllOrders),
           AppSpacing.gapV(AppSpacing.base),
@@ -202,11 +201,15 @@ class _BalanceCard extends StatelessWidget {
 
 /// Two rows of two figures.
 class _Stats extends StatelessWidget {
-  const _Stats();
+  const _Stats({required this.controller});
+
+  final ShopHomeController controller;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Obx(() {
+      final stats = controller.stats.value;
+      return Column(
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,7 +219,7 @@ class _Stats extends StatelessWidget {
                 icon: Icons.inventory_2_outlined,
                 surface: AppColors.shopOrdersSurface,
                 ink: AppColors.shopOrdersInk,
-                value: PharmacyShopData.newOrders,
+                value: '${stats.newOrders}',
                 label: AppStrings.newOrdersStat.tr,
               ),
             ),
@@ -226,7 +229,7 @@ class _Stats extends StatelessWidget {
                 icon: Icons.description_outlined,
                 surface: AppColors.shopScriptsSurface,
                 ink: AppColors.shopScriptsInk,
-                value: PharmacyShopData.newPrescriptions,
+                value: '${stats.newPrescriptions}',
                 label: AppStrings.newPrescriptionsStat.tr,
               ),
             ),
@@ -241,7 +244,7 @@ class _Stats extends StatelessWidget {
                 icon: Icons.attach_money_rounded,
                 surface: AppColors.shopEarningsSurface,
                 ink: AppColors.shopEarningsInk,
-                value: PharmacyShopData.todaysEarnings,
+                value: stats.todaysEarningsLabel,
                 label: AppStrings.todaysEarnings.tr,
               ),
             ),
@@ -251,14 +254,15 @@ class _Stats extends StatelessWidget {
                 icon: Icons.warning_amber_rounded,
                 surface: AppColors.shopStockSurface,
                 ink: AppColors.shopStockInk,
-                value: PharmacyShopData.lowStockItems,
+                value: '${stats.stockAlerts}',
                 label: AppStrings.lowStockItems.tr,
               ),
             ),
           ],
         ),
-      ],
-    );
+        ],
+      );
+    });
   }
 }
 

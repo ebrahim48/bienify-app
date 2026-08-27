@@ -36,7 +36,7 @@ class PaymentPendingScreen extends GetView<CashPaymentController> {
           children: [
             // Full-bleed, so it sits flush with the screen edges.
             CodeCopiedBanner(
-              code: controller.code.code,
+              code: (controller.code?.code ?? ''),
               isVisible: controller.justCopied.value,
             ),
             Padding(
@@ -48,7 +48,7 @@ class PaymentPendingScreen extends GetView<CashPaymentController> {
                   const _WaitingPanel(),
                   AppSpacing.gapV(AppSpacing.md),
                   PaymentCodeCard.compact(
-                    code: controller.code.code,
+                    code: (controller.code?.code ?? ''),
                     justCopied: controller.justCopied.value,
                     onCopy: controller.copyCode,
                   ),
@@ -57,7 +57,7 @@ class PaymentPendingScreen extends GetView<CashPaymentController> {
                     icon: Icons.timer_outlined,
                     title: AppStrings.timeRemaining.tr,
                     subtitle: AppStrings.codeValidFrom.trParams({
-                      'hours': '${controller.code.validFor}',
+                      'hours': '${(controller.code?.validFor ?? '')}',
                     }),
                     value: controller.countdownLabel,
                     iconColor: AppColors.timerAccent,

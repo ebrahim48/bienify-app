@@ -4,7 +4,6 @@ import '../../../../../core/constants/app_strings.dart';
 import '../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../core/widgets/app_snackbar.dart';
-import '../../data/static/doctor_orders_data.dart';
 import '../../domain/entities/test_request.dart';
 import '../../domain/repositories/doctor_practice_repository.dart';
 
@@ -50,22 +49,58 @@ class TestRequestController extends GetxController {
 
   bool get isRadiology => kind == OrderKind.radiology;
 
+  /// The orderable tests for this discipline, from `GET /diagnostic-tests`.
+  ///
+  /// Hardcoded before this, so a test the admin added never appeared in the
+  /// wizard and one they retired never left it.
+  final RxList<DiagnosticTest> catalogue = <DiagnosticTest>[].obs;
+
+  final RxBool isLoadingCatalogue = true.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _loadCatalogue();
+  }
+
+  Future<void> _loadCatalogue() async {
+    isLoadingCatalogue.value = true;
+    try {
+      catalogue.value = await _repository.testCatalogue(radiology: isRadiology);
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+    } finally {
+      isLoadingCatalogue.value = false;
+    }
+  }
+
   /// The catalogue, narrowed by the search box. The free-text row at the foot
   /// is drawn by the screen, not stored here — it is an affordance, not a test.
   List<String> get visibleTests {
-    final catalogue = isRadiology
-        ? DoctorOrdersData.radiologyTests
-        : DoctorOrdersData.labTests;
+    final names = catalogue.map((t) => t.name).toList();
     final search = query.value.trim().toLowerCase();
-    if (search.isEmpty) return catalogue;
-    return catalogue
-        .where((test) => test.toLowerCase().contains(search))
-        .toList();
+    if (search.isEmpty) return names;
+    return names.where((test) => test.toLowerCase().contains(search)).toList();
   }
 
-  /// The imaging flow draws the same catalogue again as its subtests, which is
-  /// what the design shows.
-  List<String> get subtests => DoctorOrdersData.radiologyTests;
+  /// The body regions an imaging study can cover, taken from the categories the
+  /// catalogue actually groups its radiology tests under.
+  ///
+  /// This used to redraw the modality list a second time, so step two offered
+  /// "MRI" as a sub-study of "MRI".
+  List<String> get subtests =>
+      catalogue.map((t) => t.category).toSet().toList()..sort();
+
+  /// The catalogue row behind the current selection, which is what carries the
+  /// modality the order has to be filed with.
+  DiagnosticTest? get selectedCatalogueTest {
+    final name = selectedTest.value;
+    if (name == null) return null;
+    for (final test in catalogue) {
+      if (test.name == name) return test;
+    }
+    return null;
+  }
 
   String get title => isRadiology
       ? AppStrings.requestRadiologyTest.tr
@@ -146,16 +181,20 @@ class TestRequestController extends GetxController {
       AppSnackbar.info(AppStrings.testNeedsPatient.tr);
       return;
     }
-    final test = selectedSubtest.value ?? selectedTest.value;
+    // The study is the test; the second step narrows *where* on the body, which
+    // is the order's body region rather than a different test. It used to be
+    // sent as the test name, so an MRI brain was filed as an order for
+    // "Head and neck".
+    final test = selectedTest.value;
     if (test == null) {
       AppSnackbar.info(AppStrings.pickATestFirst.tr);
       return;
     }
 
-    // Priority and the signature have nowhere to go on a lab order, so they
-    // ride along in the note rather than being dropped without trace.
+    // Priority is a field on the order now, so the note stays clinical. It used
+    // to be prepended as text because the order had nowhere to carry it, which
+    // is why every seeded indication began "Routine — ".
     final note = [
-      priorityLabel(priority.value),
       if (clinicalNotes.value.trim().isNotEmpty) clinicalNotes.value.trim(),
       if (instructions.value.trim().isNotEmpty) instructions.value.trim(),
     ].join(' — ');
@@ -166,6 +205,10 @@ class TestRequestController extends GetxController {
         patientId: patient.id,
         tests: [test],
         notes: note,
+        imaging: isRadiology,
+        modality: selectedCatalogueTest?.modality,
+        bodyRegion: isRadiology ? selectedSubtest.value : null,
+        priority: priority.value.name,
       );
     } on AppException catch (e) {
       AppSnackbar.error(e.message);

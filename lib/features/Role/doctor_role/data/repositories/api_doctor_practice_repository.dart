@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import '../../../../../core/constants/api_constants.dart';
+import '../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../core/network/api_client.dart';
+import '../../../../../core/network/attachment_uploader.dart';
 import '../../../../../core/network/mappers.dart';
 import '../../../patient/medical_vault/domain/entities/medical_record.dart';
 import '../../domain/entities/doctor_practice.dart';
@@ -8,9 +12,10 @@ import '../../domain/repositories/doctor_practice_repository.dart';
 
 /// The practitioner's practice, served by the API.
 class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
-  const ApiDoctorPracticeRepository(this._api);
+  const ApiDoctorPracticeRepository(this._api, this._uploader);
 
   final ApiClient _api;
+  final AttachmentUploader _uploader;
 
   /// The server caps a page at 100, and the doctor's list has no paging in the
   /// design — so the oldest bookings fall off rather than the screen showing a
@@ -28,12 +33,15 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
   // ─── Dashboard ───────────────────────────────────────────────────────────
 
   @override
-  Future<DoctorDashboard> dashboard() async {
+  Future<DoctorDashboard> dashboard({ChartRange range = ChartRange.weekly}) async {
     // Four independent reads; run together so the dashboard costs one round
     // trip's latency rather than four.
     final results = await Future.wait([
       _api.getMap(ApiConstants.usersMe),
-      _api.getMap(ApiConstants.doctorsMeStats),
+      _api.getMap(
+        ApiConstants.doctorsMeStats,
+        query: {'range': range == ChartRange.monthly ? 'monthly' : 'weekly'},
+      ),
       _api.getMap(ApiConstants.wallet),
       _api.getMap(ApiConstants.walletEarnings),
       _api.getMap(ApiConstants.doctorsMe),
@@ -61,11 +69,30 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
       todaysPatients: '${Api.rows(stats['todayVisits']).length}',
       totalEarned: money(Api.majorUnits(earned['lifetimeMinor']), currency),
       totalPatients: '${Api.integer(appointments['total'])}',
-      load: Api.rows(stats['load']).map(_dayLoadFrom).toList(),
+      load: _chartLoad(Api.rows(stats['load']), range),
       visits: Api.rows(stats['todayVisits']).map(_visitFrom).toList(),
       consultationFee: Api.majorUnits(practice['consultationFeeMinor']),
       currency: Api.str(practice['currency'], currency),
     );
+  }
+
+  /// Monthly returns 30 daily points, and the chart draws fixed 26px bars —
+  /// thirty of them do not fit the 390pt design width. Seven-day buckets keep
+  /// the same five-or-so bars the layout was built for and stay truthful about
+  /// the totals; weekly passes straight through as one bar per day.
+  List<DayLoad> _chartLoad(List<Map<String, dynamic>> rows, ChartRange range) {
+    if (range == ChartRange.weekly) return rows.map(_dayLoadFrom).toList();
+
+    final buckets = <DayLoad>[];
+    for (var start = 0; start < rows.length; start += 7) {
+      final end = (start + 7).clamp(0, rows.length);
+      var count = 0;
+      for (var i = start; i < end; i++) {
+        count += Api.integer(rows[i]['count']);
+      }
+      buckets.add(DayLoad(dayLabel: 'W${buckets.length + 1}', count: count));
+    }
+    return buckets;
   }
 
   /// `{date: 2026-08-05, count: 1}` → a bar captioned `Wed`.
@@ -258,6 +285,16 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
       experience: '${Api.integer(practice['yearsOfExperience'])}',
       biography: Api.str(practice['bio']),
       licenceNumber: Api.str(practice['licenseNumber']),
+      credentials: Api.rows(practice['credentials'])
+          .map(
+            (row) => PractitionerCredential(
+              kind: Api.str(row['kind'], 'document'),
+              uploadedAt: Api.date(row['uploadedAt']),
+            ),
+          )
+          .toList(),
+      verificationStatus: Api.str(practice['verificationStatus'], 'pending'),
+      verificationNote: Api.str(practice['verificationNote']),
       language: languages is List && languages.isNotEmpty
           ? Api.str(languages.first)
           : '',
@@ -554,12 +591,23 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
     required List<String> tests,
     String? notes,
     String? appointmentId,
+    bool imaging = false,
+    String? modality,
+    String? bodyRegion,
+    String priority = 'routine',
   }) async {
     await _api.post(
       ApiConstants.postLabOrders,
       body: {
         'patientId': patientId,
         'tests': tests,
+        'kind': imaging ? 'imaging' : 'lab',
+        // Priority used to be prepended to the note as text, because the order
+        // had nowhere to put it. It is a field now, so the note stays clinical.
+        'priority': priority,
+        if (imaging && modality != null) 'modality': modality,
+        if (imaging && bodyRegion != null && bodyRegion.isNotEmpty)
+          'bodyRegion': bodyRegion,
         if (notes != null && notes.isNotEmpty) 'notes': notes,
         if (appointmentId != null && appointmentId.isNotEmpty)
           'appointmentId': appointmentId,
@@ -567,14 +615,30 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
     );
   }
 
+  @override
+  Future<List<DiagnosticTest>> testCatalogue({required bool radiology}) async {
+    final rows = await _api.getList(
+      ApiConstants.diagnosticTests,
+      query: {
+        'discipline': radiology ? 'radiology' : 'laboratory',
+        'limit': _pageSize,
+      },
+    );
+    return rows.map(diagnosticTestFrom).toList();
+  }
+
   /// `GET /lab-orders` answers "orders I am the subject of" by default;
   /// `role: doctor` is what turns that into "orders I requested" — the same
   /// switch `_asDoctor` already makes for `GET /appointments`.
   @override
-  Future<List<TestRequest>> labRequests() async {
+  Future<List<TestRequest>> labRequests({bool imaging = false}) async {
     final rows = await _api.getList(
       ApiConstants.labOrders,
-      query: {'role': 'doctor', 'limit': _pageSize},
+      query: {
+        'role': 'doctor',
+        'kind': imaging ? 'imaging' : 'lab',
+        'limit': _pageSize,
+      },
     );
     return rows
         .where((row) => Api.str(row['status']) != 'cancelled')
@@ -590,6 +654,40 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
     await _api.patch(
       ApiConstants.updateLabOrdersReview(labOrderId),
       body: {'message': message},
+    );
+  }
+
+  @override
+  Future<void> uploadCredential({
+    required String kind,
+    required String path,
+    required String mimeType,
+    void Function(double progress)? onProgress,
+  }) async {
+    final file = File(path);
+    final size = await file.length();
+
+    final issued = await _api.postMap(
+      ApiConstants.postDoctorsMeCredentialsUploadUrl,
+      body: {'contentType': mimeType},
+    );
+    final url = '${issued['url'] ?? ''}';
+    final key = '${issued['key'] ?? ''}';
+    if (url.isEmpty || key.isEmpty) {
+      throw UnknownException('The server did not issue an upload location');
+    }
+
+    await _uploader.putBytes(
+      url: url,
+      file: file,
+      mime: mimeType,
+      size: size,
+      onProgress: onProgress,
+    );
+
+    await _api.post(
+      ApiConstants.postDoctorsMeCredentials,
+      body: {'kind': kind, 's3Key': key},
     );
   }
 }

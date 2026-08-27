@@ -1,3 +1,4 @@
+import '../../../../../../core/models/chat_thread.dart';
 import 'dart:async';
 
 import 'package:get/get.dart';
@@ -125,7 +126,7 @@ class VideoCallController extends GetxController {
     AppRoutes.chat,
     arguments: ConversationPeer(
       id: appointment.id,
-      appointmentId: appointment.id,
+      thread: ChatThread.consultation(appointment.id),
       name: appointment.doctorName,
       specialty: appointment.specialty,
       photoUrl: appointment.doctorPhotoUrl,

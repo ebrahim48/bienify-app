@@ -179,4 +179,17 @@ class ApiPharmacyShopRepository implements PharmacyShopRepository {
     );
     return rows.map(shopNotificationFrom).toList();
   }
+
+  @override
+  Future<ShopStats> stats() async {
+    final json = await _api.getMap(ApiConstants.pharmaciesMeStats);
+    return ShopStats(
+      newOrders: Api.integer(json['newOrders']),
+      preparing: Api.integer(json['preparing']),
+      newPrescriptions: Api.integer(json['newPrescriptions']),
+      todaysEarnings: Api.majorUnits(json['todaysEarningsMinor']),
+      lowStockItems: Api.integer(json['lowStockItems']),
+      outOfStockItems: Api.integer(json['outOfStockItems']),
+    );
+  }
 }

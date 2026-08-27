@@ -1,10 +1,16 @@
 import '../../../../../../core/constants/api_constants.dart';
+import '../../../../../../core/models/chat_thread.dart';
 import '../../../../../../core/network/api_client.dart';
 import '../../../../../../core/network/mappers.dart';
 import '../../domain/entities/conversation.dart';
 import '../../domain/repositories/conversation_repository.dart';
 
-/// A consultation's messages, served by the API.
+/// A thread's messages, served by the API.
+///
+/// One repository for both conversations: the consultation and delivery
+/// endpoints take the same body and return the same rows, so only the path
+/// differs — chosen from the thread rather than by having two repositories
+/// that would drift.
 class ApiConversationRepository implements ConversationRepository {
   const ApiConversationRepository(this._api, {required this.myUserId});
 
@@ -58,7 +64,7 @@ class ApiConversationRepository implements ConversationRepository {
             id: Api.id(doctor).isNotEmpty
                 ? Api.id(doctor)
                 : Api.id(thread['counterpartId']),
-            appointmentId: appointmentId,
+            thread: ChatThread.consultation(appointmentId),
             // Left empty when the join misses; the row localises the fallback,
             // which a repository has no business doing.
             name: Api.nameOf(doctor),
@@ -77,13 +83,20 @@ class ApiConversationRepository implements ConversationRepository {
     return threads;
   }
 
+  /// Where a thread's messages live. The two endpoints are interchangeable
+  /// apart from the path, which is the whole reason one repository serves both.
+  String _listPath(ChatThread thread) => thread.isDelivery
+      ? ApiConstants.deliveriesMessages(thread.id)
+      : ApiConstants.consultationsMessages(thread.id);
+
+  String _sendPath(ChatThread thread) => thread.isDelivery
+      ? ApiConstants.postDeliveriesMessages(thread.id)
+      : ApiConstants.postConsultationsMessages(thread.id);
+
   @override
-  Future<List<ChatMessage>> messages(String appointmentId) async {
+  Future<List<ChatMessage>> messages(ChatThread thread) async {
     final results = await Future.wait([
-      _api.get(
-        ApiConstants.consultationsMessages(appointmentId),
-        query: {'limit': _pageSize},
-      ),
+      _api.get(_listPath(thread), query: {'limit': _pageSize}),
       myUserId(),
     ]);
 
@@ -97,13 +110,13 @@ class ApiConversationRepository implements ConversationRepository {
 
   @override
   Future<ChatMessage> send({
-    required String appointmentId,
+    required ChatThread thread,
     required String body,
     String? clientId,
     Map<String, dynamic>? attachment,
   }) async {
     final data = await _api.postMap(
-      ApiConstants.postConsultationsMessages(appointmentId),
+      _sendPath(thread),
       body: {'body': body, 'clientId': ?clientId, 'attachment': ?attachment},
     );
     return chatMessageFrom(data, Api.str(data['senderId']));

@@ -116,6 +116,8 @@ class TestOrder {
     required this.orderedBy,
     required this.stage,
     this.facility,
+    this.reviewMessage,
+    this.document,
   });
 
   final String id;
@@ -129,6 +131,13 @@ class TestOrder {
 
   /// `Complete Blood Count • CBC with Differential`.
   final String title;
+
+  /// What the doctor wrote when they reviewed the result. Null until they have.
+  final String? reviewMessage;
+
+  /// The signed order sheet, built from this same row. Carried here so the
+  /// detail screen does not have to re-fetch to render it.
+  final TestOrderDocument? document;
 
   /// `Dr. Reed`.
   final String orderedBy;
@@ -155,69 +164,73 @@ class TestingCentre {
 }
 
 /// The full order document — the navy-headed sheet the doctor signed.
+/// The signed order sheet, built from the order itself.
+///
+/// This used to carry twenty-four fields and was filled from a single `const`
+/// fixture: a practice, a physician, an NPI, a DEA registration and a patient
+/// — "Margaret Sullivan", born March 1978 — none of whom were the person
+/// holding the phone. Every patient opening their own order read someone
+/// else's name, date of birth, insurer and member id.
+///
+/// It now carries only what `GET /lab-orders` and the signed-in account
+/// actually know. Practice address, NPI, DEA, insurance, member id and medical
+/// record number are gone rather than invented: NPI and DEA are US federal
+/// registrations that do not apply here at all, and insurance is a billing
+/// domain the platform has no model for.
 class TestOrderDocument {
   const TestOrderDocument({
-    required this.practiceName,
-    required this.practiceLine,
-    required this.practiceAddress,
-    required this.practiceContact,
     required this.kindLabel,
     required this.priorityLabel,
     required this.reference,
     required this.orderedOn,
-    required this.validForLabel,
     required this.patientName,
-    required this.dateOfBirth,
-    required this.medicalRecordNumber,
-    required this.insurance,
-    required this.memberId,
-    required this.modality,
-    required this.bodyRegion,
     required this.clinicalIndication,
-    required this.specialInstructions,
     required this.physicianName,
-    required this.physicianSpecialty,
-    required this.boardCertification,
-    required this.npi,
-    required this.dea,
-    required this.licence,
-    required this.signedOn,
+    this.dateOfBirth,
+    this.modality,
+    this.bodyRegion,
+    this.physicianSpecialty,
+    this.licence,
+    this.facility,
   });
 
-  final String practiceName;
-  final String practiceLine;
-  final String practiceAddress;
-  final String practiceContact;
-
-  /// `RADIOLOGY ORDER`, in the badge beside the practice name.
+  /// `LAB ORDER` or `IMAGING ORDER`, in the badge beside the title.
   final String kindLabel;
 
+  /// `Priority: Routine`.
   final String priorityLabel;
+
+  /// A short, stable handle for the order, derived from its id.
   final String reference;
+
   final String orderedOn;
-  final String validForLabel;
 
   final String patientName;
-  final String dateOfBirth;
-  final String medicalRecordNumber;
-  final String insurance;
-  final String memberId;
 
-  final String modality;
-  final String bodyRegion;
+  /// Null when the account has no date of birth on it — an empty row is
+  /// honest, a made-up birthday on a medical order is not.
+  final String? dateOfBirth;
+
+  /// Imaging only.
+  final String? modality;
+  final String? bodyRegion;
+
+  /// Why the doctor ordered it, written at request time.
   final String clinicalIndication;
-  final String specialInstructions;
 
   final String physicianName;
-  final String physicianSpecialty;
-  final String boardCertification;
-  final String npi;
-  final String dea;
-  final String licence;
-  final String signedOn;
+  final String? physicianSpecialty;
+
+  /// The practitioner's licence number, from their verified profile.
+  final String? licence;
+
+  /// Where the patient chose to be tested, once they have.
+  final String? facility;
+
+  bool get isImaging => modality != null || bodyRegion != null;
 }
 
-/// What the doctor decided after reading an uploaded report.
+/// What the doctor decided once they read the result.
 enum ReviewOutcome {
   /// Still with the doctor.
   pending,
@@ -235,7 +248,6 @@ enum ReviewOutcome {
   furtherTestRequested,
 }
 
-/// A further test the doctor ordered off the back of a report.
 class FollowUpRequest {
   const FollowUpRequest({
     required this.name,

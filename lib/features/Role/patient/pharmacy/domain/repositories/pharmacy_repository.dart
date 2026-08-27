@@ -29,6 +29,26 @@ abstract class PharmacyRepository {
 
   /// The patient's orders, newest first.
   Future<List<PharmacyOrder>> orders();
+
+  /// The live route for one delivery — `GET /deliveries/:id/location`.
+  Future<DeliveryRoute> deliveryRoute(String deliveryId);
+
+  /// The delivery dispatched for an order, or null while there is none.
+  Future<String?> deliveryIdForOrder(String orderId);
+
+  /// The courier carrying a delivery, once one has taken it.
+  Future<Courier?> courierFor(String deliveryId);
+
+  /// What the platform charges to deliver, in major units.
+  Future<double> deliveryCharge();
+
+  /// Shops ranked by how much of a prescription they can actually dispense —
+  /// `GET /pharmacies/best-matches`.
+  ///
+  /// Needs a prescription the server knows about, which means one a doctor
+  /// issued. A photograph of a paper script is a vault document, not a
+  /// prescription, so that path has no id to rank against.
+  Future<List<PharmacyStore>> bestMatches(String prescriptionId);
 }
 
 /// An order the patient has placed.
@@ -40,6 +60,8 @@ class PharmacyOrder {
     required this.status,
     required this.placedAt,
     this.deliveryAddress = '',
+    this.pharmacyName = '',
+    this.deliveryFee = 0,
   });
 
   final String id;
@@ -50,4 +72,11 @@ class PharmacyOrder {
   final String status;
   final DateTime placedAt;
   final String deliveryAddress;
+
+  /// Who is filling it. The timeline used to name one demo pharmacy on every
+  /// patient's order.
+  final String pharmacyName;
+
+  /// What the customer was charged to have it brought. Zero when collecting.
+  final double deliveryFee;
 }

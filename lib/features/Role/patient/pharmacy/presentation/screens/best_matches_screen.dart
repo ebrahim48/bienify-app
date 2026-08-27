@@ -1,3 +1,4 @@
+import '../../../medical_vault/domain/entities/medical_record.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -30,9 +31,9 @@ class BestMatchesScreen extends GetView<PrescriptionController> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             AppSpacing.gapV(AppSpacing.base),
-            _PrescriptionBanner(prescription: controller.prescription),
+            _PrescriptionBanner(prescription: controller.prescription.value),
             AppSpacing.gapV(AppSpacing.base),
-            _SearchArea(area: controller.searchArea),
+            _SearchArea(area: controller.searchArea.value),
             AppSpacing.gapV(AppSpacing.base),
             Text(
               AppStrings.pharmaciesFound.trParams({
@@ -70,12 +71,18 @@ class BestMatchesScreen extends GetView<PrescriptionController> {
 class _PrescriptionBanner extends StatelessWidget {
   const _PrescriptionBanner({required this.prescription});
 
-  final Prescription prescription;
+  /// Null when the patient reached this screen by photographing a paper
+  /// script: that is a vault document, not a prescription the server issued,
+  /// so there is no doctor or medicine count to name.
+  final DigitalPrescription? prescription;
 
   static const double _badge = 48;
 
   @override
   Widget build(BuildContext context) {
+    final script = prescription;
+    if (script == null) return const SizedBox.shrink();
+
     return Container(
       padding: EdgeInsets.all(AppSpacing.base.w),
       decoration: BoxDecoration(
@@ -106,7 +113,7 @@ class _PrescriptionBanner extends StatelessWidget {
               children: [
                 Text(
                   AppStrings.prescriptionOf.trParams({
-                    'doctor': prescription.doctorName,
+                    'doctor': script.doctorName,
                   }),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -115,8 +122,8 @@ class _PrescriptionBanner extends StatelessWidget {
                 AppSpacing.gapV(AppSpacing.xxs),
                 Text(
                   AppStrings.medicinesIdentified.trParams({
-                    'count': '${prescription.medicineCount}',
-                    'status': prescription.uploadedLabel,
+                    'count': '${script.medications.length}',
+                    'status': script.reference,
                   }),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

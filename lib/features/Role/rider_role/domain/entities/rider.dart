@@ -31,6 +31,10 @@ class Rider {
     this.licenceNumber = '',
     this.photoUrl,
     this.phone = '',
+    this.zones = const [],
+    this.shareLiveLocation = true,
+    this.reviewCount = 0,
+    this.deliveriesCompleted = 0,
   });
 
   final String name;
@@ -41,6 +45,11 @@ class Rider {
   final double todaysEarnings;
   final int deliveriesToday;
   final double rating;
+
+  /// How many customers have rated them, and how much work they have finished.
+  /// A 5.0 from one delivery reads very differently from a 4.6 from forty.
+  final int reviewCount;
+  final int deliveriesCompleted;
 
   /// Whether the courier is accepting work.
   final bool isOnline;
@@ -58,6 +67,13 @@ class Rider {
   /// The courier's own picture, when the server has one.
   final String? photoUrl;
 
+  /// The areas they cover. Their own choice — empty until they make it.
+  final List<String> zones;
+
+  /// Whether they share position while carrying a parcel. On by default; the
+  /// customer's tracking map is what depends on it.
+  final bool shareLiveLocation;
+
   /// `+15550000004` — what the Profile tab prints under the name.
   final String phone;
 
@@ -73,6 +89,13 @@ class Rider {
     todaysEarnings: todaysEarnings,
     deliveriesToday: deliveriesToday,
     rating: rating,
+    // Carried through explicitly. Every field this misses silently reverts to
+    // its default — going online would have reset the courier's own rating,
+    // review count and completed deliveries to zero on the masthead.
+    reviewCount: reviewCount,
+    deliveriesCompleted: deliveriesCompleted,
+    zones: zones,
+    shareLiveLocation: shareLiveLocation,
     isOnline: isOnline ?? this.isOnline,
     email: email,
     country: country,
@@ -110,6 +133,7 @@ class DeliveryRequest {
     required this.pickupName,
     required this.customerName,
     required this.customerAddress,
+    this.customerId = '',
     required this.minutes,
     required this.distanceKm,
     required this.items,
@@ -129,6 +153,10 @@ class DeliveryRequest {
 
   final String customerName;
   final String customerAddress;
+
+  /// The customer's account, which the courier's thread needs for presence.
+  /// Empty on a job board row where the delivery is not yet theirs.
+  final String customerId;
 
   /// `12` — minutes to complete.
   final int minutes;
@@ -246,39 +274,48 @@ class RiderEarnings {
 }
 
 /// The live job the courier is on.
+/// The job a courier is currently on, as the tracking screen shows it.
+///
+/// It used to wrap a real job in a set of invented navigation figures: a road
+/// name ("Los Angels road"), an arrival time, a latest-arrival time, a
+/// minutes-away chip and a three-of-four step count — none of which anything
+/// computed. There is no routing service behind this screen: no road is
+/// resolved, no distance measured and no arrival estimated, so the courier was
+/// being told a journey nobody had planned.
+///
+/// What is real is where they are going, how far through the job they are, and
+/// the job itself.
 class ActiveDelivery {
   const ActiveDelivery({
-    required this.roadName,
-    required this.arrivingAtLabel,
-    required this.latestArrivalLabel,
-    required this.stepsLeft,
-    required this.minutesAway,
     required this.request,
-    required this.note,
-    required this.unreadMessages,
+    required this.status,
+    this.unreadMessages = 0,
   });
-
-  /// `Los Angels road`.
-  final String roadName;
-
-  /// `2:52 PM`.
-  final String arrivingAtLabel;
-
-  /// `3:15 PM`.
-  final String latestArrivalLabel;
-
-  final int stepsLeft;
-  final int minutesAway;
 
   final DeliveryRequest request;
 
-  /// What the customer asked for, shown when View Note is tapped.
-  final String note;
+  /// The server's delivery status, which is what the step bar reads.
+  final String status;
 
   final int unreadMessages;
+
+  /// Where the parcel is going. The heading on the tracking sheet.
+  String get destination => request.customerAddress;
+
+  /// How many of the four steps are done: claimed, collected, on the road,
+  /// handed over. Derived rather than declared, so it cannot disagree with the
+  /// status the server holds.
+  int get stepsDone => switch (status) {
+    'assigned' => 1,
+    'picked_up' => 2,
+    'in_transit' => 3,
+    'delivered' => 4,
+    _ => 0,
+  };
+
+  int get stepsLeft => 4 - stepsDone;
 }
 
-/// The receipt shown once a package changes hands.
 class DeliveryReceipt {
   const DeliveryReceipt({
     required this.orderId,

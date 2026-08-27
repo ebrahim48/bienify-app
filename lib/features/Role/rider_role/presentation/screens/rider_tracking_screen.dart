@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-import '../../../../../core/constants/app_assets.dart';
 import '../../../../../core/constants/app_strings.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
@@ -12,7 +11,6 @@ import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/utils/responsive.dart';
 import '../../../../../core/widgets/app_avatar.dart';
-import '../../../patient/pharmacy/data/static/pharmacy_mock_data.dart';
 import '../../domain/entities/rider.dart';
 import '../controllers/rider_orders_controller.dart';
 
@@ -22,15 +20,6 @@ import '../controllers/rider_orders_controller.dart';
 /// designs — it hangs over the sheet when View Note is tapped.
 class RiderTrackingScreen extends GetView<RiderOrdersController> {
   const RiderTrackingScreen({super.key});
-
-  static const LatLng _courier = LatLng(
-    PharmacyMockData.courierLatitude,
-    PharmacyMockData.courierLongitude,
-  );
-  static const LatLng _destination = LatLng(
-    PharmacyMockData.destinationLatitude,
-    PharmacyMockData.destinationLongitude,
-  );
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +31,7 @@ class RiderTrackingScreen extends GetView<RiderOrdersController> {
 
         return Stack(
           children: [
-            const Positioned.fill(child: _Map()),
+            Positioned.fill(child: _Map(controller: controller)),
             SafeArea(
               child: Padding(
                 padding: AppSpacing.pagePadding,
@@ -58,11 +47,9 @@ class RiderTrackingScreen extends GetView<RiderOrdersController> {
                 ),
               ),
             ),
-            Positioned(
-              left: AppSpacing.base.w,
-              top: AppSizes.xl5.h,
-              child: _AwayChip(minutes: delivery.minutesAway),
-            ),
+            // A "15 min away" chip used to sit here, from a constant. Nothing
+            // measures a distance or estimates an arrival on this screen, so
+            // there is no number to put in it.
             Align(
               alignment: Alignment.bottomCenter,
               child: _RouteSheet(delivery: delivery),
@@ -75,42 +62,71 @@ class RiderTrackingScreen extends GetView<RiderOrdersController> {
 }
 
 class _Map extends StatelessWidget {
-  const _Map();
+  const _Map({required this.controller});
+
+  final RiderOrdersController controller;
+
+  /// Used only to frame an empty map before a route lands — never as a pin.
+  /// The two constants this file held were drawn as real markers, so every job
+  /// showed the same road between the same two points.
+  static const LatLng _fallbackCentre = LatLng(18.4861, -69.9312);
 
   @override
   Widget build(BuildContext context) {
-    return GoogleMap(
-      initialCameraPosition: const CameraPosition(
-        target: RiderTrackingScreen._courier,
-        zoom: 12.5,
-      ),
-      // Not `const` sets: `Marker` and `Polyline` override `==`, which a
-      // constant set may not contain.
-      markers: {
-        const Marker(
-          markerId: MarkerId('courier'),
-          position: RiderTrackingScreen._courier,
+    return Obx(() {
+      final route = controller.route.value;
+      final courier = route?.courier;
+      final pickup = route?.pickup;
+      final dropoff = route?.dropoff;
+      final centre = courier ?? dropoff ?? pickup;
+
+      return GoogleMap(
+        initialCameraPosition: CameraPosition(
+          target: centre == null
+              ? _fallbackCentre
+              : LatLng(centre.lat, centre.lng),
+          zoom: 12.5,
         ),
-        const Marker(
-          markerId: MarkerId('destination'),
-          position: RiderTrackingScreen._destination,
-        ),
-      },
-      polylines: {
-        const Polyline(
-          polylineId: PolylineId('route'),
-          points: [
-            RiderTrackingScreen._courier,
-            RiderTrackingScreen._destination,
-          ],
-          color: AppColors.gray950,
-          width: 4,
-        ),
-      },
-      myLocationButtonEnabled: false,
-      zoomControlsEnabled: false,
-      mapToolbarEnabled: false,
-    );
+        // Not `const` sets: `Marker` and `Polyline` override `==`, which a
+        // constant set may not contain.
+        markers: {
+          if (courier != null)
+            Marker(
+              markerId: const MarkerId('courier'),
+              position: LatLng(courier.lat, courier.lng),
+            ),
+          if (pickup != null)
+            Marker(
+              markerId: const MarkerId('pickup'),
+              position: LatLng(pickup.lat, pickup.lng),
+              infoWindow: InfoWindow(title: pickup.label),
+            ),
+          if (dropoff != null)
+            Marker(
+              markerId: const MarkerId('destination'),
+              position: LatLng(dropoff.lat, dropoff.lng),
+              infoWindow: InfoWindow(title: dropoff.label),
+            ),
+        },
+        // Only with both ends known. A line to a pin that is not there would
+        // be a guess at a road.
+        polylines: {
+          if (courier != null && dropoff != null)
+            Polyline(
+              polylineId: const PolylineId('route'),
+              points: [
+                LatLng(courier.lat, courier.lng),
+                LatLng(dropoff.lat, dropoff.lng),
+              ],
+              color: AppColors.gray950,
+              width: 4,
+            ),
+        },
+        myLocationButtonEnabled: false,
+        zoomControlsEnabled: false,
+        mapToolbarEnabled: false,
+      );
+    });
   }
 }
 
@@ -171,33 +187,6 @@ class _HelpChip extends StatelessWidget {
   }
 }
 
-/// The white flag on the route saying how far off the courier is.
-class _AwayChip extends StatelessWidget {
-  const _AwayChip({required this.minutes});
-
-  final int minutes;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm.w,
-        vertical: AppSpacing.xs.h,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: AppRadius.rMd,
-      ),
-      child: Text(
-        AppStrings.minutesAway.trParams({'count': '$minutes'}),
-        style: AppTextStyles.titleSmall.rc(AppColors.gray900),
-      ),
-    );
-  }
-}
-
-/// Everything under the map: the road, the progress, both ends of the trip,
-/// the note and the way to finish.
 class _RouteSheet extends GetView<RiderOrdersController> {
   const _RouteSheet({required this.delivery});
 
@@ -223,43 +212,27 @@ class _RouteSheet extends GetView<RiderOrdersController> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Where the parcel is going, which is the one heading a courier
+            // needs. It used to read a road name that no lookup produced.
             Text(
-              delivery.roadName,
+              delivery.destination,
               textAlign: TextAlign.center,
               style: AppTextStyles.titleLarge.rc(AppColors.authInk),
-            ),
-            Text(
-              AppStrings.nowArriving.trParams({
-                'time': delivery.arrivingAtLabel,
-              }),
-              textAlign: TextAlign.center,
-              style: AppTextStyles.bodyMedium.rc(AppColors.gray500),
             ),
             AppSpacing.gapV(AppSpacing.sm),
             _StepBar(stepsLeft: delivery.stepsLeft),
             AppSpacing.gapV(AppSpacing.xs),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    AppStrings.stepsLeft.trParams({
-                      'count': '${delivery.stepsLeft}',
-                    }),
-                    style: AppTextStyles.bodyMedium.rc(AppColors.gray600),
-                  ),
-                ),
-                Text(
-                  AppStrings.latestArrival.trParams({
-                    'time': delivery.latestArrivalLabel,
-                  }),
-                  style: AppTextStyles.bodyMedium.rc(AppColors.gray600),
-                ),
-              ],
+            // The arrival and latest-arrival times that flanked this were both
+            // constants. The step count is derived from the delivery's own
+            // status, so it cannot disagree with what the server holds.
+            Text(
+              AppStrings.stepsLeft.trParams({
+                'count': '${delivery.stepsLeft}',
+              }),
+              style: AppTextStyles.bodyMedium.rc(AppColors.gray600),
             ),
             AppSpacing.gapV(AppSpacing.sm),
             _Endpoints(request: delivery.request),
-            AppSpacing.gapV(AppSpacing.sm),
-            _NoteRow(note: delivery.note),
             AppSpacing.gapV(AppSpacing.sm),
             _CustomerRow(
               name: delivery.request.customerName,
@@ -382,109 +355,6 @@ class _Endpoints extends StatelessWidget {
   }
 }
 
-/// The doorway photos, and the button that reveals what the customer asked
-/// for. The note hangs over the sheet rather than pushing it down, which is
-/// how the design draws it.
-class _NoteRow extends GetView<RiderOrdersController> {
-  const _NoteRow({required this.note});
-
-  final String note;
-
-  static const double _thumb = 44;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Row(
-          children: [
-            for (var index = 0; index < 2; index++) ...[
-              if (index > 0) AppSpacing.gapH(AppSpacing.xs2),
-              ClipRRect(
-                borderRadius: AppRadius.rMd,
-                child: Image.asset(
-                  AppAssets.reportDocument,
-                  width: _thumb.w,
-                  height: _thumb.w,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ],
-            const Spacer(),
-            _ViewNoteButton(onTap: controller.toggleNote),
-          ],
-        ),
-        Obx(
-          () => controller.isNoteVisible.value
-              ? Positioned(
-                  right: 0,
-                  top: _thumb.h,
-                  child: _NoteBubble(note: note),
-                )
-              : const SizedBox.shrink(),
-        ),
-      ],
-    );
-  }
-}
-
-class _ViewNoteButton extends StatelessWidget {
-  const _ViewNoteButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  static const double _height = 36;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.actionFill,
-      borderRadius: AppRadius.rFull,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          height: _height.h,
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.base.w),
-          child: Center(
-            widthFactor: 1,
-            child: Text(
-              AppStrings.viewNote.tr,
-              style: AppTextStyles.titleSmall.rc(AppColors.actionLabel),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NoteBubble extends StatelessWidget {
-  const _NoteBubble({required this.note});
-
-  final String note;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.gray400,
-      borderRadius: AppRadius.rMd,
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm.w,
-          vertical: AppSpacing.xs.h,
-        ),
-        child: Text(
-          note,
-          style: AppTextStyles.bodyMedium.rc(AppColors.gray900),
-        ),
-      ),
-    );
-  }
-}
-
-/// The customer's avatar, and the chat with its unread count.
 class _CustomerRow extends GetView<RiderOrdersController> {
   const _CustomerRow({required this.name, required this.unread});
 

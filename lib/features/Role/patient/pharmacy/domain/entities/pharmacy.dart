@@ -1,10 +1,10 @@
 /// Shapes used across the Pharmacy journey.
 ///
-/// **Names only, by design.** This feature is UI-first: no repository, use
-/// case or data source, and nothing calls an API. The models exist so the
-/// widgets have typed inputs and the swap to live data is a matter of
-/// filling these in.
+/// The types the pharmacy screens are built on. Filled from the API by
+/// `PharmacyRepository` and the mappers in `core/network/mappers.dart`.
 library;
+
+export '../../../../../../core/models/delivery_address.dart';
 
 /// A product in the catalogue or on a prescription.
 class Medicine {
@@ -133,24 +133,6 @@ class Prescription {
 }
 
 /// Where an order is delivered.
-class DeliveryAddress {
-  const DeliveryAddress({
-    required this.line1,
-    required this.line2,
-    this.note,
-    this.doorImageName,
-  });
-
-  final String line1;
-  final String line2;
-
-  /// Courier instructions.
-  final String? note;
-
-  /// File name of the door photo, when one has been attached.
-  final String? doorImageName;
-}
-
 /// The stages an order moves through, in order.
 enum OrderStage {
   placed,
@@ -173,4 +155,70 @@ class OrderStep {
   final OrderStage stage;
   final String title;
   final String subtitle;
+}
+
+/// One point on the tracking map.
+class MapPoint {
+  const MapPoint({required this.lat, required this.lng, this.label = ''});
+
+  final double lat;
+  final double lng;
+
+  /// The pharmacy's name, or the delivery address. Empty for the courier.
+  final String label;
+}
+
+/// Where the courier is, where they set off from, and where they are going.
+///
+/// Every field is optional and independently so. A pharmacy that has not
+/// recorded its coordinates has no pickup pin; an address the patient typed
+/// without granting location has no destination; and a courier who has not
+/// reported yet has no position. A missing pin is honest — the four constants
+/// this replaces put every order on the same route.
+class DeliveryRoute {
+  const DeliveryRoute({
+    required this.status,
+    this.courier,
+    this.pickup,
+    this.dropoff,
+    this.reportedAt,
+  });
+
+  final String status;
+  final MapPoint? courier;
+  final MapPoint? pickup;
+  final MapPoint? dropoff;
+
+  /// When the courier last reported. A position from an hour ago is not a
+  /// live one, and the sheet says so.
+  final DateTime? reportedAt;
+
+  bool get hasAnyPoint => courier != null || pickup != null || dropoff != null;
+}
+
+/// The courier carrying an order, as the tracking sheet shows them.
+class Courier {
+  const Courier({
+    required this.id,
+    required this.name,
+    this.photoUrl = '',
+    this.rating = 0,
+    this.reviewCount = 0,
+    this.vehicleType = '',
+    this.city = '',
+  });
+
+  final String id;
+  final String name;
+  final String photoUrl;
+
+  /// Zero means nobody has rated them yet, which the sheet says rather than
+  /// printing a score. It used to show 4.9 from a constant for every courier.
+  final double rating;
+  final int reviewCount;
+
+  final String vehicleType;
+  final String city;
+
+  bool get hasRating => reviewCount > 0;
 }

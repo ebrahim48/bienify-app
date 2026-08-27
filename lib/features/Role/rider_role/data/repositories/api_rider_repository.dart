@@ -1,14 +1,20 @@
+import '../../../patient/pharmacy/domain/entities/pharmacy.dart';
+import 'dart:io';
+
 import '../../../../../core/constants/api_constants.dart';
+import '../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../core/network/api_client.dart';
+import '../../../../../core/network/attachment_uploader.dart';
 import '../../../../../core/network/mappers.dart';
 import '../../domain/entities/rider.dart';
 import '../../domain/repositories/rider_repository.dart';
 
 /// The courier, served by the API.
 class ApiRiderRepository implements RiderRepository {
-  const ApiRiderRepository(this._api);
+  const ApiRiderRepository(this._api, this._uploader);
 
   final ApiClient _api;
+  final AttachmentUploader _uploader;
 
   static const int _pageSize = 100;
 
@@ -33,18 +39,24 @@ class ApiRiderRepository implements RiderRepository {
       location: city,
       todaysEarnings: Api.majorUnits(earned['todayMinor']),
       deliveriesToday: Api.integer(earned['todayCount']),
-      // The server keeps no rider rating; the masthead prints a dash rather
-      // than a number nobody has earned. See docs/API-GAPS.md.
-      rating: 0,
+      // Their own standing, from reviews customers wrote on deliveries they
+      // completed. `GET /riders/me` was not returning it, so the masthead
+      // printed a dash where a real figure had always been computable.
+      rating: Api.decimal(Api.map(profile['rating'])['average']),
+      reviewCount: Api.integer(Api.map(profile['rating'])['count']),
+      deliveriesCompleted: Api.integer(profile['deliveriesCompleted']),
       isOnline: profile['isAvailable'] == true,
       email: Api.str(user['email']),
-      // A rider profile stores one free-text city and no country. Copying the
-      // city into it printed "Country: Springfield" on the edit form, so the
-      // field is left empty and its picker shows its own default instead.
-      // See docs/API-GAPS.md.
-      country: '',
+      // The profile carries these now. It held only a city before, so the
+      // country was blanked and the address printed the city back — and
+      // whatever the courier typed on the edit form was discarded on save.
+      country: Api.str(profile['country']),
       city: city,
-      address: city,
+      address: Api.str(profile['addressLine']),
+      zones: (profile['zones'] is List)
+          ? (profile['zones'] as List).map(Api.str).toList()
+          : const <String>[],
+      shareLiveLocation: profile['shareLiveLocation'] != false,
       vehicleType: Api.str(profile['vehicleType'], 'motorbike'),
       licenceNumber: Api.str(profile['licenseNumber']),
       photoUrl: Api.avatarOf(user),
@@ -160,7 +172,19 @@ class ApiRiderRepository implements RiderRepository {
     required String vehicleType,
     required String licenceNumber,
     required String city,
+    String? name,
+    String? country,
+    String? addressLine,
+    List<String>? zones,
+    bool? shareLiveLocation,
   }) async {
+    // The name lives on the account, not the courier profile, so it takes a
+    // different endpoint. The edit screen offered the field and nothing ever
+    // sent it anywhere.
+    if (name != null && name.trim().isNotEmpty) {
+      await _api.patch(ApiConstants.updateUsersMe, body: {'name': name.trim()});
+    }
+
     // `POST /riders/me` upserts, so applying and editing are the same call —
     // which is also why [apply] delegates here rather than duplicating it.
     await _api.post(
@@ -169,7 +193,55 @@ class ApiRiderRepository implements RiderRepository {
         'vehicleType': vehicleType,
         'licenseNumber': licenceNumber,
         'city': city,
+        // Omitted rather than sent empty: the upsert only overwrites what it
+        // is given, so the application flow posting without these leaves what
+        // the courier already saved alone.
+        if (country != null && country.isNotEmpty) 'country': country,
+        if (addressLine != null && addressLine.isNotEmpty)
+          'addressLine': addressLine,
+        'zones': ?zones,
+        'shareLiveLocation': ?shareLiveLocation,
       },
     );
+  }
+
+  @override
+  Future<void> uploadDocument({
+    required String kind,
+    required String path,
+    required String mimeType,
+    void Function(double progress)? onProgress,
+  }) async {
+    final file = File(path);
+    final size = await file.length();
+
+    final issued = await _api.postMap(
+      ApiConstants.postRidersMeDocumentsUploadUrl,
+      body: {'contentType': mimeType},
+    );
+    final url = '${issued['url'] ?? ''}';
+    final key = '${issued['key'] ?? ''}';
+    if (url.isEmpty || key.isEmpty) {
+      throw UnknownException('The server did not issue an upload location');
+    }
+
+    await _uploader.putBytes(
+      url: url,
+      file: file,
+      mime: mimeType,
+      size: size,
+      onProgress: onProgress,
+    );
+
+    await _api.post(
+      ApiConstants.postRidersMeDocuments,
+      body: {'kind': kind, 's3Key': key},
+    );
+  }
+
+  @override
+  Future<DeliveryRoute> route(String deliveryId) async {
+    final json = await _api.getMap(ApiConstants.deliveriesLocation(deliveryId));
+    return deliveryRouteFrom(json);
   }
 }

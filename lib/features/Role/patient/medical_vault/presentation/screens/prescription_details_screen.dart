@@ -13,7 +13,6 @@ import '../../../../../../core/widgets/app_card.dart';
 import '../../../../../../core/widgets/app_scaffold.dart';
 import '../../../../../../core/widgets/app_tag.dart';
 import '../../../../../../core/widgets/app_top_bar.dart';
-import '../../data/static/medical_mock_data.dart';
 import '../../domain/entities/medical_record.dart';
 import '../controllers/documents_controller.dart';
 
@@ -21,14 +20,20 @@ import '../controllers/documents_controller.dart';
 class PrescriptionDetailsScreen extends GetView<DocumentsController> {
   const PrescriptionDetailsScreen({super.key});
 
-  /// Falls back to the sample script when opened without an argument.
-  DigitalPrescription get _prescription => Get.arguments is DigitalPrescription
+  /// The script that was opened, or null on a deep link that carried none.
+  ///
+  /// It used to fall back to the design's sample: a real patient opening a
+  /// prescription without an argument was shown medications, doses and a
+  /// prescribing doctor that had nothing to do with them.
+  DigitalPrescription? get _prescription =>
+      Get.arguments is DigitalPrescription
       ? Get.arguments as DigitalPrescription
-      : MedicalMockData.prescription();
+      : null;
 
   @override
   Widget build(BuildContext context) {
     final prescription = _prescription;
+    if (prescription == null) return const SizedBox.shrink();
 
     return AppScaffold(
       topBar: AppTopBar(title: AppStrings.prescriptionDetails.tr),

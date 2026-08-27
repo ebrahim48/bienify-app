@@ -12,7 +12,6 @@ import '../../../../../../core/utils/responsive.dart';
 import '../../../../../../core/widgets/app_button.dart';
 import '../../../../../../core/widgets/app_card.dart';
 import '../../../../../../core/widgets/app_scaffold.dart';
-import '../../data/static/pharmacy_mock_data.dart';
 import '../../domain/entities/pharmacy.dart';
 import '../controllers/order_tracking_controller.dart';
 import '../controllers/pharmacy_cart_controller.dart';
@@ -45,7 +44,6 @@ class OrderStatusScreen extends GetView<OrderTrackingController> {
               itemCount: cart.itemCount,
             ),
             AppSpacing.gapV(AppSpacing.base),
-            _EstimateCard(),
             AppSpacing.gapV(AppSpacing.base),
             _Timeline(
               steps: controller.steps,
@@ -171,51 +169,11 @@ class _StagePanel extends StatelessWidget {
   }
 }
 
-class _EstimateCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      hasShadow: false,
-      padding: EdgeInsets.all(AppSpacing.sm.w),
-      child: Row(
-        children: [
-          Icon(
-            Icons.schedule_outlined,
-            size: AppSizes.xl2.w,
-            color: AppColors.timerAccent,
-          ),
-          AppSpacing.gapH(AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  AppStrings.estimatedDelivery2.tr,
-                  style: AppTextStyles.titleSmall.rc(AppColors.black),
-                ),
-                Text(
-                  PharmacyMockData.deliveryWindow,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.bodyMedium.rc(AppColors.gray400),
-                ),
-              ],
-            ),
-          ),
-          AppSpacing.gapH(AppSpacing.xs),
-          Text(
-            PharmacyMockData.deliveryEta,
-            style: AppTextStyles.headlineSmall.rc(AppColors.black),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Vertical stepper: completed stages carry a filled check, the current one
-/// a ring, and the rest are muted.
+/// An "Estimated Delivery — 10:30 – 11:00 AM, 25 min" card used to sit above
+/// the timeline, both figures from constants. Nothing estimates a delivery:
+/// there is no routing engine behind this screen and no distance is measured,
+/// so every order was quoted the same window whatever it was doing. The
+/// timeline below says where the order actually is, which is true.
 class _Timeline extends StatelessWidget {
   const _Timeline({required this.steps, required this.completedCount});
 

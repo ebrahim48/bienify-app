@@ -25,11 +25,46 @@ class MedicalMockData {
         durationLabel: '7 days',
       ),
       Medication(
-        name: 'Ibuprofen 400mg',
-        dosage: '1 tablet',
-        frequency: 'As needed (max 3 times daily)',
+        name: 'Paracetamol 500mg',
+        dosage: '2 tablets',
+        frequency: 'As needed (max 4 times daily)',
         instructions: 'Take with food or milk',
         durationLabel: '5 days',
+      ),
+      // Six in total, and named to match what the demo pharmacy stocks.
+      //
+      // Two reasons. A script of two meant every shop could fill the whole
+      // thing, so the "Not Available" row the Select Medicines screen exists to
+      // show was unreachable. And a script naming medicines no shelf carries
+      // prices at zero — the basket is priced from the shop's own catalogue,
+      // because what a prescription costs depends on who fills it.
+      Medication(
+        name: 'Metformin 850mg',
+        dosage: '1 tablet',
+        frequency: 'Twice daily',
+        instructions: 'Take with meals',
+        durationLabel: '30 days',
+      ),
+      Medication(
+        name: 'Lisinopril 10mg',
+        dosage: '1 tablet',
+        frequency: 'Once daily',
+        instructions: 'Take in the morning',
+        durationLabel: '30 days',
+      ),
+      Medication(
+        name: 'Atorvastatin 20mg',
+        dosage: '1 tablet',
+        frequency: 'Once daily at night',
+        instructions: 'Avoid grapefruit',
+        durationLabel: '30 days',
+      ),
+      Medication(
+        name: 'Omeprazole 20mg',
+        dosage: '1 capsule',
+        frequency: 'Once daily',
+        instructions: 'Take before breakfast',
+        durationLabel: '14 days',
       ),
     ],
   );
@@ -68,6 +103,26 @@ class MedicalMockData {
 
   /// One order per stage, which is what the design shows: the same test in
   /// three states so every status pill and action link is visible at once.
+  /// The order sheet the demo orders carry.
+  ///
+  /// Deliberately describes the demo patient and the demo doctor, not the
+  /// invented practice the old fixture used — a sample must not model a shape
+  /// the real screen can no longer produce.
+  static const TestOrderDocument document = TestOrderDocument(
+    kindLabel: 'LABORATORY ORDER',
+    priorityLabel: 'Priority: Routine',
+    reference: 'A1B2C3',
+    orderedOn: '22 Aug 2026, 09:15 AM',
+    patientName: 'Pat Patient',
+    dateOfBirth: '15 Mar 1988',
+    clinicalIndication:
+        'Fatigue and pallor for six weeks. Rule out iron deficiency anaemia.',
+    physicianName: orderingDoctor,
+    physicianSpecialty: 'General practice',
+    licence: 'LIC-DEMO-0001',
+    facility: defaultFacility,
+  );
+
   static const List<TestOrder> testOrders = [
     TestOrder(
       id: 'test-1',
@@ -78,6 +133,7 @@ class MedicalMockData {
       orderedBy: orderingDoctor,
       stage: TestStage.reviewed,
       facility: defaultFacility,
+      document: document,
     ),
     TestOrder(
       id: 'test-2',
@@ -86,6 +142,7 @@ class MedicalMockData {
       priority: 'Routine',
       title: testTitle,
       orderedBy: orderingDoctor,
+      document: document,
       stage: TestStage.awaitingReview,
       facility: defaultFacility,
     ),
@@ -96,6 +153,7 @@ class MedicalMockData {
       priority: 'Routine',
       title: testTitle,
       orderedBy: orderingDoctor,
+      document: document,
       stage: TestStage.requestSent,
     ),
     TestOrder(
@@ -105,6 +163,7 @@ class MedicalMockData {
       priority: 'Urgent',
       title: 'MRI • Brain without contrast',
       orderedBy: 'Dr. Elena Reyes',
+      document: document,
       stage: TestStage.requestSent,
     ),
     TestOrder(
@@ -114,6 +173,7 @@ class MedicalMockData {
       priority: 'Routine',
       title: 'Chest X-ray • PA and lateral',
       orderedBy: 'Dr. Elena Reyes',
+      document: document,
       stage: TestStage.awaitingUpload,
       facility: defaultFacility,
     ),
@@ -161,35 +221,6 @@ class MedicalMockData {
 
   // ─── The signed order sheet ──────────────────────────────────────────────
 
-  static const TestOrderDocument document = TestOrderDocument(
-    practiceName: 'Harmony Health Medical Group',
-    practiceLine: 'Dr. Elena Reyes, MD, FACP · Internal Medicine',
-    practiceAddress:
-        '1200 Medical Plaza Drive, Suite 400 · San Francisco, CA 94102',
-    practiceContact: 'Tel: (415) 555-0100 · Fax: (415) 555-0199',
-    kindLabel: 'RADIOLOGY ORDER',
-    priorityLabel: 'Priority: Urgent',
-    reference: 'RAD-2024-001',
-    orderedOn: '2024-07-22 09:15',
-    validForLabel: '30 days',
-    patientName: 'Margaret Sullivan',
-    dateOfBirth: 'March 15, 1978',
-    medicalRecordNumber: 'PT-10042',
-    insurance: 'BlueCross BlueShield PPO',
-    memberId: 'BCB-0042-XY',
-    modality: 'MRI',
-    bodyRegion: 'Brain',
-    clinicalIndication: 'Persistent headaches, rule out intracranial lesion',
-    specialInstructions:
-        'Patient is claustrophobic — open MRI preferred if available',
-    physicianName: 'Dr. Elena Reyes, MD, FACP',
-    physicianSpecialty: 'Internal Medicine',
-    boardCertification: 'Board Certified — American Board of Internal Medicine',
-    npi: '1234567890',
-    dea: 'FR1234563',
-    licence: 'CA-G-12345',
-    signedOn: '2024-07-22 09:15',
-  );
 
   /// The question the patient attached when uploading the report.
   static const String patientNote =

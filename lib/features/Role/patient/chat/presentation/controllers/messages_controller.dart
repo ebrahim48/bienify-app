@@ -1,3 +1,4 @@
+import '../../../../../../core/models/chat_thread.dart';
 import 'dart:async';
 
 import 'package:get/get.dart';
@@ -72,8 +73,8 @@ class MessagesController extends GetxController {
   /// disconnect.
   void _subscribeToThreads() {
     for (final thread in threads) {
-      final appointmentId = thread.appointmentId;
-      if (appointmentId.isNotEmpty) _socket.joinThread(appointmentId);
+      final id = thread.appointmentId;
+      if (id.isNotEmpty) _socket.joinThread(ChatThread.consultation(id));
 
       final peerId = thread.peer.id;
       if (peerId.isEmpty) continue;

@@ -39,19 +39,24 @@ class HowToPayScreen extends GetView<CashPaymentController> {
                 .copyWith(letterSpacing: 1.2),
           ),
           AppSpacing.gapV(AppSpacing.xs),
-          Obx(
-            () => PaymentCodeCard(
-              code: controller.code.code,
+          // Nothing shown until the server has issued one. A placeholder
+          // stood here, and a payment code is a reference a patient reads off
+          // the screen and quotes at a counter.
+          Obx(() {
+            final code = controller.code;
+            if (code == null) return const SizedBox.shrink();
+            return PaymentCodeCard(
+              code: code.code,
               justCopied: controller.justCopied.value,
               onCopy: controller.copyCode,
-            ),
-          ),
+            );
+          }),
           AppSpacing.gapV(AppSpacing.xs),
           Obx(
             () => PaymentInfoRow(
               icon: Icons.timer_outlined,
               title: AppStrings.validForHours.trParams({
-                'hours': '${controller.code.validFor}',
+                'hours': '${(controller.code?.validFor ?? 0)}',
               }),
               subtitle: AppStrings.codeExpiresAfter.tr,
               value: controller.countdownLabel,
@@ -62,8 +67,8 @@ class HowToPayScreen extends GetView<CashPaymentController> {
           PaymentInfoRow(
             icon: Icons.attach_money_rounded,
             title: AppStrings.amountToPay.tr,
-            subtitle: controller.code.itemsLabel,
-            value: controller.code.amountLabel,
+            subtitle: (controller.code?.itemsLabel ?? ''),
+            value: (controller.code?.amountLabel ?? ''),
             background: AppColors.accentSurface,
             showIconSurface: false,
             iconColor: AppColors.primary600,

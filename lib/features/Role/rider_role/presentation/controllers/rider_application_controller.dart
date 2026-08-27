@@ -8,6 +8,7 @@ import '../../../../../core/routes/app_routes.dart';
 import '../../../../../core/widgets/app_snackbar.dart';
 import '../../data/static/rider_data.dart';
 import '../../domain/entities/rider.dart';
+import '../../../patient/profile/domain/repositories/account_repository.dart';
 import '../../domain/repositories/rider_repository.dart';
 
 /// Backs the five-step application behind Apply Now.
@@ -43,8 +44,15 @@ class RiderApplicationController extends GetxController {
 
   final RxString country = RiderData.countries.first.obs;
   final RxString city = RiderData.cities.first.obs;
-  final RxString address = RiderData.rider.address.obs;
+
+  /// Typed by the applicant. It was pre-filled with the sample courier's
+  /// street, so a courier who never touched the field applied from an address
+  /// that was not theirs.
+  final RxString address = ''.obs;
   final RxString zone = RiderData.zones.first.obs;
+
+  /// The applicant's own first name, for the greeting.
+  final RxString firstName = ''.obs;
   final RxList<String> zones = <String>[].obs;
   final RxBool gpsEnabled = true.obs;
 
@@ -54,7 +62,21 @@ class RiderApplicationController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    zones.value = List.of(RiderData.pickedZones);
+    // Nothing pre-selected: the zones a courier covers are their choice, and
+    // the fixture picked three on their behalf.
+    zones.value = <String>[];
+    _loadApplicant();
+  }
+
+  /// The signed-in account's first name, for the greeting on step one.
+  Future<void> _loadApplicant() async {
+    try {
+      final me = await Get.find<AccountRepository>().me();
+      firstName.value = me.name.split(' ').first;
+    } on AppException {
+      // The greeting simply omits the name; it is a nicety, not the flow.
+      firstName.value = '';
+    }
   }
 
   String get title => switch (step.value) {
@@ -136,12 +158,19 @@ class RiderApplicationController extends GetxController {
     return true;
   }
 
-  /// Files the application.
+  /// Files the application, documents included.
   ///
-  /// The photos are captured but not uploaded: `POST /riders/me/documents`
-  /// takes an S3 key, and the app has no route to the bucket yet. What the
-  /// profile can hold — the vehicle, the licence and the city — is sent, and
-  /// the courier is told the application is in.
+  /// The photos used to be captured and then dropped on the floor: the profile
+  /// fields were sent and the five images never left the phone, because
+  /// `POST /riders/me/documents` wants a key under the courier's own prefix and
+  /// nothing issued one. With the upload-url endpoint in place they are sent
+  /// here, after the profile exists — the documents attach to a rider record,
+  /// so there has to be one first.
+  ///
+  /// A failed photo does not fail the application. The profile is already
+  /// filed at that point, and telling a courier their whole application was
+  /// lost because one of five uploads timed out would be false; they are told
+  /// which ones to add again instead.
   Future<void> submit() async {
     if (isSubmitting.value) return;
     isSubmitting.value = true;
@@ -157,7 +186,50 @@ class RiderApplicationController extends GetxController {
     } finally {
       isSubmitting.value = false;
     }
+
+    final failed = await _uploadDocuments();
+    if (failed.isNotEmpty) {
+      AppSnackbar.info(AppStrings.someDocumentsNotSent.tr);
+    }
     Get.offNamed<void>(AppRoutes.riderReady);
+  }
+
+  /// Sends every captured photo; returns the kinds that did not make it.
+  Future<List<String>> _uploadDocuments() async {
+    final documents = <String, File?>{
+      'selfie': selfie.value,
+      'id_front': idFront.value,
+      'id_back': idBack.value,
+      'licence': licence.value,
+      'vehicle': vehiclePhoto.value,
+    };
+
+    final failed = <String>[];
+    for (final entry in documents.entries) {
+      final file = entry.value;
+      if (file == null) continue;
+      try {
+        await _repository.uploadDocument(
+          kind: entry.key,
+          path: file.path,
+          mimeType: _mimeOf(file.path),
+        );
+      } on AppException {
+        failed.add(entry.key);
+      }
+    }
+    return failed;
+  }
+
+  /// The picker hands back whatever the camera or gallery produced; the server
+  /// only signs the four types it accepts, so anything else is sent as JPEG,
+  /// which is what a phone camera actually produces.
+  static String _mimeOf(String path) {
+    final lower = path.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    if (lower.endsWith('.pdf')) return 'application/pdf';
+    return 'image/jpeg';
   }
 
   /// The picker offers three vehicles and the server names four; `bike` is

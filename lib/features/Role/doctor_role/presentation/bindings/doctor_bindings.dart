@@ -1,8 +1,8 @@
+import '../controllers/doctor_credentials_controller.dart';
 import 'package:get/get.dart';
 
 import '../../../patient/appointments/domain/entities/appointment.dart';
 import '../../../patient/appointments/presentation/controllers/video_call_controller.dart';
-import '../../data/static/doctor_orders_data.dart';
 import '../../domain/entities/test_request.dart';
 import '../controllers/results_to_review_controller.dart';
 import '../controllers/test_request_controller.dart';
@@ -34,6 +34,14 @@ class DoctorShellBinding extends Bindings {
 
 /// Set Schedule owns its own editing state; the dashboard controller stays
 /// registered underneath it.
+/// The credentials screen reads the practitioner's own profile.
+class DoctorCredentialsBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.put(DoctorCredentialsController());
+  }
+}
+
 class DoctorScheduleBinding extends Bindings {
   @override
   void dependencies() {
@@ -131,7 +139,22 @@ class TestRequestBinding extends Bindings {
         kind: Get.arguments is OrderKind
             ? Get.arguments as OrderKind
             : OrderKind.lab,
-        patient: results.patient.value ?? DoctorOrdersData.patients.first,
+        // An empty patient rather than a fixture: `submit` already refuses an
+        // order with no patient id and says so. Falling back to the first
+        // demo patient meant a wizard opened without one would file a real
+        // order against a person the doctor never chose.
+        patient:
+            results.patient.value ??
+            ReviewPatient(
+              id: '',
+              name: '',
+              code: '',
+              age: 0,
+              gender: '',
+              complaint: '',
+              seenOn: DateTime.now(),
+              photoUrl: '',
+            ),
       ),
     );
   }

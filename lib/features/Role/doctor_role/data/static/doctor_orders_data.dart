@@ -70,6 +70,27 @@ class DoctorOrdersData {
     'Echocardiogram (Echo)',
   ];
 
+  /// The demo catalogues, shaped like `GET /diagnostic-tests` so mock mode
+  /// exercises the same widget code as the live one. The bare name lists these
+  /// replace carried no category and no modality, which is why the imaging
+  /// wizard had to guess a machine from a title.
+  static const List<DiagnosticTest> labCatalogue = [
+    DiagnosticTest(id: 'cat-cbc', name: 'Complete blood count', category: 'Haematology'),
+    DiagnosticTest(id: 'cat-glu', name: 'Blood glucose (fasting)', category: 'Biochemistry', preparation: 'Fast for 8 hours beforehand. Water is fine.'),
+    DiagnosticTest(id: 'cat-lipid', name: 'Lipid profile', category: 'Biochemistry'),
+    DiagnosticTest(id: 'cat-lft', name: 'Liver function test', category: 'Biochemistry'),
+    DiagnosticTest(id: 'cat-kft', name: 'Kidney function test', category: 'Biochemistry'),
+    DiagnosticTest(id: 'cat-tft', name: 'Thyroid function test', category: 'Endocrinology'),
+  ];
+
+  static const List<DiagnosticTest> radiologyCatalogue = [
+    DiagnosticTest(id: 'cat-xr-chest', name: 'Chest X-ray', category: 'Chest', modality: 'x_ray'),
+    DiagnosticTest(id: 'cat-us-abdo', name: 'Abdominal ultrasound', category: 'Abdomen', modality: 'ultrasound', preparation: 'Nothing to eat or drink for 6 hours beforehand.'),
+    DiagnosticTest(id: 'cat-ct-head', name: 'CT head', category: 'Head and neck', modality: 'ct'),
+    DiagnosticTest(id: 'cat-mr-brain', name: 'MRI brain', category: 'Head and neck', modality: 'mri'),
+    DiagnosticTest(id: 'cat-mam', name: 'Mammography (bilateral)', category: 'Breast', modality: 'mammography'),
+  ];
+
   /// The signature the electric-sign box is pre-filled with.
   static const String signatureHint = 'dr.deep';
 

@@ -100,6 +100,7 @@ abstract class AppRoutes {
 
   /// Results to Review, and the ordering / reviewing flow behind it.
   static const String doctorResultsToReview = '/doctor/results-to-review';
+  static const String doctorCredentials = '/doctor-credentials';
   static const String doctorReviewPatient = '/doctor/review-patient';
   static const String doctorRequestTest = '/doctor/request-test';
   static const String doctorOrderDetail = '/doctor/order-detail';

@@ -26,6 +26,10 @@ class RidersApi {
   Future<dynamic> getMedeliveries({Map<String, dynamic>? query}) =>
       _c.get(ApiConstants.ridersMeDeliveries, query: query);
 
+  /// `POST /api/v1/riders/me/documents/upload-url`
+  Future<dynamic> createMedocumentsUploadUrl({Object? body}) =>
+      _c.post(ApiConstants.postRidersMeDocumentsUploadUrl, body: body);
+
   /// `POST /api/v1/riders/me/documents`
   Future<dynamic> createMedocuments({Object? body}) =>
       _c.post(ApiConstants.postRidersMeDocuments, body: body);

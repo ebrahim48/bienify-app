@@ -1,6 +1,7 @@
 @Tags(['live'])
 library;
 
+import 'package:bienify_app/core/network/attachment_uploader.dart';
 import 'dart:io';
 
 import 'package:bienify_app/core/constants/api_constants.dart';
@@ -56,7 +57,7 @@ void main() {
       print('Auth rate limit reached — live checks skipped. Retry in 15 min.');
       return;
     }
-    account = ApiAccountRepository(client);
+    account = ApiAccountRepository(client, AttachmentUploader(client));
     wallet = ApiWalletRepository(client);
     cash = ApiCashPaymentRepository(client);
   });

@@ -41,4 +41,16 @@ class DeliveriesApi {
   /// `GET /api/v1/deliveries/available`
   Future<dynamic> getAvailable({Map<String, dynamic>? query}) =>
       _c.get(ApiConstants.deliveriesAvailable, query: query);
+
+  /// `GET /api/v1/deliveries/:id/messages`
+  Future<dynamic> listMessages(String id, {Map<String, dynamic>? query}) =>
+      _c.get(ApiConstants.deliveriesMessages(id), query: query);
+
+  /// `POST /api/v1/deliveries/:id/messages`
+  Future<dynamic> createMessage(String id, {Object? body}) =>
+      _c.post(ApiConstants.postDeliveriesMessages(id), body: body);
+
+  /// `POST /api/v1/deliveries/:id/attachments/upload-url`
+  Future<dynamic> createAttachmentUploadUrl(String id, {Object? body}) =>
+      _c.post(ApiConstants.postDeliveriesAttachmentUploadUrl(id), body: body);
 }

@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+import '../../../../../core/services/avatar_service.dart';
 import 'package:get/get.dart';
 
 import '../../../../../core/constants/app_strings.dart';
@@ -15,7 +17,7 @@ import '../../domain/repositories/pharmacy_shop_repository.dart';
 /// Payments and Credit and Settings are the patient app's own screens — a
 /// shop keeps its money in the same wallet and reads the same legal pages, so
 /// they are navigated to rather than rebuilt.
-class ShopProfileController extends GetxController {
+class ShopProfileController extends GetxController with AvatarChanging {
   ShopProfileController({PharmacyShopRepository? repository, Logout? logout})
     : _repository = repository ?? Get.find<PharmacyShopRepository>(),
       _logout = logout ?? Get.find<Logout>();
@@ -78,7 +80,14 @@ class ShopProfileController extends GetxController {
 
   void edit() => Get.toNamed<void>(AppRoutes.shopEditProfile);
 
-  void changePhoto() => edit();
+  /// Changes the account photo.
+  ///
+  /// This opened the edit form, which has no photo field — so the control did
+  /// nothing at all, in all four roles.
+  Future<void> changePhoto(BuildContext context) => changePhotoWith(context);
+
+  @override
+  Future<void> reloadProfile() => load();
 
   /// Clears the session before leaving, so the next sign-in does not inherit
   /// this owner's tokens.

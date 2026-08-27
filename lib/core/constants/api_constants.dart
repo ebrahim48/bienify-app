@@ -144,9 +144,17 @@ class ApiConstants {
   static String updateDeliveriesStatus(String id) =>
       '$_v1/deliveries/$id/status';
   static const String deliveriesAvailable = '$_v1/deliveries/available';
+  /// The courier ↔ customer thread. Same shape as a consultation's messages,
+  /// because it is the same conversation with a different pair of people.
+  static String deliveriesMessages(String id) => '$_v1/deliveries/$id/messages';
+  static String postDeliveriesMessages(String id) =>
+      '$_v1/deliveries/$id/messages';
+  static String postDeliveriesAttachmentUploadUrl(String id) =>
+      '$_v1/deliveries/$id/attachments/upload-url';
 
   // ─── diagnostic-tests ────────────────────────────────────────────
   static const String diagnosticTests = '$_v1/diagnostic-tests';
+  static const String clientConfig = '$_v1/config';
 
   // ─── doctors ─────────────────────────────────────────────────────
   static const String doctors = '$_v1/doctors';
@@ -171,6 +179,11 @@ class ApiConstants {
       '$_v1/lab-orders/$id/review';
   static String updateLabOrdersStatus(String id) =>
       '$_v1/lab-orders/$id/status';
+  static String updateLabOrdersFacility(String id) =>
+      '$_v1/lab-orders/$id/facility';
+  static String postLabOrdersResultUploadUrl(String id) =>
+      '$_v1/lab-orders/$id/result/upload-url';
+  static String postLabOrdersResult(String id) => '$_v1/lab-orders/$id/result';
 
   // ─── medicine-orders ─────────────────────────────────────────────
   static const String medicineOrders = '$_v1/medicine-orders';
@@ -215,6 +228,7 @@ class ApiConstants {
       '$_v1/pharmacies/me/medicines';
   static String updatePharmaciesMeMedicines(String id) =>
       '$_v1/pharmacies/me/medicines/$id';
+  static const String pharmaciesMeStats = '$_v1/pharmacies/me/stats';
   static const String pharmaciesMeOrders = '$_v1/pharmacies/me/orders';
   static const String pharmaciesStockAlerts = '$_v1/pharmacies/stock-alerts';
 
@@ -246,6 +260,8 @@ class ApiConstants {
   static const String postUsersMeAvatarConfirm = '$_v1/users/me/avatar/confirm';
   static const String postUsersMeAvatarUploadUrl =
       '$_v1/users/me/avatar/upload-url';
+  static const String postUsersMeDoorImageUploadUrl =
+      '$_v1/users/me/address/door-image/upload-url';
 
   // ─── vault ───────────────────────────────────────────────────────
   static const String vaultHealthProfile = '$_v1/vault/health-profile';
@@ -261,6 +277,11 @@ class ApiConstants {
   ) => '$_v1/vault/records/$id/share/$doctorUserId';
   static const String vaultRecordsSharedWithMe =
       '$_v1/vault/records/shared-with-me';
+  static const String postDoctorsMeCredentialsUploadUrl =
+      '$_v1/doctors/me/credentials/upload-url';
+  static const String postRidersMeDocumentsUploadUrl =
+      '$_v1/riders/me/documents/upload-url';
+
   static const String postVaultRecordsUploadUrl =
       '$_v1/vault/records/upload-url';
 

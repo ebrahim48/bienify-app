@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 
-import '../../data/static/appointment_mock_data.dart';
 import '../../domain/entities/appointment.dart';
 import '../controllers/video_call_controller.dart';
 
@@ -11,14 +10,15 @@ import '../controllers/video_call_controller.dart';
 class VideoCallBinding extends Bindings {
   @override
   void dependencies() {
-    // Opening the call without an appointment (a deep link, or the Home
-    // shortcut) falls back to the sample booking rather than crashing.
-    Get.put(
-      VideoCallController(
-        appointment: Get.arguments is Appointment
-            ? Get.arguments as Appointment
-            : AppointmentMockData.upcoming().first,
-      ),
-    );
+    // Opened without an appointment — a deep link, or a reload that dropped
+    // the argument. This used to fall back to the sample booking, so the
+    // patient joined a video call for a consultation with a doctor they had
+    // never booked, at a time nobody had agreed.
+    final appointment = Get.arguments;
+    if (appointment is! Appointment) {
+      Get.back<void>();
+      return;
+    }
+    Get.put(VideoCallController(appointment: appointment));
   }
 }

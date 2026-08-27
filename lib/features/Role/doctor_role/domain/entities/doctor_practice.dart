@@ -28,6 +28,7 @@ class Practitioner {
   /// The practitioner's own picture, when the server has one.
   final String? photoUrl;
 
+
   final double availableBalance;
 
   /// ISO code from the wallet. The design was drawn in dollars, so a dollar
@@ -160,6 +161,9 @@ class DoctorProfileDetails {
     required this.consultationFee,
     required this.currency,
     this.photoUrl,
+    this.credentials = const [],
+    this.verificationStatus = 'pending',
+    this.verificationNote = '',
   });
 
   final String fullName;
@@ -175,6 +179,16 @@ class DoctorProfileDetails {
   final double consultationFee;
   final String currency;
   final String? photoUrl;
+  /// Licences and certificates the practitioner has submitted.
+  final List<PractitionerCredential> credentials;
+
+  /// `pending`, `approved` or `rejected`, as the server holds it. Adding a
+  /// credential resets an approved profile to pending, so the screen has to
+  /// say which it is rather than implying approval.
+  final String verificationStatus;
+
+  /// Why it was rejected, when it was.
+  final String verificationNote;
 }
 
 /// One of the four dashboard statistics.
@@ -579,4 +593,16 @@ class ScheduleDay {
     isOpen: isOpen ?? this.isOpen,
     slots: slots ?? this.slots,
   );
+}
+
+/// One licence or certificate on a practitioner's file.
+class PractitionerCredential {
+  const PractitionerCredential({
+    required this.kind,
+    required this.uploadedAt,
+  });
+
+  /// `medical_licence`, `certificate`, `id` — what the doctor filed it as.
+  final String kind;
+  final DateTime uploadedAt;
 }

@@ -18,9 +18,13 @@ class RiderData {
     rating: 4.9,
     isOnline: true,
     email: 'alex@gmail.com',
-    country: 'Cameron',
-    city: 'Cameron',
-    address: 'Cameron',
+    // Country, city and address all read 'Cameron' here, so the demo's Edit
+    // Profile showed the same word in four fields. Aligned with the courier
+    // the backend seeds, so mock mode and a live session look like the same
+    // product.
+    country: 'Dominican Republic',
+    city: 'Springfield',
+    address: '18 Calle Duarte',
   );
 
   /// The masthead on the dashboard carries the shop's name in the design;
@@ -68,25 +72,36 @@ class RiderData {
 
   // ─── Application ─────────────────────────────────────────────────────────
 
+  /// Where Bienify operates. "Cameron" headed both this list and the cities
+  /// one — a misspelling of Cameroon used as a city as well as a country.
   static const List<String> countries = [
-    'Cameron',
-    'Nigeria',
-    'Kenya',
-    'Ghana',
-    'South Africa',
+    'Dominican Republic',
+    'Haiti',
+    'Puerto Rico',
   ];
 
   static const List<String> cities = [
-    'Cameron',
-    'Douala',
-    'Yaoundé',
-    'Bamenda',
+    'Springfield',
+    'Santo Domingo',
+    'Santiago',
+    'La Romana',
+    'Puerto Plata',
   ];
 
-  static const List<String> zones = ['Cameron', 'Downtown', 'Airport', 'Port'];
+  /// The delivery zones a courier can choose to cover.
+  static const List<String> zones = [
+    'Downtown',
+    'Airport',
+    'Port',
+    'lester city',
+    'jamaica',
+    'rome',
+  ];
 
-  /// The zones already picked, drawn as chips under the dropdown.
-  static const List<String> pickedZones = ['lester city', 'jamaica', 'rome'];
+  /// `pickedZones` used to live here — three zones drawn as chips under the
+  /// dropdown before the courier had chosen anything, so the step opened
+  /// already answered on somebody else's behalf. Which zones a courier covers
+  /// is their decision, so they start with none.
 
   // ─── Requests ────────────────────────────────────────────────────────────
 
@@ -158,20 +173,11 @@ class RiderData {
 
   static ActiveDelivery activeDelivery() => activeDeliveryFor(requests().first);
 
-  /// The map's own figures — the road, the arrival window, how many turns are
-  /// left — come from a routing service the app does not have, so they stay
-  /// the design's. [request] is the real job they are wrapped around.
-  static ActiveDelivery activeDeliveryFor(DeliveryRequest request) =>
-      ActiveDelivery(
-        roadName: 'Los Angels road',
-        arrivingAtLabel: '2:52 PM',
-        latestArrivalLabel: '3:15 PM',
-        stepsLeft: 3,
-        minutesAway: 15,
-        request: request,
-        note: AppStrings.customerNote.tr,
-        unreadMessages: 1,
-      );
+  /// [request] is the real job; the status is what the step bar reads.
+  static ActiveDelivery activeDeliveryFor(
+    DeliveryRequest request, {
+    String status = 'assigned',
+  }) => ActiveDelivery(request: request, status: status);
 
   static const DeliveryReceipt receipt = DeliveryReceipt(
     orderId: '#45892',

@@ -358,13 +358,16 @@ void main() {
   });
 
   testWidgets('Set Schedule', (tester) async {
+    // The pickers open on the week the doctor is actually in, so the date has
+    // to be pinned: read live, this golden went red on its own the first time
+    // the calendar moved past the day it was captured.
+    Get.put(
+      DoctorScheduleController(clock: () => DateTime(2026, 8, 12)),
+    );
+
     // True device metrics, then scrolled — a tall surface would inflate every
     // `.h` and the controls would stop matching the design.
-    await pump(
-      tester,
-      const SetScheduleScreen(),
-      binding: DoctorScheduleBinding(),
-    );
+    await pump(tester, const SetScheduleScreen());
     await settleImages(tester);
     await expectLater(
       find.byType(SetScheduleScreen),

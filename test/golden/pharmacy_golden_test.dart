@@ -1,3 +1,6 @@
+import 'package:bienify_app/features/Role/patient/profile/domain/repositories/account_repository.dart';
+import 'package:bienify_app/features/Role/patient/medical_vault/data/static/medical_mock_data.dart';
+import 'package:bienify_app/features/Role/patient/pharmacy/data/static/pharmacy_mock_data.dart';
 import 'package:bienify_app/app.dart';
 import 'package:bienify_app/core/di/dependency_injection.dart';
 import 'package:bienify_app/core/localization/app_translations.dart';
@@ -90,8 +93,19 @@ void main() {
   /// Walks the flow far enough that the basket has the six prescribed lines.
   PharmacyCartController seedCart() {
     final prescription = Get.put(PrescriptionController());
+    // Matches come from `GET /pharmacies/best-matches` now, so they are not
+    // present the instant the controller is built. Set explicitly so every
+    // test below starts from the same basket.
+    prescription.matches.value = List.of(PharmacyMockData.matches);
+    // The basket is the patient's own script now, not a fixed list of six demo
+    // medicines, and it is read rather than constructed — so it too has to be
+    // in place before the cart looks at it.
+    prescription.prescription.value = MedicalMockData.prescriptions().first;
     final cart = Get.put(PharmacyCartController())
       ..store.value = prescription.matches.first;
+    // The script is priced from the shop's catalogue, so it has to be read
+    // before the basket has any figures in it.
+    cart.loadStoreCatalogue();
     cart
       ..toggleSelectAll()
       ..lines.value = [
@@ -248,6 +262,8 @@ void main() {
       binding: PrescriptionBinding(),
       size: const Size(390, 1000),
     );
+    // The matches are fetched, so they arrive a frame later.
+    await tester.pumpAndSettle();
     expect(find.text('3 pharmacies found'), findsOneWidget);
 
     await settleImages(tester);
@@ -259,9 +275,17 @@ void main() {
 
   testWidgets('Select medicines marks the unavailable line', (tester) async {
     final prescription = Get.put(PrescriptionController());
+    // Matches are read from `GET /pharmacies/best-matches` now, so they are
+    // not there the instant the controller is constructed. Set explicitly so
+    // the fixture under test is deterministic.
+    prescription.matches.value = List.of(PharmacyMockData.matches);
+    prescription.prescription.value = MedicalMockData.prescriptions().first;
     // The third match stocks four of six, so two lines are unavailable.
     final cart = Get.put(PharmacyCartController())
       ..store.value = prescription.matches.last;
+    // The script is priced from the shop's own catalogue; without the read
+    // every line shows $0.00.
+    await cart.loadStoreCatalogue();
 
     await pump(
       tester,
@@ -327,10 +351,108 @@ void main() {
       matchesGoldenFile('location_dialog.png'),
     );
 
+    // An empty street is refused rather than saved: the dialog used to accept
+    // anything, because the street was a label and not a field at all.
+    await tester.tap(find.text('Add Location').last);
+    await tester.pumpAndSettle();
+    expect(cart.hasSavedAddress.value, isFalse);
+    expect(find.text('Enter a street and number'), findsOneWidget);
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Street and number'),
+      '14 Rua das Flores',
+    );
+    await tester.enterText(find.widgetWithText(TextField, 'City'), 'Lisbon');
+    await tester.pumpAndSettle();
+
     await tester.tap(find.text('Add Location').last);
     await tester.pumpAndSettle();
     expect(cart.hasSavedAddress.value, isTrue);
+    expect(cart.address.value.line1, '14 Rua das Flores');
     expect(find.text('Change'), findsOneWidget);
+    // The address the patient typed is the one the screen prints back.
+    expect(find.text('14 Rua das Flores'), findsOneWidget);
+    expect(find.text('Lisbon'), findsOneWidget);
+
+    // Left unticked, so this is where *this* parcel goes and nothing more —
+    // the profile is untouched and the next order still starts from home.
+    expect(await Get.find<AccountRepository>().savedAddress(), isNull);
+  });
+
+  testWidgets('A checkout address reaches the profile only when asked', (
+    tester,
+  ) async {
+    final cart = seedCart();
+    await pump(
+      tester,
+      const PharmacyPaymentScreen(),
+      size: const Size(390, 1000),
+    );
+
+    await tester.tap(find.text('Add'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Street and number'),
+      '9 Praça do Comércio',
+    );
+    await tester.tap(find.text('Also save this to my profile'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Add Location').last);
+    await tester.pumpAndSettle();
+
+    final saved = await Get.find<AccountRepository>().savedAddress();
+    expect(saved?.line1, '9 Praça do Comércio');
+    expect(cart.profileAddress.value?.line1, '9 Praça do Comércio');
+    // Not an override any more: this *is* the profile address now, so there
+    // is nothing to revert to and no link offering it.
+    expect(cart.isOverridingAddress, isFalse);
+    expect(find.text('Use my profile address'), findsNothing);
+  });
+
+  testWidgets('A one-off delivery address can be undone', (tester) async {
+    final cart = seedCart();
+    // Already living somewhere, the way a returning patient does.
+    await cart.saveAddress(
+      const DeliveryAddress(line1: '14 Rua das Flores', city: 'Lisbon'),
+      saveToProfile: true,
+    );
+
+    await pump(
+      tester,
+      const PharmacyPaymentScreen(),
+      size: const Size(390, 1000),
+    );
+
+    // Send this one parcel to the office instead.
+    await tester.tap(find.text('Change'));
+    await tester.pumpAndSettle();
+    // By position, not by hint: the hint only renders while a field is empty,
+    // and this one arrives already carrying the profile address.
+    await tester.enterText(
+      find
+          .descendant(
+            of: find.byType(LocationDialog),
+            matching: find.byType(TextField),
+          )
+          .first,
+      '4 Avenida da Liberdade',
+    );
+    // "Change Location" is the dialog's title; the confirm button reads
+    // "Update Location" once there is an address to update.
+    await tester.tap(find.text('Update Location'));
+    await tester.pumpAndSettle();
+
+    expect(cart.address.value.line1, '4 Avenida da Liberdade');
+    expect(cart.isOverridingAddress, isTrue);
+    // Home is untouched, and the way back is on screen.
+    expect(cart.profileAddress.value?.line1, '14 Rua das Flores');
+    expect(find.text('Use my profile address'), findsOneWidget);
+
+    await tester.tap(find.text('Use my profile address'));
+    await tester.pumpAndSettle();
+    expect(cart.address.value.line1, '14 Rua das Flores');
+    expect(cart.isOverridingAddress, isFalse);
   });
 
   testWidgets('Order status', (tester) async {

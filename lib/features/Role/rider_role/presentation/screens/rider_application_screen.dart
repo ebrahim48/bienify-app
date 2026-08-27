@@ -80,10 +80,14 @@ class _SelfiePane extends GetView<RiderApplicationController> {
       mainAxisSize: MainAxisSize.min,
       children: [
         AppSpacing.gapV(AppSpacing.md),
-        Text(
-          AppStrings.heyName.trParams({'name': RiderData.firstName}),
-          textAlign: TextAlign.center,
-          style: AppTextStyles.headlineMedium.rc(AppColors.gray900),
+        // The applicant's own first name. It greeted every courier as the
+        // design's sample one.
+        Obx(
+          () => Text(
+            AppStrings.heyName.trParams({'name': controller.firstName.value}),
+            textAlign: TextAlign.center,
+            style: AppTextStyles.headlineMedium.rc(AppColors.gray900),
+          ),
         ),
         AppSpacing.gapV(AppSpacing.xs2),
         Text(

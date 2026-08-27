@@ -234,3 +234,40 @@ class ShopNotification {
   /// `1 day ago`.
   final String ageLabel;
 }
+
+/// The four figures on the shop dashboard.
+///
+/// One read rather than four: each could be counted from a list endpoint, but
+/// that means paging whole collections on a phone to produce a count, and
+/// today's earnings would need every order of the day pulled down to be summed.
+/// The tiles were hardcoded strings before — the same four numbers for every
+/// shop on the platform, whatever their day had actually been.
+class ShopStats {
+  const ShopStats({
+    this.newOrders = 0,
+    this.preparing = 0,
+    this.newPrescriptions = 0,
+    this.todaysEarnings = 0,
+    this.lowStockItems = 0,
+    this.outOfStockItems = 0,
+  });
+
+  /// Paid and waiting on the owner. Excludes `pending_payment`, which is
+  /// waiting on the customer and is not the shop's to action.
+  final int newOrders;
+  final int preparing;
+
+  /// Orders carrying a script the pharmacist has still to check.
+  final int newPrescriptions;
+
+  /// Delivered orders only, in major units.
+  final double todaysEarnings;
+
+  final int lowStockItems;
+  final int outOfStockItems;
+
+  int get stockAlerts => lowStockItems + outOfStockItems;
+
+  /// `$284`, matching how the balance above it is printed.
+  String get todaysEarningsLabel => '\$${todaysEarnings.toStringAsFixed(0)}';
+}

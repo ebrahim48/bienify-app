@@ -1,3 +1,5 @@
+import '../../../pharmacy/domain/entities/pharmacy.dart';
+import '../../../pharmacy/domain/repositories/pharmacy_repository.dart';
 import 'package:get/get.dart';
 
 import '../../../../../../core/constants/app_strings.dart';
@@ -12,10 +14,17 @@ import '../../domain/entities/profile.dart';
 /// One controller because both are views of the same account and neither has
 /// enough state to justify its own.
 class AccountController extends GetxController {
-  AccountController({WalletRepository? repository})
-    : _repository = repository ?? Get.find<WalletRepository>();
+  AccountController({WalletRepository? repository, PharmacyRepository? pharmacy})
+    : _repository = repository ?? Get.find<WalletRepository>(),
+      _pharmacy = pharmacy ?? Get.find<PharmacyRepository>();
 
   final WalletRepository _repository;
+  final PharmacyRepository _pharmacy;
+
+  /// What the shop being reviewed actually stocks.
+  ///
+  /// The review screen drew a fixed grid of demo medicines for every shop.
+  final RxList<Medicine> shopMedicines = <Medicine>[].obs;
 
   final RxList<OrderHistoryEntry> orders = <OrderHistoryEntry>[].obs;
   final RxList<WalletCard> cards = <WalletCard>[].obs;
@@ -155,8 +164,23 @@ class AccountController extends GetxController {
 
   /// Opening an order shows the shop it came from, which is where a review is
   /// written.
-  void openOrder(OrderHistoryEntry order) =>
-      Get.toNamed<void>(AppRoutes.reviewShop, arguments: order);
+  void openOrder(OrderHistoryEntry order) {
+    _loadShopMedicines(order.pharmacyId);
+    Get.toNamed<void>(AppRoutes.reviewShop, arguments: order);
+  }
+
+  Future<void> _loadShopMedicines(String pharmacyId) async {
+    shopMedicines.clear();
+    if (pharmacyId.isEmpty) return;
+    try {
+      shopMedicines.value = await _pharmacy.searchMedicines(
+        pharmacyId: pharmacyId,
+      );
+    } on AppException {
+      // The grid simply stays empty; the review itself is the point of the
+      // screen, and a shelf of somebody else's stock is not a fallback.
+    }
+  }
 
   /// The pill and the filter chip use the same words in the design, so they
   /// share one set of labels — an order the chip calls "Pending" must not read

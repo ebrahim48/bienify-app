@@ -14,34 +14,48 @@ import '../../domain/repositories/doctor_practice_repository.dart';
 /// choose which week the pattern is laid over — changing them re-reads it,
 /// and saving writes the pattern back for every weekday the editor shows.
 class DoctorScheduleController extends GetxController {
-  DoctorScheduleController({DoctorPracticeRepository? repository})
-    : _repository = repository ?? Get.find<DoctorPracticeRepository>();
+  DoctorScheduleController({
+    DoctorPracticeRepository? repository,
+    DateTime Function()? clock,
+  }) : _repository = repository ?? Get.find<DoctorPracticeRepository>(),
+       _clock = clock ?? DateTime.now {
+    year = _yearFor(_clock());
+    month = _monthFor(_clock());
+    week = _weekFor(_clock());
+  }
 
   final DoctorPracticeRepository _repository;
+
+  /// Injectable so a test can pin a date.
+  ///
+  /// `DateTime.now()` was read directly, which made every golden of this
+  /// screen fail the moment the calendar moved past the day it was captured —
+  /// a test that goes red on its own overnight teaches people to ignore it.
+  final DateTime Function() _clock;
 
   /// The pickers open on the week the doctor is actually in.
   ///
   /// These were fixed at July's second week whatever the date, so a doctor
   /// editing their availability in August was shown — and would have saved
   /// over — a week two months behind them.
-  final RxString year = _thisYear;
-  final RxString month = _thisMonth;
-  final RxString week = _thisWeek;
+  late final RxString year;
+  late final RxString month;
+  late final RxString week;
 
-  static RxString get _thisYear {
-    final now = DateTime.now().year.toString();
+  static RxString _yearFor(DateTime at) {
+    final now = at.year.toString();
     return (DoctorPracticeData.years.contains(now)
             ? now
             : DoctorPracticeData.years.first)
         .obs;
   }
 
-  static RxString get _thisMonth =>
-      DoctorPracticeData.months[DateTime.now().month - 1].obs;
+  static RxString _monthFor(DateTime at) =>
+      DoctorPracticeData.months[at.month - 1].obs;
 
-  /// The band in [DoctorPracticeData.weeks] that contains today.
-  static RxString get _thisWeek {
-    final today = DateTime.now().day;
+  /// The band in [DoctorPracticeData.weeks] that contains [at].
+  static RxString _weekFor(DateTime at) {
+    final today = at.day;
     for (final band in DoctorPracticeData.weeks) {
       final parts = band.split('-');
       final from = int.tryParse(parts.first);
@@ -89,7 +103,7 @@ class DoctorScheduleController extends GetxController {
     final y = int.tryParse(year.value);
     final m = DoctorPracticeData.months.indexOf(month.value) + 1;
     final firstDay = int.tryParse(week.value.split('-').first);
-    if (y == null || m == 0 || firstDay == null) return DateTime.now();
+    if (y == null || m == 0 || firstDay == null) return _clock();
     return DateTime(y, m, firstDay);
   }
 

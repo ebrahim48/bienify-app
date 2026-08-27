@@ -13,7 +13,6 @@ import '../../../../../../core/widgets/app_button.dart';
 import '../../../../../../core/widgets/app_card.dart';
 import '../../../../../../core/widgets/app_scaffold.dart';
 import '../../../../../../core/widgets/app_top_bar.dart';
-import '../../data/static/medical_mock_data.dart';
 import '../../domain/entities/medical_record.dart';
 import '../controllers/test_results_controller.dart';
 
@@ -27,62 +26,90 @@ class TestOrderScreen extends GetView<TestResultsController> {
 
   @override
   Widget build(BuildContext context) {
-    const document = MedicalMockData.document;
-
     return AppScaffold(
       topBar: AppTopBar(title: AppStrings.laboratoryResults.tr),
-      child: Column(
+      child: Obx(() {
+        final document = controller.orderDocument.value;
+        if (document == null) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppSpacing.gapV(AppSpacing.base),
+            _Sheet(document: document),
+            AppSpacing.gapV(AppSpacing.base),
+            AppButton(
+              label: AppStrings.downloadPdf.tr,
+              variant: AppButtonVariant.outlined,
+              onPressed: controller.downloadDocument,
+            ),
+            AppSpacing.gapV(AppSpacing.sm),
+            // Three footers, not two. A patient who has not answered yet is
+            // asked to; one who has agreed picks a centre; one who has a centre
+            // marks the test done. Declining had no control at all before —
+            // `POST /lab-orders/:id/respond` has always accepted a refusal and
+            // no screen ever offered one, so an unwanted test sat in
+            // `requested` for ever.
+            if (!controller.hasFacility) ...[
+              if (controller.canRespond)
+                _RespondFooter(controller: controller)
+              else
+                AppButton(
+                  label: AppStrings.chooseTestingLocation.tr,
+                  icon: Icon(
+                    Icons.check_circle_outline_rounded,
+                    size: AppSizes.buttonIcon.w,
+                    color: AppColors.actionLabel,
+                  ),
+                  onPressed: controller.openTestingCentres,
+                ),
+            ] else ...[
+              _SelectedCentre(name: controller.facilityName),
+              AppSpacing.gapV(AppSpacing.base),
+              AppButton(
+                label: AppStrings.completedMyTest.tr,
+                onPressed: controller.completedTest,
+              ),
+            ],
+            AppSpacing.gapV(AppSpacing.md),
+          ],
+        );
+      }),
+    );
+  }
+}
+
+/// Accept or decline a test the doctor raised.
+class _RespondFooter extends StatelessWidget {
+  const _RespondFooter({required this.controller});
+
+  final TestResultsController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(
+      () => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppSpacing.gapV(AppSpacing.base),
-          _Sheet(document: document),
-          AppSpacing.gapV(AppSpacing.base),
-          // The chosen centre is read here so the footer swaps when it lands.
-          Obx(() {
-            final centre = controller.centre.value;
-            if (centre == null) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  AppButton(
-                    label: AppStrings.downloadPdf.tr,
-                    variant: AppButtonVariant.outlined,
-                    onPressed: controller.downloadDocument,
-                  ),
-                  AppSpacing.gapV(AppSpacing.sm),
-                  AppButton(
-                    label: AppStrings.chooseTestingLocation.tr,
-                    icon: Icon(
-                      Icons.check_circle_outline_rounded,
-                      size: AppSizes.buttonIcon.w,
-                      color: AppColors.actionLabel,
-                    ),
-                    onPressed: controller.openTestingCentres,
-                  ),
-                ],
-              );
-            }
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _SelectedCentre(name: centre.name),
-                AppSpacing.gapV(AppSpacing.base),
-                AppButton(
-                  label: AppStrings.completedMyTest.tr,
-                  onPressed: controller.completedTest,
-                ),
-              ],
-            );
-          }),
-          AppSpacing.gapV(AppSpacing.md),
+          AppButton(
+            label: AppStrings.acceptAndChooseCentre.tr,
+            isLoading: controller.isResponding.value,
+            onPressed: () => controller.respond(accept: true),
+          ),
+          AppSpacing.gapV(AppSpacing.sm),
+          AppButton(
+            label: AppStrings.declineTest.tr,
+            variant: AppButtonVariant.outlined,
+            onPressed: controller.isResponding.value
+                ? null
+                : () => controller.respond(accept: false),
+          ),
         ],
       ),
     );
   }
 }
 
-/// The document itself: navy masthead, priority band, then the labelled
-/// sections down to the signature block.
 class _Sheet extends StatelessWidget {
   const _Sheet({required this.document});
 
@@ -120,68 +147,53 @@ class _Sheet extends StatelessWidget {
                     value: document.orderedOn,
                     isIdentifier: true,
                   ),
-                  _Field(
-                    label: AppStrings.validFor.tr,
-                    value: document.validForLabel,
-                  ),
+                  if (document.facility != null)
+                    _Field(
+                      label: AppStrings.testingCentreLabel.tr,
+                      value: document.facility!,
+                    ),
                   AppSpacing.gapV(AppSpacing.base),
                   _SectionLabel(AppStrings.patientInformation.tr),
                   _Field(
                     label: AppStrings.patientNameLabel.tr,
                     value: document.patientName,
                   ),
-                  _Field(
-                    label: AppStrings.dateOfBirth.tr,
-                    value: document.dateOfBirth,
-                  ),
-                  _Field(
-                    label: AppStrings.medicalRecordNumber.tr,
-                    value: document.medicalRecordNumber,
-                    isIdentifier: true,
-                  ),
-                  _Field(
-                    label: AppStrings.insurance.tr,
-                    value: document.insurance,
-                  ),
-                  _Field(
-                    label: AppStrings.memberId.tr,
-                    value: document.memberId,
-                    isIdentifier: true,
-                  ),
-                  AppSpacing.gapV(AppSpacing.base),
-                  _SectionLabel(AppStrings.studyOrdered.tr),
-                  _Panel(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _Field(
-                          label: AppStrings.modality.tr,
-                          value: document.modality,
-                        ),
-                        _Field(
-                          label: AppStrings.bodyRegion.tr,
-                          value: document.bodyRegion,
-                        ),
-                      ],
+                  // Omitted rather than invented when the account has no date
+                  // of birth. Insurance, member id and medical record number
+                  // used to sit here too, all three from a fixture describing
+                  // somebody else.
+                  if (document.dateOfBirth != null)
+                    _Field(
+                      label: AppStrings.dateOfBirth.tr,
+                      value: document.dateOfBirth!,
                     ),
-                  ),
+                  if (document.isImaging) ...[
+                    AppSpacing.gapV(AppSpacing.base),
+                    _SectionLabel(AppStrings.studyOrdered.tr),
+                    _Panel(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (document.modality != null)
+                            _Field(
+                              label: AppStrings.modality.tr,
+                              value: document.modality!,
+                            ),
+                          if (document.bodyRegion != null)
+                            _Field(
+                              label: AppStrings.bodyRegion.tr,
+                              value: document.bodyRegion!,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
                   AppSpacing.gapV(AppSpacing.base),
                   _SectionLabel(AppStrings.clinicalIndication.tr),
                   _Panel(
                     child: Text(
                       document.clinicalIndication,
                       style: AppTextStyles.bodyLarge.rc(AppColors.gray900),
-                    ),
-                  ),
-                  AppSpacing.gapV(AppSpacing.base),
-                  _SectionLabel(AppStrings.specialInstructions.tr),
-                  _Panel(
-                    color: AppColors.tagPendingSurface,
-                    child: Text(
-                      document.specialInstructions,
-                      style: AppTextStyles.bodyLarge.rc(
-                        AppColors.tagPendingInk,
-                      ),
                     ),
                   ),
                   AppSpacing.gapV(AppSpacing.base),
@@ -195,18 +207,18 @@ class _Sheet extends StatelessWidget {
                     document.physicianName,
                     style: AppTextStyles.titleSmall.rc(AppColors.gray900),
                   ),
-                  Text(
-                    document.physicianSpecialty,
-                    style: AppTextStyles.bodyLarge.rc(AppColors.gray500),
-                  ),
-                  Text(
-                    document.boardCertification,
-                    style: AppTextStyles.bodyLarge.rc(AppColors.gray500),
-                  ),
-                  AppSpacing.gapV(AppSpacing.xs),
-                  _MonoLine('NPI: ${document.npi}'),
-                  _MonoLine('DEA: ${document.dea}'),
-                  _MonoLine('License: ${document.licence}'),
+                  if (document.physicianSpecialty != null)
+                    Text(
+                      document.physicianSpecialty!,
+                      style: AppTextStyles.bodyLarge.rc(AppColors.gray500),
+                    ),
+                  // NPI and DEA are US federal registrations. They were printed
+                  // here from a fixture, on a platform that does not operate in
+                  // that jurisdiction and holds neither number for anyone.
+                  if (document.licence != null) ...[
+                    AppSpacing.gapV(AppSpacing.xs),
+                    _MonoLine('${AppStrings.licenceLabel.tr}: ${document.licence}'),
+                  ],
                   AppSpacing.gapV(AppSpacing.sm),
                   _SignatureBlock(document: document),
                   AppSpacing.gapV(AppSpacing.base),
@@ -247,7 +259,11 @@ class _Masthead extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  document.practiceName,
+                  // The ordering doctor heads the sheet. There is no practice
+                  // entity behind a Bienify order — the previous masthead
+                  // printed a clinic name, street address and fax number from
+                  // a fixture, none of which existed.
+                  document.physicianName,
                   style: AppTextStyles.titleLarge.rc(AppColors.white),
                 ),
               ),
@@ -269,26 +285,24 @@ class _Masthead extends StatelessWidget {
               ),
             ],
           ),
-          AppSpacing.gapV(AppSpacing.xs2),
-          Text(
-            document.practiceLine,
-            style: AppTextStyles.bodyMedium.rc(
-              AppColors.white.withValues(alpha: 0.86),
+          if (document.physicianSpecialty != null) ...[
+            AppSpacing.gapV(AppSpacing.xs2),
+            Text(
+              document.physicianSpecialty!,
+              style: AppTextStyles.bodyMedium.rc(
+                AppColors.white.withValues(alpha: 0.86),
+              ),
             ),
-          ),
-          AppSpacing.gapV(AppSpacing.xxs),
-          Text(
-            document.practiceAddress,
-            style: AppTextStyles.bodyMedium.rc(
-              AppColors.white.withValues(alpha: 0.56),
+          ],
+          if (document.facility != null) ...[
+            AppSpacing.gapV(AppSpacing.xxs),
+            Text(
+              document.facility!,
+              style: AppTextStyles.bodyMedium.rc(
+                AppColors.white.withValues(alpha: 0.56),
+              ),
             ),
-          ),
-          Text(
-            document.practiceContact,
-            style: AppTextStyles.bodyMedium.rc(
-              AppColors.white.withValues(alpha: 0.56),
-            ),
-          ),
+          ],
         ],
       ),
     );
@@ -427,10 +441,9 @@ class _MonoLine extends StatelessWidget {
 }
 
 class _Panel extends StatelessWidget {
-  const _Panel({required this.child, this.color});
+  const _Panel({required this.child});
 
   final Widget child;
-  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -438,7 +451,7 @@ class _Panel extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(AppSpacing.sm.w),
       decoration: BoxDecoration(
-        color: color ?? AppColors.gray50,
+        color: AppColors.gray50,
         borderRadius: AppRadius.rLg,
       ),
       child: child,
@@ -463,15 +476,12 @@ class _SignatureBlock extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(
-            // The signature is the physician's name without the credentials,
-            // which is what a signed line actually carries.
-            document.physicianName.split(',').first.replaceFirst('Dr. ', ''),
-            style: AppTextStyles.headlineSmall
-                .rc(AppColors.tagSuccessInk)
-                .copyWith(fontStyle: FontStyle.italic),
-          ),
-          AppSpacing.gapV(AppSpacing.xs2),
+          // The physician's surname used to be drawn here in italic script, on
+          // a signature line, above the words "Electronically Signed" — a
+          // rendered font standing in for a signature nobody gave. Bienify
+          // holds no signature for any practitioner and does not capture one,
+          // so the line is gone. What the platform can attest to is who raised
+          // the order and when, which is what remains below.
           Container(
             height: AppSizes.borderWidth,
             color: AppColors.tagSuccessInk.withValues(alpha: 0.3),
@@ -493,11 +503,16 @@ class _SignatureBlock extends StatelessWidget {
             ],
           ),
           Text(
-            document.signedOn,
+            document.orderedOn,
             style: _identifierStyle(AppColors.tagSuccessInk),
           ),
+          // "SHA-256 verified" used to sit here. Nothing hashes a lab order,
+          // signs one, or could verify either — it was a cryptographic
+          // assurance printed on a medical document that no code backed. What
+          // is true is that a verified practitioner raised it, so that is what
+          // it says now.
           Text(
-            AppStrings.shaVerified.tr,
+            AppStrings.raisedByVerifiedPractitioner.tr,
             style: _identifierStyle(AppColors.tagSuccessInk),
           ),
         ],

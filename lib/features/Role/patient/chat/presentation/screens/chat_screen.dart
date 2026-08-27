@@ -11,7 +11,8 @@ import '../widgets/chat_bubble.dart';
 import '../widgets/chat_composer.dart';
 import '../widgets/chat_header.dart';
 
-/// A message thread with a doctor.
+/// A message thread — with a doctor during a consultation, or with the
+/// courier carrying a delivery. Same screen, same machinery, different peer.
 class ChatScreen extends GetView<ChatController> {
   const ChatScreen({super.key});
 

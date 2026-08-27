@@ -154,3 +154,27 @@ class TestRequest {
       '${orderedOn.month.toString().padLeft(2, '0')}/'
       '${orderedOn.year}';
 }
+
+/// One orderable test from the platform catalogue.
+class DiagnosticTest {
+  const DiagnosticTest({
+    required this.id,
+    required this.name,
+    required this.category,
+    this.modality,
+    this.preparation,
+  });
+
+  final String id;
+  final String name;
+
+  /// `Haematology`, `Chest` — how the catalogue groups it.
+  final String category;
+
+  /// Radiology only: `x_ray`, `ct`, … as the server names it. Sent straight
+  /// back on the order so the app never has to infer a machine from a title.
+  final String? modality;
+
+  /// What the patient has to do beforehand, when anything.
+  final String? preparation;
+}

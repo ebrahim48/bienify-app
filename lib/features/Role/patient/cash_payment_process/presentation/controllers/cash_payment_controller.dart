@@ -7,7 +7,6 @@ import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/routes/app_routes.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
-import '../../data/static/cash_payment_data.dart';
 import '../../domain/entities/cash_payment.dart';
 import '../../domain/repositories/cash_payment_repository.dart';
 
@@ -53,13 +52,16 @@ class CashPaymentController extends GetxController {
   /// show the design's placeholder until then.
   final Rxn<PaymentCode> issued = Rxn<PaymentCode>();
 
-  /// The placeholder the design draws, used until [issued] lands so no screen
-  /// has to handle a null code.
-  late final PaymentCode _placeholder = CashPaymentData.code(
-    amountLabel: amountLabel,
-  );
+  /// The code the server issued, or null while it has not.
+  ///
+  /// The design's placeholder stood in here so no screen had to handle a null.
+  /// That placeholder is a *payment reference*: a patient could read it off
+  /// the screen, walk to a payment point and quote a code that exists nowhere.
+  /// The screens wait instead.
+  PaymentCode? get code => issued.value;
 
-  PaymentCode get code => issued.value ?? _placeholder;
+  /// Whether there is a code to show yet.
+  bool get hasCode => issued.value != null;
 
   final RxBool isLoading = true.obs;
   final RxBool isChecking = false.obs;
@@ -136,7 +138,12 @@ class CashPaymentController extends GetxController {
   }
 
   void _resetCountdown() {
-    secondsRemaining.value = code.expiresAt
+    final issuedCode = code;
+    if (issuedCode == null) {
+      secondsRemaining.value = 0;
+      return;
+    }
+    secondsRemaining.value = issuedCode.expiresAt
         .difference(DateTime.now())
         .inSeconds
         .clamp(0, 24 * 3600);
@@ -156,7 +163,9 @@ class CashPaymentController extends GetxController {
   }
 
   Future<void> copyCode() async {
-    await Clipboard.setData(ClipboardData(text: code.code));
+    final issuedCode = code;
+    if (issuedCode == null) return;
+    await Clipboard.setData(ClipboardData(text: issuedCode.code));
     justCopied.value = true;
     _copyReset?.cancel();
     _copyReset = Timer(const Duration(seconds: 3), () {
@@ -184,7 +193,7 @@ class CashPaymentController extends GetxController {
 
     final CashIntentState state;
     try {
-      state = await _repository.refresh(code.code);
+      state = await _repository.refresh(code!.code);
     } on AppException catch (e) {
       AppSnackbar.error(e.message);
       return;

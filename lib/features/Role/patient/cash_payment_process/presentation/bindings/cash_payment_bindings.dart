@@ -57,8 +57,11 @@ class PaymentConfirmedBinding extends Bindings {
 
     Get.put(
       PaymentConfirmedController(
-        totalLabel: cash?.code.amountLabel ?? '\$74.89',
-        code: cash?.code.code ?? '#BIE12345',
+        // Blank rather than the design's sample. A confirmation screen naming
+        // a payment reference nobody was issued is worse than one that names
+        // none — the patient would quote it at the counter.
+        totalLabel: cash?.code?.amountLabel ?? '',
+        code: cash?.code?.code ?? '',
       ),
     );
   }

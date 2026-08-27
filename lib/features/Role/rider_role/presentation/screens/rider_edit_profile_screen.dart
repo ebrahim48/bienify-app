@@ -53,13 +53,20 @@ class _Form extends GetView<RiderProfileController> {
           ),
           AppSpacing.gapV(AppSpacing.sm),
           RiderFieldLabel(AppStrings.email.tr),
+          // Shown, not edited.
+          //
+          // The address is a sign-in credential carrying a verified flag, so
+          // changing it needs re-verification and a uniqueness check that
+          // `PATCH /users/me` deliberately does not do — it takes name, date of
+          // birth and gender only. The field accepted typing and threw it away,
+          // which is worse than not offering it: a courier could believe they
+          // had moved their login.
           AppTextField(
             initialText: controller.email.value,
             hint: AppStrings.emailHint.tr,
             keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.done,
-            autofillHints: const [AutofillHints.email],
-            onChanged: (value) => controller.email.value = value,
+            readOnly: true,
+            enabled: false,
           ),
           AppSpacing.gapV(AppSpacing.sm),
           RiderFieldLabel(AppStrings.country.tr),

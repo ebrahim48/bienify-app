@@ -65,4 +65,14 @@ class StaticPharmacyShopRepository implements PharmacyShopRepository {
   @override
   Future<List<ShopNotification>> notifications() async =>
       List.of(PharmacyShopData.notifications);
+
+  @override
+  Future<ShopStats> stats() async => const ShopStats(
+    newOrders: 12,
+    preparing: 3,
+    newPrescriptions: 5,
+    todaysEarnings: 284.50,
+    lowStockItems: 4,
+    outOfStockItems: 1,
+  );
 }

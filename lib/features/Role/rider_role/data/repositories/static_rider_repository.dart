@@ -1,3 +1,4 @@
+import '../../../patient/pharmacy/domain/entities/pharmacy.dart';
 import '../../domain/entities/rider.dart';
 import '../../domain/repositories/rider_repository.dart';
 import '../static/rider_data.dart';
@@ -44,5 +45,29 @@ class StaticRiderRepository implements RiderRepository {
     required String vehicleType,
     required String licenceNumber,
     required String city,
+    String? name,
+    String? country,
+    String? addressLine,
+    List<String>? zones,
+    bool? shareLiveLocation,
   }) async {}
+
+  @override
+  Future<void> uploadDocument({
+    required String kind,
+    required String path,
+    required String mimeType,
+    void Function(double progress)? onProgress,
+  }) async {
+    onProgress?.call(1);
+  }
+
+  @override
+  Future<DeliveryRoute> route(String deliveryId) async => DeliveryRoute(
+    status: 'in_transit',
+    courier: const MapPoint(lat: 18.4801, lng: -69.9215),
+    pickup: const MapPoint(lat: 18.4861, lng: -69.9312, label: 'Demo Pharmacy'),
+    dropoff: const MapPoint(lat: 18.4712, lng: -69.9089, label: '12 Oak Avenue'),
+    reportedAt: DateTime.now(),
+  );
 }

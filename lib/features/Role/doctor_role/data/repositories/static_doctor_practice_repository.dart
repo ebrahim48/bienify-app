@@ -17,13 +17,26 @@ class StaticDoctorPracticeRepository implements DoctorPracticeRepository {
   StaticDoctorPracticeRepository();
 
   @override
-  Future<DoctorDashboard> dashboard() async => DoctorDashboard(
+  Future<DoctorDashboard> dashboard({ChartRange range = ChartRange.weekly}) async =>
+      DoctorDashboard(
     practitioner: DoctorPracticeData.practitioner,
     pendingRequests: DoctorPracticeData.pendingRequests,
     todaysPatients: DoctorPracticeData.todaysPatients,
     totalEarned: DoctorPracticeData.totalEarned,
     totalPatients: DoctorPracticeData.totalPatients,
-    load: List.of(DoctorPracticeData.weeklyLoad),
+        // The mock has one fixture; monthly folds it into a single bar rather
+        // than pretending to four weeks of data it does not hold.
+        load: range == ChartRange.monthly
+            ? [
+                DayLoad(
+                  dayLabel: 'W1',
+                  count: DoctorPracticeData.weeklyLoad.fold(
+                    0,
+                    (sum, d) => sum + d.count,
+                  ),
+                ),
+              ]
+            : List.of(DoctorPracticeData.weeklyLoad),
     visits: List.of(DoctorPracticeData.upcomingVisits),
     consultationFee: 440,
     currency: 'CAD',
@@ -142,15 +155,36 @@ class StaticDoctorPracticeRepository implements DoctorPracticeRepository {
     required List<String> tests,
     String? notes,
     String? appointmentId,
+    bool imaging = false,
+    String? modality,
+    String? bodyRegion,
+    String priority = 'routine',
   }) async {}
 
   @override
-  Future<List<TestRequest>> labRequests() async =>
-      List.of(DoctorOrdersData.requests);
+  Future<List<DiagnosticTest>> testCatalogue({required bool radiology}) async =>
+      radiology
+      ? List.of(DoctorOrdersData.radiologyCatalogue)
+      : List.of(DoctorOrdersData.labCatalogue);
+
+  @override
+  Future<List<TestRequest>> labRequests({bool imaging = false}) async => imaging
+      ? List.of(DoctorOrdersData.radiologyRequests)
+      : List.of(DoctorOrdersData.requests);
 
   @override
   Future<void> reviewLabOrder({
     required String labOrderId,
     required String message,
   }) async {}
+
+  @override
+  Future<void> uploadCredential({
+    required String kind,
+    required String path,
+    required String mimeType,
+    void Function(double progress)? onProgress,
+  }) async {
+    onProgress?.call(1);
+  }
 }

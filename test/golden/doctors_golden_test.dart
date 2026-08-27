@@ -77,7 +77,10 @@ void main() {
   testWidgets('Find a doctor tab', (tester) async {
     await pump(tester, const MainShellScreen(), binding: MainBinding());
     Get.find<MainNavController>().select(2);
-    await tester.pump();
+    // The specialty grid is read from what the doctors on the platform
+    // actually practise, so it arrives a frame later. It was a fixed list of
+    // six before, and a specialty with real practitioners never appeared.
+    await tester.pumpAndSettle();
 
     await settleImages(tester);
     await expectLater(

@@ -57,6 +57,30 @@ class MockVaultRepository implements VaultRepository {
   }) async {}
 
   @override
+  Future<void> uploadLabResult({
+    required String labOrderId,
+    required String path,
+    required String fileName,
+    required String mimeType,
+    String? notes,
+    void Function(double progress)? onProgress,
+  }) async {
+    onProgress?.call(1);
+  }
+
+  @override
+  Future<void> selectTestingCentre({
+    required String labOrderId,
+    required String testingCentreId,
+  }) async {}
+
+  @override
+  Future<void> respondToLabOrder({
+    required String labOrderId,
+    required bool accept,
+  }) async {}
+
+  @override
   Future<UploadedDocument> uploadDocument({
     required String path,
     required String fileName,

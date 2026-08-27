@@ -90,7 +90,7 @@ class DoctorHomeController extends GetxController {
     isLoading.value = true;
     error.value = null;
     try {
-      final dashboard = await _repository.dashboard();
+      final dashboard = await _repository.dashboard(range: range.value);
       practitioner.value = dashboard.practitioner;
       chartLoad.value = dashboard.load;
       visits.value = dashboard.visits;
@@ -119,7 +119,17 @@ class DoctorHomeController extends GetxController {
     ChartRange.monthly => AppStrings.monthly.tr,
   };
 
-  void selectRange(ChartRange value) => range.value = value;
+  /// Switching the range refetches.
+  ///
+  /// This used to assign `range.value` and stop there, so the bars stayed on
+  /// the last seven days whatever the label said — the request never carried
+  /// `range` at all. Guarded on an unchanged value so re-tapping the current
+  /// option is free.
+  Future<void> selectRange(ChartRange value) async {
+    if (range.value == value) return;
+    range.value = value;
+    await load();
+  }
 
   String statusLabel(VisitStatus status) => switch (status) {
     VisitStatus.pending => AppStrings.filterPending.tr,

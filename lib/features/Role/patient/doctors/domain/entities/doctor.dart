@@ -9,6 +9,7 @@ class Doctor {
     this.reviewCount = 0,
     this.consultationFee = 0,
     this.isAvailable = true,
+    this.patientsSeen = 0,
   });
 
   final String id;
@@ -23,6 +24,14 @@ class Doctor {
   final double rating;
 
   final int reviewCount;
+
+  /// Distinct patients this practitioner has actually consulted.
+  ///
+  /// Counted from completed appointments, so a patient seen five times counts
+  /// once and a cancelled booking counts not at all. Nothing exposed it before
+  /// — a patient choosing between practitioners could see a rating but not how
+  /// many people it was based on.
+  final int patientsSeen;
 
   /// Price per consultation in the account's currency.
   final double consultationFee;

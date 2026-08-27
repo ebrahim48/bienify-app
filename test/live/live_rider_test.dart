@@ -1,6 +1,7 @@
 @Tags(['live'])
 library;
 
+import 'package:bienify_app/core/network/attachment_uploader.dart';
 import 'dart:io';
 
 import 'package:bienify_app/core/constants/api_constants.dart';
@@ -56,7 +57,8 @@ void main() {
     if (!up) return;
 
     try {
-      repository = ApiRiderRepository(await signIn('rider@bienify.test'));
+      final client = await signIn('rider@bienify.test');
+      repository = ApiRiderRepository(client, AttachmentUploader(client));
       patient = await signIn('patient@bienify.test');
       pharmacy = await signIn('pharmacy@bienify.test');
     } on TooManyRequestsException {

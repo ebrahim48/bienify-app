@@ -1,3 +1,4 @@
+import '../models/chat_thread.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -61,7 +62,7 @@ class AttachmentUploader {
   /// the wrong video should not have to wait for it to finish before sending
   /// the right one.
   Future<UploadedAttachment> upload({
-    required String appointmentId,
+    required ChatThread thread,
     required PickedAttachment attachment,
     void Function(double progress)? onProgress,
     CancelToken? cancelToken,
@@ -74,7 +75,11 @@ class AttachmentUploader {
     }
 
     final issued = await _api.postMap(
-      ApiConstants.postConsultationsAttachmentUploadUrl(appointmentId),
+      // Same presign, different thread: a courier's photo of a doorstep goes
+      // under the delivery, a scan under the consultation.
+      thread.isDelivery
+          ? ApiConstants.postDeliveriesAttachmentUploadUrl(thread.id)
+          : ApiConstants.postConsultationsAttachmentUploadUrl(thread.id),
       body: {'contentType': attachment.mime, 'fileName': attachment.name},
     );
 

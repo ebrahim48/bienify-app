@@ -26,6 +26,18 @@ class LabOrdersApi {
   Future<dynamic> updateReview({required String id, Object? body}) =>
       _c.patch(ApiConstants.updateLabOrdersReview(id), body: body);
 
+  /// `PATCH /api/v1/lab-orders/:id/facility`
+  Future<dynamic> updateFacility({required String id, Object? body}) =>
+      _c.patch(ApiConstants.updateLabOrdersFacility(id), body: body);
+
+  /// `POST /api/v1/lab-orders/:id/result/upload-url`
+  Future<dynamic> createResultUploadUrl({required String id, Object? body}) =>
+      _c.post(ApiConstants.postLabOrdersResultUploadUrl(id), body: body);
+
+  /// `POST /api/v1/lab-orders/:id/result`
+  Future<dynamic> createResult({required String id, Object? body}) =>
+      _c.post(ApiConstants.postLabOrdersResult(id), body: body);
+
   /// `PATCH /api/v1/lab-orders/:id/status`
   Future<dynamic> updateStatus({required String id, Object? body}) =>
       _c.patch(ApiConstants.updateLabOrdersStatus(id), body: body);

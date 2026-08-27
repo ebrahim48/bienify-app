@@ -14,7 +14,6 @@ import '../../../../../core/utils/app_navigator.dart';
 import '../../../../../core/utils/responsive.dart';
 import '../../../../../core/widgets/app_card.dart';
 import '../../../../../core/widgets/app_scaffold.dart';
-import '../../data/static/rider_data.dart';
 import '../../domain/entities/rider.dart';
 import '../controllers/rider_orders_controller.dart';
 
@@ -28,12 +27,16 @@ class RiderDeliveredScreen extends StatelessWidget {
   ///
   /// Read off the live orders controller rather than through `GetView`: this
   /// page is also reachable with no courier session behind it — a deep link,
-  /// or a reload that dropped the controller — and the design's sample is the
-  /// right thing to draw then. A controller built fresh for this route would
-  /// carry no receipt anyway, so there is nothing to bind.
-  DeliveryReceipt get _receipt {
-    if (!Get.isRegistered<RiderOrdersController>()) return RiderData.receipt;
-    return Get.find<RiderOrdersController>().receipt.value ?? RiderData.receipt;
+  /// or a reload that dropped the controller — and there is nothing to draw
+  /// then.
+  ///
+  /// It used to fall back to the design's sample: a handover to "John Doe" at
+  /// "Banani, Dhaka" on order #45892. A courier arriving here without a session
+  /// was shown a completed delivery they had never made, with somebody else's
+  /// customer on it.
+  DeliveryReceipt? get _receipt {
+    if (!Get.isRegistered<RiderOrdersController>()) return null;
+    return Get.find<RiderOrdersController>().receipt.value;
   }
 
   @override
@@ -100,8 +103,13 @@ class RiderDeliveredScreen extends StatelessWidget {
                   style: AppTextStyles.bodyLarge.rc(AppColors.gray600),
                 ),
                 AppSpacing.gapV(AppSpacing.base),
-                _Receipt(receipt: receipt),
-                AppSpacing.gapV(AppSpacing.md),
+                // Omitted rather than substituted when there is no session
+                // behind the page. The confirmation still reads correctly;
+                // there is simply no handover to itemise.
+                if (receipt != null) ...[
+                  _Receipt(receipt: receipt),
+                  AppSpacing.gapV(AppSpacing.md),
+                ],
               ],
             ),
           ),

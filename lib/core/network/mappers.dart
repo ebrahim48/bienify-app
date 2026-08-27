@@ -1,3 +1,5 @@
+import 'package:get/get.dart';
+import '../constants/app_strings.dart';
 import '../constants/api_constants.dart';
 import '../../features/Role/doctor_role/domain/entities/doctor_practice.dart';
 // Prefixed: `OrderStage` names both a pharmacy delivery step and a lab-order
@@ -152,6 +154,7 @@ Doctor doctorFrom(Map<String, dynamic> json) {
     photoUrl: Api.avatarOf(json['userId']),
     rating: Api.decimal(rating['average']),
     reviewCount: Api.integer(rating['count']),
+    patientsSeen: Api.integer(json['patientsSeen']),
     consultationFee: Api.majorUnits(json['consultationFeeMinor']),
     isAvailable: json['isAcceptingPatients'] != false,
   );
@@ -321,13 +324,45 @@ orders.RequestStatus requestStatusFrom(String raw) => switch (raw) {
 };
 
 /// How far the detail screen's five-circle tracker is filled.
+///
+/// The backend keeps more states than the tracker draws circles, because the
+/// three lab states are operational detail the patient does not need: what they
+/// want to know is that the test has been done. They collapse onto one circle.
+///
+/// This used to read `sample_collected → facilitySelected` and
+/// `processing → testCompleted`, which was wrong twice over: no facility was
+/// involved in the first, and the second says "completed" of an order the lab
+/// is still working on.
 orders.OrderStage orderStageFrom(String raw) => switch (raw) {
-  'sample_collected' => orders.OrderStage.facilitySelected,
-  'processing' => orders.OrderStage.testCompleted,
+  'facility_selected' => orders.OrderStage.facilitySelected,
+  'sample_collected' ||
+  'processing' ||
+  'test_completed' => orders.OrderStage.testCompleted,
   'completed' => orders.OrderStage.resultsReceived,
   'reviewed' => orders.OrderStage.reviewed,
+  // `requested` and `accepted` are both "ordered" as far as the tracker goes.
   _ => orders.OrderStage.ordered,
 };
+
+/// The patient's saved delivery address, from `profile.address`.
+///
+/// Null rather than an empty address when they have never saved one — the
+/// checkout distinguishes "nothing saved yet" from "saved but blank", and an
+/// empty [DeliveryAddress] would read as the latter.
+String? _orNull(String value) => value.isEmpty ? null : value;
+
+DeliveryAddress? addressFrom(Object? value) {
+  final json = Api.map(value);
+  final line1 = Api.str(json['line1']);
+  if (line1.isEmpty) return null;
+  return DeliveryAddress(
+    line1: line1,
+    line2: Api.str(json['line2']),
+    city: Api.str(json['city']),
+    note: _orNull(Api.str(json['note'])),
+    doorImageKey: _orNull(Api.str(json['doorImageKey'])),
+  );
+}
 
 /// `GET /home/feed` — the whole patient home screen in one payload.
 HomeFeed homeFeedFrom(Map<String, dynamic> json) => HomeFeed(
@@ -437,21 +472,44 @@ DigitalPrescription prescriptionFrom(Map<String, dynamic> json) {
 }
 
 /// Where a lab order has reached, in the four stages the screen shows.
+/// What the patient still has to do, which is not the same question the
+/// doctor's tracker answers.
+///
+/// Every line of this was wrong before: `sample_collected → awaitingUpload`
+/// asked for a report the lab had not produced, `processing → awaitingReview`
+/// claimed something had been uploaded when nothing had, `completed → reviewed`
+/// said the doctor had read a result they had not been sent, and `reviewed`
+/// itself fell through the default back to `requestSent` — the finished state
+/// displayed as the first one.
 TestStage testStageFrom(String raw) => switch (raw) {
-  'sample_collected' => TestStage.awaitingUpload,
-  'processing' => TestStage.awaitingReview,
-  'completed' => TestStage.reviewed,
+  // Nothing to do but wait for the doctor's read.
+  'completed' => TestStage.awaitingReview,
+  'reviewed' => TestStage.reviewed,
+  // Once a centre is chosen the patient can upload the moment the lab hands
+  // them the report — which in practice happens before anyone updates a status.
+  'facility_selected' ||
+  'sample_collected' ||
+  'processing' ||
+  'test_completed' => TestStage.awaitingUpload,
+  // `requested`, `accepted` and `cancelled`.
   _ => TestStage.requestSent,
 };
 
 /// `GET /lab-orders`.
-TestOrder testOrderFrom(Map<String, dynamic> json) {
+TestOrder testOrderFrom(
+  Map<String, dynamic> json, {
+  String? patientName,
+  DateTime? patientDob,
+}) {
   final tests = json['tests'];
-  final discipline = Api.str(json['discipline'], 'laboratory');
+  // `kind` is what the server actually calls it; `discipline` was read for a
+  // field the backend has never sent, so every order looked like a lab order.
+  final kind = Api.str(json['kind'], 'lab');
+  final centre = json['testingCentreId'];
 
   return TestOrder(
     id: Api.id(json),
-    discipline: discipline == 'radiology'
+    discipline: kind == 'imaging'
         ? ResultDiscipline.radiology
         : ResultDiscipline.laboratory,
     category: Api.str(json['category'], 'Diagnostics'),
@@ -461,9 +519,155 @@ TestOrder testOrderFrom(Map<String, dynamic> json) {
         : Api.str(json['title'], 'Test'),
     orderedBy: Api.nameOf(json['requestedByDoctorId'], 'Your doctor'),
     stage: testStageFrom(Api.str(json['status'])),
-    facility: json['facility'] == null ? null : Api.str(json['facility']),
+    // Populated by the listing when a centre has been chosen, so this names it
+    // rather than printing an id. Null until then, which is what the facility
+    // picker keys off.
+    facility: centre is Map<String, dynamic> ? Api.str(centre['name']) : null,
+    reviewMessage: json['reviewMessage'] == null
+        ? null
+        : Api.str(json['reviewMessage']),
+    document: testOrderDocumentFrom(
+      json,
+      // The listing populates the patient on a doctor's view but not on the
+      // patient's own — they already know who they are — so the caller passes
+      // it in from the signed-in account.
+      patientName:
+          patientName ?? Api.nameOf(json['patientId'], AppStrings.you.tr),
+      patientDob: patientDob,
+    ),
   );
 }
+
+/// The signed order sheet for one lab or imaging order.
+///
+/// Everything here comes off the order row the listing already returns —
+/// including the ordering doctor's licence and specialty, which the backend
+/// attaches from their `DoctorProfile` because the order itself only holds a
+/// user id.
+TestOrderDocument testOrderDocumentFrom(
+  Map<String, dynamic> json, {
+  required String patientName,
+  DateTime? patientDob,
+}) {
+  final kind = Api.str(json['kind'], 'lab');
+  final priority = Api.str(json['priority'], 'routine');
+  final doctor = json['requestedByDoctorId'];
+  final practitioner = json['practitioner'];
+  final centre = json['testingCentreId'];
+  final id = Api.id(json);
+
+  final specialties = practitioner is Map<String, dynamic>
+      ? practitioner['specialties']
+      : null;
+
+  return TestOrderDocument(
+    kindLabel: kind == 'imaging'
+        ? AppStrings.imagingOrder.tr
+        : AppStrings.labOrder.tr,
+    priorityLabel: AppStrings.priorityLabel.trParams({
+      'priority': _priorityLabel(priority),
+    }),
+    // The last six characters of the id: short enough to read out over the
+    // phone, and it is the handle the server actually knows the order by.
+    reference: id.length > 6 ? id.substring(id.length - 6).toUpperCase() : id,
+    orderedOn: formatDateTime(Api.date(json['createdAt'])),
+    patientName: patientName,
+    dateOfBirth: patientDob == null ? null : formatDate(patientDob),
+    modality: json['modality'] == null
+        ? null
+        : _modalityLabel(Api.str(json['modality'])),
+    bodyRegion: json['bodyRegion'] == null
+        ? null
+        : Api.str(json['bodyRegion']),
+    clinicalIndication: Api.str(json['notes'], AppStrings.noIndicationGiven.tr),
+    physicianName: Api.nameOf(doctor, AppStrings.yourDoctor.tr),
+    physicianSpecialty: specialties is List && specialties.isNotEmpty
+        ? specialties.map(Api.str).join(', ')
+        : null,
+    licence: practitioner is Map<String, dynamic>
+        ? (practitioner['licenseNumber'] == null
+              ? null
+              : Api.str(practitioner['licenseNumber']))
+        : null,
+    facility: centre is Map<String, dynamic> ? Api.str(centre['name']) : null,
+  );
+}
+
+String _priorityLabel(String raw) => switch (raw) {
+  'urgent' => AppStrings.priorityUrgent.tr,
+  'stat' => AppStrings.priorityStat.tr,
+  _ => AppStrings.priorityRoutine.tr,
+};
+
+String _modalityLabel(String raw) => switch (raw) {
+  'x_ray' => AppStrings.modalityXray.tr,
+  'ultrasound' => AppStrings.modalityUltrasound.tr,
+  'ct' => AppStrings.modalityCt.tr,
+  'mri' => AppStrings.modalityMri.tr,
+  'mammography' => AppStrings.modalityMammography.tr,
+  _ => AppStrings.modalityOther.tr,
+};
+
+/// `GET /deliveries/:id/location`.
+DeliveryRoute deliveryRouteFrom(Map<String, dynamic> json) {
+  MapPoint? point(dynamic raw) {
+    if (raw is! Map<String, dynamic>) return null;
+    final lat = raw['lat'];
+    final lng = raw['lng'];
+    if (lat == null || lng == null) return null;
+    return MapPoint(
+      lat: Api.decimal(lat),
+      lng: Api.decimal(lng),
+      label: Api.str(raw['label']),
+    );
+  }
+
+  final last = json['lastLocation'];
+  return DeliveryRoute(
+    status: Api.str(json['status'], 'unassigned'),
+    courier: point(last),
+    pickup: point(json['pickup']),
+    dropoff: point(json['dropoff']),
+    reportedAt: last is Map<String, dynamic> && last['at'] != null
+        ? Api.date(last['at'])
+        : null,
+  );
+}
+
+/// `GET /pharmacies/best-matches` — one shop, ranked against a prescription.
+///
+/// The row wraps the pharmacy rather than being one: it carries how much of
+/// the script the shop can dispense and what that would cost, which is the
+/// whole point of the ranking. Reading it as a flat pharmacy produced a store
+/// with no name and no coverage.
+PharmacyStore pharmacyMatchFrom(Map<String, dynamic> json) {
+  final base = pharmacyFrom(Api.map(json['pharmacy']));
+  return PharmacyStore(
+    id: base.id,
+    name: base.name,
+    address: base.address,
+    distanceLabel: base.distanceLabel,
+    rating: base.rating,
+    reviewCount: base.reviewCount,
+    etaLabel: base.etaLabel,
+    price: Api.majorUnits(json['estimatedTotalMinor']),
+    availableCount: Api.integer(json['matchedCount']),
+    totalCount: Api.integer(json['requestedCount']),
+    logoAsset: base.logoAsset,
+  );
+}
+
+/// `GET /diagnostic-tests` — one orderable test.
+orders.DiagnosticTest diagnosticTestFrom(Map<String, dynamic> json) =>
+    orders.DiagnosticTest(
+      id: Api.id(json),
+      name: Api.str(json['name'], 'Test'),
+      category: Api.str(json['category'], 'General'),
+      modality: json['modality'] == null ? null : Api.str(json['modality']),
+      preparation: json['preparation'] == null
+          ? null
+          : Api.str(json['preparation']),
+    );
 
 /// `GET /testing-centres`.
 TestingCentre testingCentreFrom(Map<String, dynamic> json) {
@@ -537,6 +741,19 @@ OrderLine shopOrderLineFrom(Map<String, dynamic> json) => OrderLine(
   quantity: Api.integer(json['quantity'], 1),
   unitPrice: Api.majorUnits(json['unitPriceMinor']),
 );
+
+/// `15 Mar 1978` — an unambiguous date, which matters on a medical document
+/// where 03/04 could be March or April depending on the reader.
+String formatDate(DateTime at) {
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  return '${at.day} ${months[at.month - 1]} ${at.year}';
+}
+
+/// `15 Mar 1978, 09:15 AM`.
+String formatDateTime(DateTime at) => '${formatDate(at)}, ${clockLabel(at)}';
 
 /// `10:32 AM`.
 String clockLabel(DateTime at) {
@@ -626,6 +843,7 @@ DeliveryRequest deliveryRequestFrom(Map<String, dynamic> json) {
     pickupName: Api.str(json['pickupAddress']),
     customerName: Api.nameOf(json['patientId']),
     customerAddress: Api.str(json['dropoffAddress']),
+    customerId: Api.id(json['patientId']),
     minutes: 0,
     distanceKm: 0,
     items: orderItemsLabel(json['orderId']),
@@ -771,6 +989,9 @@ OrderHistoryEntry orderHistoryEntryFrom(Map<String, dynamic> json) {
     reference: '#${id.length >= 6 ? id.substring(id.length - 6) : id}'
         .toUpperCase(),
     storeName: Api.str(Api.map(json['pharmacyId'])['name'], 'Pharmacy'),
+    pharmacyId: Api.id(json['pharmacyId']),
+    storeAddress: Api.str(Api.map(json['pharmacyId'])['addressLine']),
+    storeCity: Api.str(Api.map(json['pharmacyId'])['city']),
     placedOn: Api.date(json['createdAt']),
     // Units ordered, not lines: two boxes of one medicine is two items.
     itemCount: items.fold(0, (n, i) => n + Api.integer(i['quantity'], 1)),
@@ -833,8 +1054,8 @@ ChatMessage chatMessageFrom(Map<String, dynamic> json, String myUserId) =>
       text: Api.str(json['body']),
       sentAt: Api.date(json['createdAt']),
       author: Api.id(json['senderId']) == myUserId
-          ? MessageAuthor.patient
-          : MessageAuthor.doctor,
+          ? MessageAuthor.me
+          : MessageAuthor.peer,
       // Nullable on purpose: absent means "not yet", which is what the single
       // tick versus double tick is drawn from.
       deliveredAt: json['deliveredAt'] == null

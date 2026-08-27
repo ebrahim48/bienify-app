@@ -1,3 +1,6 @@
+import 'package:get/get.dart';
+
+import '../../../../../../core/constants/app_strings.dart';
 import 'dart:io';
 
 import '../../../../../../core/constants/api_constants.dart';
@@ -44,11 +47,22 @@ class ApiVaultRepository implements VaultRepository {
 
   @override
   Future<List<TestOrder>> testOrders() async {
-    final rows = await _api.getList(
-      ApiConstants.labOrders,
-      query: {'limit': _pageSize},
-    );
-    return rows.map(testOrderFrom).toList();
+    // The order sheet names the patient and prints their date of birth, and a
+    // patient's own listing does not populate them — they are the caller. Read
+    // once here rather than per row.
+    final results = await Future.wait([
+      _api.getList(ApiConstants.labOrders, query: {'limit': _pageSize}),
+      _api.getMap(ApiConstants.usersMe),
+    ]);
+    final rows = results[0] as List<Map<String, dynamic>>;
+    final me = results[1] as Map<String, dynamic>;
+
+    final name = Api.nameOf(me, AppStrings.you.tr);
+    final dob = me['dob'] == null ? null : Api.date(me['dob']);
+
+    return rows
+        .map((row) => testOrderFrom(row, patientName: name, patientDob: dob))
+        .toList();
   }
 
   @override
@@ -167,6 +181,72 @@ class ApiVaultRepository implements VaultRepository {
     );
 
     return vaultRecordFrom(created);
+  }
+
+  @override
+  Future<void> uploadLabResult({
+    required String labOrderId,
+    required String path,
+    required String fileName,
+    required String mimeType,
+    String? notes,
+    void Function(double progress)? onProgress,
+  }) async {
+    final file = File(path);
+    final size = await file.length();
+
+    // Scoped by the server to the *order's* patient, not the caller — which is
+    // why this is a different endpoint from the vault's own upload-url.
+    final issued = await _api.postMap(
+      ApiConstants.postLabOrdersResultUploadUrl(labOrderId),
+      body: {'contentType': mimeType},
+    );
+
+    final url = '${issued['url'] ?? ''}';
+    final key = '${issued['key'] ?? ''}';
+    if (url.isEmpty || key.isEmpty) {
+      throw UnknownException('The server did not issue an upload location');
+    }
+
+    await _uploader.putBytes(
+      url: url,
+      file: file,
+      mime: mimeType,
+      size: size,
+      onProgress: onProgress,
+    );
+
+    // Filing is what completes the order, so it comes after the bytes land.
+    await _api.postMap(
+      ApiConstants.postLabOrdersResult(labOrderId),
+      body: {
+        's3Key': key,
+        'title': fileName,
+        if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+      },
+    );
+  }
+
+  @override
+  Future<void> selectTestingCentre({
+    required String labOrderId,
+    required String testingCentreId,
+  }) async {
+    await _api.patch(
+      ApiConstants.updateLabOrdersFacility(labOrderId),
+      body: {'testingCentreId': testingCentreId},
+    );
+  }
+
+  @override
+  Future<void> respondToLabOrder({
+    required String labOrderId,
+    required bool accept,
+  }) async {
+    await _api.post(
+      ApiConstants.postLabOrdersRespond(labOrderId),
+      body: {'accept': accept},
+    );
   }
 
   static List<String> _strings(dynamic v) =>

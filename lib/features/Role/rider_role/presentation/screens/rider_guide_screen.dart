@@ -15,10 +15,11 @@ import '../../../../../core/widgets/app_card.dart';
 import '../../../../../core/widgets/app_scaffold.dart';
 import '../../data/static/rider_data.dart';
 import '../../domain/entities/rider.dart';
+import '../controllers/rider_home_controller.dart';
 import '../widgets/rider_widgets.dart';
 
 /// How It Works — the five steps, then the invitation to apply.
-class RiderGuideScreen extends StatelessWidget {
+class RiderGuideScreen extends GetView<RiderHomeController> {
   const RiderGuideScreen({super.key});
 
   @override
@@ -30,11 +31,15 @@ class RiderGuideScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AppSpacing.gapV(AppSpacing.sm),
-          RiderMasthead(
-            name: RiderData.rider.name,
-            location: RiderData.rider.location,
-            onNotifications: () =>
-                Get.toNamed<void>(AppRoutes.shopNotifications),
+          // The signed-in courier, not the design's sample one.
+          Obx(
+            () => RiderMasthead(
+              name: controller.rider.value.name,
+              location: controller.rider.value.location,
+              photoUrl: controller.rider.value.photoUrl,
+              onNotifications: () =>
+                  Get.toNamed<void>(AppRoutes.shopNotifications),
+            ),
           ),
           AppSpacing.gapV(AppSpacing.md),
           Text(

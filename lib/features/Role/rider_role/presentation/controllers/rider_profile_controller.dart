@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+import '../../../../../core/services/avatar_service.dart';
 import 'package:get/get.dart';
 
 import '../../../../../core/constants/app_strings.dart';
@@ -15,7 +17,7 @@ import '../../domain/repositories/rider_repository.dart';
 /// My Wallet and Settings are the patient app's own screens — a courier keeps
 /// their money in the same wallet and reads the same legal pages, so they are
 /// navigated to rather than rebuilt.
-class RiderProfileController extends GetxController {
+class RiderProfileController extends GetxController with AvatarChanging {
   RiderProfileController({RiderRepository? repository, Logout? logout})
     : _repository = repository ?? Get.find<RiderRepository>(),
       _logout = logout ?? Get.find<Logout>();
@@ -76,6 +78,10 @@ class RiderProfileController extends GetxController {
           : loaded.country;
       city.value = loaded.city.isEmpty ? RiderData.cities.first : loaded.city;
       address.value = loaded.address;
+      // The courier's own saved answers, not a fixture's. Both were reset to
+      // defaults on every load because the profile carried neither.
+      zones.value = List.of(loaded.zones);
+      gpsEnabled.value = loaded.shareLiveLocation;
       formGeneration.value++;
     } on AppException catch (e) {
       error.value = e.message;
@@ -90,7 +96,14 @@ class RiderProfileController extends GetxController {
 
   void edit() => Get.toNamed<void>(AppRoutes.riderEditProfile);
 
-  void changePhoto() => edit();
+  /// Changes the account photo.
+  ///
+  /// This opened the edit form, which has no photo field — so the control did
+  /// nothing at all, in all four roles.
+  Future<void> changePhoto(BuildContext context) => changePhotoWith(context);
+
+  @override
+  Future<void> reloadProfile() => load();
 
   /// Clears the session before leaving, so the next sign-in does not inherit
   /// this courier's tokens.
@@ -131,7 +144,9 @@ class RiderProfileController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    zones.value = List.of(RiderData.pickedZones);
+    // Replaced by the courier's saved zones as soon as [load] returns; empty
+    // rather than three the fixture picked on their behalf.
+    zones.value = <String>[];
     load();
   }
 
@@ -152,10 +167,17 @@ class RiderProfileController extends GetxController {
     if (isSubmitting.value) return;
     isSubmitting.value = true;
     try {
+      // Everything the form collects. It sent three of seven fields and
+      // reported success for all of them.
       await _repository.saveProfile(
         vehicleType: rider.value.vehicleType,
         licenceNumber: rider.value.licenceNumber,
         city: city.value,
+        name: fullName.value,
+        country: country.value,
+        addressLine: address.value,
+        zones: List.of(zones),
+        shareLiveLocation: gpsEnabled.value,
       );
     } on AppException catch (e) {
       AppSnackbar.error(e.message);

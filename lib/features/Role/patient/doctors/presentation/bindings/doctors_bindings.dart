@@ -1,12 +1,11 @@
+import '../controllers/find_doctor_controller.dart';
 import 'package:get/get.dart';
 
 import '../../../booking/presentation/controllers/payment_controller.dart';
 import '../../../appointments/domain/entities/appointment.dart';
-import '../../../chat/data/static/chat_mock_data.dart';
 import '../../../chat/domain/entities/conversation.dart';
 import '../../../chat/presentation/controllers/chat_controller.dart';
 import '../../../chat/presentation/controllers/messages_controller.dart';
-import '../../data/static/doctor_mock_data.dart';
 import '../../domain/entities/doctor.dart';
 import '../../domain/entities/doctor_category.dart';
 import '../../domain/usecases/doctor_usecases.dart';
@@ -38,7 +37,9 @@ class DoctorListBinding extends Bindings {
       DoctorListController(
         category: Get.arguments is DoctorCategory
             ? Get.arguments as DoctorCategory
-            : DoctorMockData.generalCategory,
+            // "Everyone", not a specialty — the same catch-all the Find a
+            // Doctor grid shows above its specialties.
+            : FindDoctorController.generalCategory,
       ),
     );
   }
@@ -93,11 +94,19 @@ class MessagesBinding extends Bindings {
 class ChatBinding extends Bindings {
   @override
   void dependencies() {
-    // Opening a thread without a peer (e.g. from the header shortcut) falls
-    // back to the sample conversation rather than crashing.
-    final peer = Get.arguments is ConversationPeer
-        ? Get.arguments as ConversationPeer
-        : ChatMockData.peer;
+    // Every route into chat now carries the person being talked to. The
+    // fallback here was the sample conversation, so the two callers that had
+    // no peer — the courier's job screen and the support shortcut — opened a
+    // thread with a doctor the user had never messaged, and a canned reply
+    // arrived 900ms later. Both now say the channel does not exist, which
+    // leaves nothing to fall back to.
+    final peer = Get.arguments;
+    if (peer is! ConversationPeer) {
+      // Not reachable from the app. Going back beats a thread with nobody in
+      // it, and does not invent a correspondent.
+      Get.back<void>();
+      return;
+    }
     Get.put(ChatController(peer: peer));
   }
 }

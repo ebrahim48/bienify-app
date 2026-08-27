@@ -1,3 +1,6 @@
+import 'package:bienify_app/features/Role/patient/pharmacy/domain/repositories/pharmacy_repository.dart';
+import 'package:bienify_app/features/Role/patient/pharmacy/domain/entities/pharmacy.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'dart:io';
 
 import 'package:bienify_app/core/localization/app_translations.dart';
@@ -11,7 +14,6 @@ import 'package:bienify_app/features/Role/patient/medical_vault/presentation/wid
 import 'package:bienify_app/features/Role/patient/pharmacy/presentation/controllers/prescription_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
 import '../support/test_fonts.dart';
@@ -162,6 +164,10 @@ void main() {
       final vault = _RecordingVault();
       final controller = PrescriptionController(
         vault: vault,
+        // The controller ranks shops against the patient's prescription now,
+        // so it takes a pharmacy repository too. This test is about what
+        // reaches the vault, so the ranking returns nothing.
+        pharmacy: _StubPharmacy(),
         picker: _StubPicker(mime: 'application/pdf', name: 'script.pdf'),
       );
       Get.put(controller);
@@ -224,6 +230,30 @@ class _RecordingVault implements VaultRepository {
   final List<({String fileName, String? notes, VaultRecordType type})> uploads =
       [];
 
+  /// Lab results, facility choices and accept/decline are exercised by the
+  /// vault repository's own live tests; this fake only records vault uploads.
+  @override
+  Future<void> uploadLabResult({
+    required String labOrderId,
+    required String path,
+    required String fileName,
+    required String mimeType,
+    String? notes,
+    void Function(double progress)? onProgress,
+  }) async {}
+
+  @override
+  Future<void> selectTestingCentre({
+    required String labOrderId,
+    required String testingCentreId,
+  }) async {}
+
+  @override
+  Future<void> respondToLabOrder({
+    required String labOrderId,
+    required bool accept,
+  }) async {}
+
   @override
   Future<UploadedDocument> uploadDocument({
     required String path,
@@ -282,4 +312,16 @@ class _StubPicker implements AttachmentPickerService {
         mime: mime,
         size: 1024,
       );
+}
+
+
+/// The prescription flow reads shops to rank against the script; this test is
+/// only about the file that reaches the vault, so it ranks nothing.
+class _StubPharmacy extends Fake implements PharmacyRepository {
+  @override
+  Future<List<PharmacyStore>> stores({String query = ''}) async => const [];
+
+  @override
+  Future<List<PharmacyStore>> bestMatches(String prescriptionId) async =>
+      const [];
 }

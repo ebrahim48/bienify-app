@@ -78,7 +78,15 @@ void main() {
   }
 
   testWidgets('How It Works', (tester) async {
-    await pump(tester, const RiderGuideScreen());
+    // The masthead names the signed-in courier now, so the screen needs the
+    // controller that reads them — it drew the fixture courier before, on a
+    // page a real courier opens.
+    await pump(
+      tester,
+      const RiderGuideScreen(),
+      binding: RiderGuideBinding(),
+    );
+    await tester.pumpAndSettle();
 
     expect(find.text('Rider Arif'), findsOneWidget);
     expect(find.text('Apply Rider?'), findsOneWidget);
@@ -108,6 +116,10 @@ void main() {
       binding: RiderApplicationBinding(),
     );
     final controller = Get.find<RiderApplicationController>();
+    // The greeting is the applicant's own first name, read from their account.
+    // It said "Hey Arif!" to every courier who ever applied.
+    controller.firstName.value = 'Arif';
+    await tester.pump();
 
     expect(find.text('Hey Arif!'), findsOneWidget);
     await settleImages(tester);
@@ -151,6 +163,13 @@ void main() {
 
     controller.step.value = 3;
     await tester.pumpAndSettle();
+    // A zone chip appears once the applicant picks one. Three were pre-picked
+    // from a fixture before, so this step opened already answered.
+    expect(controller.zones, isEmpty);
+    controller.selectZone('lester city');
+    // Selecting also moves the picker onto it, so the name would appear twice.
+    controller.zone.value = 'Downtown';
+    await tester.pumpAndSettle();
     expect(find.text('lester city'), findsOneWidget);
     await settleImages(tester);
     await expectLater(
@@ -183,15 +202,25 @@ void main() {
     final controller = Get.find<RiderApplicationController>()..step.value = 3;
     await tester.pumpAndSettle();
 
-    expect(controller.zones.length, 3);
+    // Nothing pre-picked: which zones a courier covers is their choice, and
+    // the fixture chose three on their behalf.
+    expect(controller.zones, isEmpty);
+
     controller.selectZone('Airport');
     await tester.pump();
-    expect(controller.zones.length, 4);
+    expect(controller.zones.length, 1);
 
     // Picking the same one twice does not double it up.
     controller.selectZone('Airport');
     await tester.pump();
-    expect(controller.zones.length, 4);
+    expect(controller.zones.length, 1);
+
+    controller.selectZone('jamaica');
+    // Move the picker off it, so the only 'jamaica' on screen is the chip.
+    // Selecting a zone also sets the dropdown's value, and tapping that row
+    // re-adds what the chip just removed.
+    controller.zone.value = 'Airport';
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('jamaica'));
     await tester.pumpAndSettle();
@@ -309,7 +338,15 @@ void main() {
   });
 
   testWidgets('Delivery completed', (tester) async {
+    // With a courier session behind it, carrying the handover they just made.
+    Get.put(RiderOrdersController()).receipt.value = const DeliveryReceipt(
+      orderId: '#45892',
+      customerName: 'John Doe',
+      location: 'Banani, Dhaka',
+      timeLabel: '4:32 PM',
+    );
     await pump(tester, const RiderDeliveredScreen());
+    await tester.pumpAndSettle();
 
     expect(find.text('Order successfully delivered!'), findsOneWidget);
     expect(find.text('#45892'), findsOneWidget);

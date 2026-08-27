@@ -57,11 +57,23 @@ class OrderHistoryEntry {
     required this.itemCount,
     required this.total,
     required this.state,
+    this.pharmacyId = '',
+    this.storeAddress = '',
+    this.storeCity = '',
   });
 
   final String id;
   final String reference;
   final String storeName;
+
+  /// The shop that filled it, so a review can be read for and written against
+  /// the right one. The review screen showed the first demo store to everybody
+  /// without it.
+  final String pharmacyId;
+
+  /// Where the shop is, from the same row.
+  final String storeAddress;
+  final String storeCity;
   final DateTime placedOn;
   final int itemCount;
   final double total;

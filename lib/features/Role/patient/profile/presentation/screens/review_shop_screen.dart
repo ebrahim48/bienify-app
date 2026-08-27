@@ -1,3 +1,4 @@
+import '../../domain/entities/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -6,7 +7,6 @@ import '../../../../../../core/constants/app_assets.dart';
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_radius.dart';
-import '../../../../../../core/theme/app_sizes.dart';
 import '../../../../../../core/theme/app_spacing.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/utils/responsive.dart';
@@ -14,7 +14,6 @@ import '../../../../../../core/widgets/app_button.dart';
 import '../../../../../../core/widgets/app_scaffold.dart';
 import '../../../../../../core/widgets/app_top_bar.dart';
 import '../../../appointments/presentation/widgets/review_dialog.dart';
-import '../../../pharmacy/data/static/pharmacy_mock_data.dart';
 import '../../../pharmacy/presentation/widgets/medicine_card.dart';
 import '../controllers/account_controller.dart';
 
@@ -31,7 +30,12 @@ class ReviewShopScreen extends GetView<AccountController> {
 
   @override
   Widget build(BuildContext context) {
-    final store = PharmacyMockData.nearbyStores.first;
+    // The order the patient tapped, which names the shop that filled it. The
+    // screen drew the first demo store for everybody before, under a rating
+    // and review count belonging to a *rider*.
+    final order = Get.arguments is OrderHistoryEntry
+        ? Get.arguments as OrderHistoryEntry
+        : null;
 
     return AppScaffold(
       topBar: AppTopBar(title: AppStrings.reviewShop.tr),
@@ -39,20 +43,16 @@ class ReviewShopScreen extends GetView<AccountController> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AppSpacing.gapV(AppSpacing.base),
-          _Masthead(storeName: store.name),
+          _Masthead(storeName: order?.storeName ?? ''),
           AppSpacing.gapV(AppSpacing.xs),
-          _Rating(
-            rating: PharmacyMockData.riderRating,
-            reviewCount: PharmacyMockData.riderReviews,
-          ),
           AppSpacing.gapV(AppSpacing.xs2),
           Text(
-            PharmacyMockData.address.line1,
+            order?.storeAddress ?? '',
             textAlign: TextAlign.center,
             style: AppTextStyles.bodyLarge.rc(AppColors.gray900),
           ),
           Text(
-            PharmacyMockData.address.line2,
+            order?.storeCity ?? '',
             textAlign: TextAlign.center,
             style: AppTextStyles.bodyLarge.rc(AppColors.gray400),
           ),
@@ -129,57 +129,44 @@ class _Masthead extends StatelessWidget {
   }
 }
 
-class _Rating extends StatelessWidget {
-  const _Rating({required this.rating, required this.reviewCount});
-
-  final double rating;
-  final int reviewCount;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.star_rounded, size: AppSizes.xl.w, color: AppColors.star),
-        AppSpacing.gapH(AppSpacing.xs2),
-        Text('$rating', style: AppTextStyles.titleSmall.rc(AppColors.gray900)),
-        Text(
-          AppStrings.reviewsCount.trParams({'count': '$reviewCount'}),
-          style: AppTextStyles.bodyLarge.rc(AppColors.gray900),
-        ),
-      ],
-    );
-  }
-}
-
-class _Grid extends StatelessWidget {
+class _Grid extends GetView<AccountController> {
   const _Grid({required this.onAdd});
 
   final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
-    final medicines = PharmacyMockData.commonMedicines;
+    // The Obx belongs here, around the read, not around this widget from the
+    // caller: GetX only tracks observables touched inside the closure's own
+    // build, so wrapping the widget watched nothing.
+    return Obx(() {
+      // What this shop actually stocks. A fixed grid of demo medicines was
+      // drawn for every shop before, so a patient could tap "add" on something
+      // the pharmacy they were reviewing had never carried.
+      final medicines = controller.shopMedicines;
+      if (medicines.isEmpty) return const SizedBox.shrink();
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final gutter = ReviewShopScreen._gutter.w;
-        final itemWidth =
-            (constraints.maxWidth - gutter * (ReviewShopScreen._columns - 1)) /
-            ReviewShopScreen._columns;
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final gutter = ReviewShopScreen._gutter.w;
+          final itemWidth =
+              (constraints.maxWidth -
+                  gutter * (ReviewShopScreen._columns - 1)) /
+              ReviewShopScreen._columns;
 
-        return Wrap(
-          spacing: gutter,
-          runSpacing: gutter,
-          children: [
-            for (final medicine in medicines)
-              SizedBox(
-                width: itemWidth,
-                child: MedicineCard(medicine: medicine, onAdd: onAdd),
-              ),
-          ],
-        );
-      },
-    );
+          return Wrap(
+            spacing: gutter,
+            runSpacing: gutter,
+            children: [
+              for (final medicine in medicines)
+                SizedBox(
+                  width: itemWidth,
+                  child: MedicineCard(medicine: medicine, onAdd: onAdd),
+                ),
+            ],
+          );
+        },
+      );
+    });
   }
 }

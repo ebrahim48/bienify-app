@@ -10,7 +10,10 @@ import '../entities/test_request.dart';
 /// same client and re-deriving the same profile.
 abstract class DoctorPracticeRepository {
   /// Masthead, the four statistics, the load chart and today's visits.
-  Future<DoctorDashboard> dashboard();
+  /// [range] selects the appointments chart window. The backend has always
+  /// accepted `?range=weekly|monthly`; nothing sent it, so the Monthly toggle
+  /// on the home screen changed a label and nothing else.
+  Future<DoctorDashboard> dashboard({ChartRange range = ChartRange.weekly});
 
   /// Every booking the practitioner is party to, newest first.
   Future<List<DoctorAppointment>> appointments();
@@ -82,18 +85,30 @@ abstract class DoctorPracticeRepository {
   Future<List<ReviewPatient>> reviewPatients();
 
   /// Orders lab or imaging work for a patient.
+  /// The orderable tests for one discipline, from the platform catalogue.
+  ///
+  /// Both ordering wizards read a hardcoded list before this — so a test the
+  /// admin added never appeared, and one they retired never went away.
+  Future<List<DiagnosticTest>> testCatalogue({required bool radiology});
+
   Future<void> orderTest({
     required String patientId,
     required List<String> tests,
     String? notes,
     String? appointmentId,
+    bool imaging = false,
+    String? modality,
+    String? bodyRegion,
+    String priority = 'routine',
   });
 
   /// The lab orders this practitioner requested, newest first.
   ///
   /// `GET /lab-orders` answers "orders I am the subject of" by default; a
   /// doctor asks the same endpoint the opposite question with `role=doctor`.
-  Future<List<TestRequest>> labRequests();
+  /// [imaging] switches the tab between diagnostics and radiology; both are
+  /// the same endpoint narrowed by `kind`.
+  Future<List<TestRequest>> labRequests({bool imaging = false});
 
   /// Leaves [message] for the patient and marks [labOrderId] reviewed.
   ///
@@ -101,4 +116,16 @@ abstract class DoctorPracticeRepository {
   /// nothing to review before that — and only for an order this practitioner
   /// requested themselves.
   Future<void> reviewLabOrder({required String labOrderId, required String message});
+
+  /// Files one credential document — a licence or certificate.
+  ///
+  /// `POST /doctors/me/credentials` has always demanded a key under the
+  /// doctor's own prefix and nothing issued one, so submitting credentials was
+  /// unreachable through the API until the upload-url endpoint was added.
+  Future<void> uploadCredential({
+    required String kind,
+    required String path,
+    required String mimeType,
+    void Function(double progress)? onProgress,
+  });
 }

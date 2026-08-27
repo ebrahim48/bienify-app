@@ -1,3 +1,5 @@
+import '../../domain/repositories/pharmacy_repository.dart';
+import '../../../medical_vault/domain/entities/medical_record.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
@@ -7,7 +9,6 @@ import '../../../../../../core/services/attachment_picker_service.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../../chat/presentation/widgets/attachment_sheet.dart';
 import '../../../medical_vault/domain/repositories/vault_repository.dart';
-import '../../data/static/pharmacy_mock_data.dart';
 import '../../domain/entities/pharmacy.dart';
 
 /// Spans the prescription flow: upload → best matches → medicine selection.
@@ -19,17 +20,26 @@ import '../../domain/entities/pharmacy.dart';
 class PrescriptionController extends GetxController {
   PrescriptionController({
     VaultRepository? vault,
+    PharmacyRepository? pharmacy,
     AttachmentPickerService? picker,
   }) : _vault = vault ?? Get.find<VaultRepository>(),
+       _pharmacy = pharmacy ?? Get.find<PharmacyRepository>(),
        _picker = picker ?? Get.find<AttachmentPickerService>();
 
   final VaultRepository _vault;
+  final PharmacyRepository _pharmacy;
   final AttachmentPickerService _picker;
 
-  final Prescription prescription = PharmacyMockData.prescription;
-  final String searchArea = PharmacyMockData.searchArea;
+  /// The patient's own most recent prescription, once read.
+  final Rxn<DigitalPrescription> prescription = Rxn<DigitalPrescription>();
+
+  /// Where the shops shown are. Blank until a search names somewhere — the
+  /// screen printed a fixed neighbourhood before.
+  final RxString searchArea = ''.obs;
 
   final RxList<PharmacyStore> matches = <PharmacyStore>[].obs;
+
+  final RxBool isLoadingMatches = true.obs;
   final RxnString selectedStoreId = RxnString();
 
   /// Set once a file has been picked, so the upload screen can reflect it.
@@ -41,9 +51,36 @@ class PrescriptionController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    matches.value = PharmacyMockData.matches;
-    // The best match starts selected, as the design shows.
-    selectedStoreId.value = matches.first.id;
+    _load();
+  }
+
+  /// Shops that can actually fill the patient's script.
+  ///
+  /// `GET /pharmacies/best-matches` ranks by how much of a prescription a shop
+  /// can dispense, which is the whole point of this screen — it showed three
+  /// fixture shops with invented coverage before.
+  ///
+  /// It needs a prescription the server issued. A photographed paper script is
+  /// a vault document with no id to rank against, so that path falls back to
+  /// the shops nearby, which is at least true.
+  Future<void> _load() async {
+    isLoadingMatches.value = true;
+    try {
+      final scripts = await _vault.prescriptions();
+      final script = scripts.isEmpty ? null : scripts.first;
+      prescription.value = script;
+
+      matches.value = script == null
+          ? await _pharmacy.stores()
+          : await _pharmacy.bestMatches(script.id);
+
+      selectedStoreId.value = matches.isEmpty ? null : matches.first.id;
+      searchArea.value = matches.isEmpty ? '' : matches.first.address;
+    } on AppException {
+      matches.clear();
+    } finally {
+      isLoadingMatches.value = false;
+    }
   }
 
   bool isSelected(PharmacyStore store) => selectedStoreId.value == store.id;

@@ -28,6 +28,7 @@ class BienifyApi {
   late final DoctorsApi doctorsApi = DoctorsApi(client);
   late final HealthApi healthApi = HealthApi(client);
   late final HomeApi homeApi = HomeApi(client);
+  late final ConfigApi configApi = ConfigApi(client);
   late final LabOrdersApi labOrdersApi = LabOrdersApi(client);
   late final MedicineOrdersApi medicineOrdersApi = MedicineOrdersApi(client);
   late final MedicinesApi medicinesApi = MedicinesApi(client);

@@ -1,3 +1,4 @@
+import '../models/chat_thread.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -25,6 +26,13 @@ class SocketEvents {
 
   // Inbound.
   static const String messageNew = 'message:new';
+
+  /// `{deliveryId, lat, lng, at, status}` — the courier moved.
+  ///
+  /// Sent to the patient and the shop, never to the courier reporting it. The
+  /// tracking map polled for this on a ten-second timer, so a pin was up to an
+  /// interval stale and jumped between fixes rather than moving.
+  static const String deliveryLocation = 'delivery:location';
   static const String messageRead = 'message:read';
   static const String messageDelivered = 'message:delivered';
   static const String messageReacted = 'message:reacted';
@@ -57,12 +65,12 @@ class PresenceState {
 /// Someone started or stopped typing in a thread.
 class TypingState {
   const TypingState({
-    required this.appointmentId,
+    required this.thread,
     required this.userId,
     required this.isTyping,
   });
 
-  final String appointmentId;
+  final ChatThread thread;
   final String userId;
   final bool isTyping;
 }
@@ -70,12 +78,12 @@ class TypingState {
 /// Receipts for messages the signed-in user sent.
 class ReceiptState {
   const ReceiptState({
-    required this.appointmentId,
+    required this.thread,
     required this.messageIds,
     required this.isRead,
   });
 
-  final String appointmentId;
+  final ChatThread thread;
   final List<String> messageIds;
 
   /// True for read, false for merely delivered.
@@ -104,10 +112,11 @@ class SocketService {
   /// Threads to re-join after a reconnect. The server forgets room membership
   /// when a socket drops, so without this a recovered connection would look
   /// alive while receiving nothing.
-  final Set<String> _joined = <String>{};
+  final Set<ChatThread> _joined = <ChatThread>{};
 
   final _messages = StreamController<Map<String, dynamic>>.broadcast();
   final _presence = StreamController<PresenceState>.broadcast();
+  final _deliveryLocations = StreamController<Map<String, dynamic>>.broadcast();
   final _typing = StreamController<TypingState>.broadcast();
   final _receipts = StreamController<ReceiptState>.broadcast();
   final _connected = StreamController<bool>.broadcast();
@@ -116,6 +125,10 @@ class SocketService {
   /// A message was stored — by either party, on any of their devices.
   Stream<Map<String, dynamic>> get messages => _messages.stream;
   Stream<PresenceState> get presence => _presence.stream;
+
+  /// Courier positions, as they are reported.
+  Stream<Map<String, dynamic>> get deliveryLocations =>
+      _deliveryLocations.stream;
   Stream<TypingState> get typing => _typing.stream;
   Stream<ReceiptState> get receipts => _receipts.stream;
 
@@ -191,8 +204,8 @@ class SocketService {
         _connected.add(true);
         // Rooms do not survive a reconnect; re-join everything this session
         // was watching before the drop.
-        for (final appointmentId in _joined) {
-          socket.emit(SocketEvents.joinThread, {'appointmentId': appointmentId});
+        for (final thread in _joined) {
+          socket.emit(SocketEvents.joinThread, thread.payload);
         }
         _startHeartbeat();
       })
@@ -205,6 +218,10 @@ class SocketService {
         final map = _asMap(data);
         if (map != null) _messages.add(map);
       })
+      ..on(SocketEvents.deliveryLocation, (data) {
+        final map = _asMap(data);
+        if (map != null) _deliveryLocations.add(map);
+      })
       ..on(SocketEvents.presence, (data) {
         final map = _asMap(data);
         if (map != null) _presence.add(PresenceState.fromJson(map));
@@ -214,7 +231,7 @@ class SocketService {
         if (map == null) return;
         _typing.add(
           TypingState(
-            appointmentId: '${map['appointmentId'] ?? ''}',
+            thread: ChatThread.fromJson(map) ?? const ChatThread.consultation(''),
             userId: '${map['userId'] ?? ''}',
             isTyping: map['isTyping'] == true,
           ),
@@ -239,23 +256,23 @@ class SocketService {
     final ids = map['messageIds'];
     _receipts.add(
       ReceiptState(
-        appointmentId: '${map['appointmentId'] ?? ''}',
+        thread: ChatThread.fromJson(map) ?? const ChatThread.consultation(''),
         messageIds: ids is List ? ids.map((id) => '$id').toList() : const [],
         isRead: isRead,
       ),
     );
   }
 
-  /// Watches one consultation. Remembered, so a reconnect restores it.
-  void joinThread(String appointmentId) {
-    if (appointmentId.isEmpty) return;
-    _joined.add(appointmentId);
-    _socket?.emit(SocketEvents.joinThread, {'appointmentId': appointmentId});
+  /// Watches one thread. Remembered, so a reconnect restores it.
+  void joinThread(ChatThread thread) {
+    if (!thread.isLive) return;
+    _joined.add(thread);
+    _socket?.emit(SocketEvents.joinThread, thread.payload);
   }
 
-  void leaveThread(String appointmentId) {
-    _joined.remove(appointmentId);
-    _socket?.emit(SocketEvents.leaveThread, {'appointmentId': appointmentId});
+  void leaveThread(ChatThread thread) {
+    _joined.remove(thread);
+    _socket?.emit(SocketEvents.leaveThread, thread.payload);
   }
 
   /// Sends a message and resolves with the row the server stored.
@@ -265,7 +282,7 @@ class SocketService {
   /// twice, and the screen uses it to match its optimistic bubble to the
   /// stored row instead of briefly showing both.
   Future<Map<String, dynamic>?> sendMessage({
-    required String appointmentId,
+    required ChatThread thread,
     required String body,
     required String clientId,
     String? attachmentKey,
@@ -278,7 +295,7 @@ class SocketService {
     socket.emitWithAck(
       SocketEvents.sendMessage,
       {
-        'appointmentId': appointmentId,
+        ...thread.payload,
         'body': body,
         'clientId': clientId,
         'attachmentKey': ?attachmentKey,
@@ -302,29 +319,25 @@ class SocketService {
   /// Sets, replaces or clears a reaction. A null [kind] clears; sending the
   /// kind already set toggles it off server-side.
   void react({
-    required String appointmentId,
+    required ChatThread thread,
     required String messageId,
     required String? kind,
   }) => _socket?.emit(SocketEvents.react, {
-    'appointmentId': appointmentId,
+    ...thread.payload,
     'messageId': messageId,
     'kind': kind,
   });
 
-  void markRead(String appointmentId) => _socket?.emit(SocketEvents.markRead, {
-    'appointmentId': appointmentId,
-  });
+  void markRead(ChatThread thread) =>
+      _socket?.emit(SocketEvents.markRead, thread.payload);
 
-  void markDelivered(String appointmentId) =>
-      _socket?.emit(SocketEvents.markDelivered, {
-        'appointmentId': appointmentId,
-      });
+  void markDelivered(ChatThread thread) =>
+      _socket?.emit(SocketEvents.markDelivered, thread.payload);
 
-  void setTyping(String appointmentId, {required bool isTyping}) =>
-      _socket?.emit(
-        isTyping ? SocketEvents.typingStart : SocketEvents.typingStop,
-        {'appointmentId': appointmentId},
-      );
+  void setTyping(ChatThread thread, {required bool isTyping}) => _socket?.emit(
+    isTyping ? SocketEvents.typingStart : SocketEvents.typingStop,
+    thread.payload,
+  );
 
   /// One-off presence read, for a thread header opening before any change.
   Future<PresenceState?> queryPresence(String userId) {
@@ -374,6 +387,7 @@ class SocketService {
     disconnect();
     _messages.close();
     _presence.close();
+    _deliveryLocations.close();
     _typing.close();
     _receipts.close();
     _connected.close();

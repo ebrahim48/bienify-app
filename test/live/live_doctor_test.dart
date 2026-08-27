@@ -1,6 +1,8 @@
 @Tags(['live'])
 library;
 
+import 'package:bienify_app/core/models/chat_thread.dart';
+import 'package:bienify_app/core/network/attachment_uploader.dart';
 import 'dart:io';
 
 import 'package:bienify_app/core/constants/api_constants.dart';
@@ -61,7 +63,7 @@ void main() {
       print('Auth rate limit reached — live checks skipped. Retry in 15 min.');
       return;
     }
-    repository = ApiDoctorPracticeRepository(client);
+    repository = ApiDoctorPracticeRepository(client, AttachmentUploader(client));
     conversations = ApiConversationRepository(
       client,
       myUserId: () async => Api.id(await client.getMap(ApiConstants.usersMe)),
@@ -400,12 +402,14 @@ void main() {
           final id = open.first.id;
 
           final sent = await conversations.send(
-            appointmentId: id,
+            thread: ChatThread.consultation(id),
             body: 'Live check ${DateTime.now().millisecondsSinceEpoch}',
           );
           expect(sent.isMine, isTrue);
 
-          final thread = await conversations.messages(id);
+          final thread = await conversations.messages(
+            ChatThread.consultation(id),
+          );
           expect(thread.map((m) => m.id), contains(sent.id));
           // Oldest first: the server pages newest-first, and a thread read in
           // that order puts the reply above the question.

@@ -1,3 +1,4 @@
+import '../../features/Role/doctor_role/presentation/screens/doctor_credentials_screen.dart';
 import 'package:get/get.dart';
 
 import '../../features/Role/patient/appointments/presentation/bindings/appointments_bindings.dart';
@@ -531,6 +532,13 @@ abstract class AppPages {
       transitionDuration: _transitionDuration,
     ),
     GetPage(
+      name: AppRoutes.doctorCredentials,
+      page: () => const DoctorCredentialsScreen(),
+      binding: DoctorCredentialsBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
       name: AppRoutes.doctorReviewPatient,
       page: () => const ReviewPatientScreen(),
       binding: ResultsToReviewBinding(),
@@ -612,6 +620,10 @@ abstract class AppPages {
     GetPage(
       name: AppRoutes.riderGuide,
       page: () => const RiderGuideScreen(),
+      // The masthead names the signed-in courier, so the screen needs the
+      // controller that reads them. It drew the fixture courier's name and
+      // city before, on a page a real courier opens.
+      binding: RiderGuideBinding(),
       transition: _transition,
       transitionDuration: _transitionDuration,
     ),

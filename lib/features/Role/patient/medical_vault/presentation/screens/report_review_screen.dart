@@ -11,8 +11,6 @@ import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/utils/responsive.dart';
 import '../../../../../../core/widgets/app_button.dart';
 import '../../../../../../core/widgets/app_scaffold.dart';
-import '../../../../../../core/widgets/app_card.dart';
-import '../../../../../../core/widgets/app_tag.dart';
 import '../../../../../../core/widgets/app_top_bar.dart';
 import '../../domain/entities/medical_record.dart';
 import '../controllers/test_results_controller.dart';
@@ -81,10 +79,6 @@ class ReportReviewScreen extends GetView<TestResultsController> {
                     label: noteLabel,
                     onChanged: (value) => controller.replyNote.value = value,
                   ),
-                ],
-                if (controller.hasRequest) ...[
-                  AppSpacing.gapV(AppSpacing.base),
-                  _RequestCard(request: controller.request),
                 ],
               ],
             );
@@ -289,85 +283,3 @@ class _NoteSection extends StatelessWidget {
 
 /// A further test the doctor ordered: pencil disc, name with a priority tag,
 /// the analyte underneath, then the status pill below a hairline.
-class _RequestCard extends StatelessWidget {
-  const _RequestCard({required this.request});
-
-  final FollowUpRequest request;
-
-  static const double _disc = 40;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      hasShadow: false,
-      padding: EdgeInsets.all(AppSpacing.sm.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: _disc.w,
-                height: _disc.w,
-                decoration: BoxDecoration(
-                  color: AppColors.accentSurface,
-                  borderRadius: AppRadius.rLg,
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  Icons.colorize_rounded,
-                  size: AppSizes.xl.w,
-                  color: AppColors.actionFill,
-                ),
-              ),
-              AppSpacing.gapH(AppSpacing.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Wrapped so the priority tag drops below a long test
-                    // name rather than squeezing it.
-                    Wrap(
-                      spacing: AppSpacing.xs.w,
-                      runSpacing: AppSpacing.xs2.h,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(
-                          request.name,
-                          style: AppTextStyles.titleSmall.rc(AppColors.gray900),
-                        ),
-                        AppTag(
-                          request.priorityLabel,
-                          tone: AppTagTone.warning,
-                          pill: true,
-                        ),
-                      ],
-                    ),
-                    Text(
-                      request.detail,
-                      style: AppTextStyles.bodyLarge.rc(AppColors.gray500),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          AppSpacing.gapV(AppSpacing.sm),
-          Container(
-            height: AppSizes.borderWidth,
-            color: AppColors.surfaceBorder,
-          ),
-          AppSpacing.gapV(AppSpacing.sm),
-          AppTag(
-            request.statusLabel,
-            tone: AppTagTone.warning,
-            hasDot: true,
-            pill: true,
-          ),
-        ],
-      ),
-    );
-  }
-}

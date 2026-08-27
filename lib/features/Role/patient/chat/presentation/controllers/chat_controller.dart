@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 import '../../../../../../core/exceptions/app_exceptions.dart';
+import '../../../../../../core/models/chat_thread.dart';
 import '../../../../../../core/network/mappers.dart';
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/network/attachment_uploader.dart';
@@ -20,10 +21,13 @@ import '../screens/media_viewer_screen.dart';
 
 /// Backs the message thread.
 ///
-/// Messages are keyed by appointment on the server, so a thread opened for a
-/// consultation is real. One opened outside one — a courier, support, a doctor
-/// the patient has not booked — has nowhere to send to and falls back to the
-/// sample conversation. See `docs/API-GAPS.md`.
+/// One controller for both conversations the app has: a consultation between
+/// a patient and their doctor, and a delivery between a customer and their
+/// courier. The server serves both from one set of events, so the only thing
+/// that differs here is which id names the thread — held by [ChatThread].
+///
+/// A thread opened outside either — support, a doctor the patient has not
+/// booked — has nowhere to send to and falls back to the sample conversation.
 class ChatController extends GetxController {
   ChatController({
     required this.peer,
@@ -43,9 +47,11 @@ class ChatController extends GetxController {
   final AttachmentPickerService _picker;
   final AttachmentUploader _uploader;
 
-  /// True when this thread has a consultation behind it.
-  bool get isLive =>
-      peer.appointmentId != null && peer.appointmentId!.isNotEmpty;
+  /// True when there is a real conversation behind this screen.
+  bool get isLive => peer.thread?.isLive ?? false;
+
+  /// The conversation this screen is bound to. Only read once [isLive].
+  ChatThread get _thread => peer.thread!;
 
   final RxBool isLoading = true.obs;
   final RxBool isSending = false.obs;
@@ -91,20 +97,20 @@ class ChatController extends GetxController {
   /// they are sent rather than up to three seconds later, and an idle thread
   /// costs nothing instead of twenty requests a minute.
   void _listen() {
-    final appointmentId = peer.appointmentId!;
+    final thread = _thread;
     _socket
       ..connect()
-      ..joinThread(appointmentId);
+      ..joinThread(thread);
 
     _subscriptions.addAll([
-      _socket.messages.listen((json) => _onMessage(json, appointmentId)),
+      _socket.messages.listen((json) => _onMessage(json, thread)),
       _socket.receipts.listen((receipt) {
-        if (receipt.appointmentId == appointmentId) _onReceipt(receipt);
+        if (receipt.thread == thread) _onReceipt(receipt);
       }),
       _socket.typing.listen((event) {
         // Only the other party's typing; our own echo is not sent back, but
         // a second device of ours would be.
-        if (event.appointmentId != appointmentId) return;
+        if (event.thread != thread) return;
         if (event.userId == peer.id) _setPeerTyping(event.isTyping);
       }),
       _socket.presence.listen((state) {
@@ -126,8 +132,10 @@ class ChatController extends GetxController {
   }
 
   /// A message arrived — ours echoed back, or theirs.
-  void _onMessage(Map<String, dynamic> json, String appointmentId) {
-    if ('${json['appointmentId'] ?? ''}' != appointmentId) return;
+  void _onMessage(Map<String, dynamic> json, ChatThread thread) {
+    // Both kinds arrive on one event, so a screen watching a delivery must
+    // ignore a consultation's messages and the other way round.
+    if (ChatThread.fromJson(json) != thread) return;
 
     final incoming = chatMessageFrom(json, _myIdFor(json));
     final clientId = incoming.clientId;
@@ -150,7 +158,7 @@ class ChatController extends GetxController {
 
     // Their message, and this thread is open — so it is both delivered and
     // being read right now.
-    if (!incoming.isMine) _socket.markRead(appointmentId);
+    if (!incoming.isMine) _socket.markRead(thread);
   }
 
   /// Whether a payload was sent by us, decided the same way the mapper does.
@@ -182,7 +190,7 @@ class ChatController extends GetxController {
   Future<void> _reconcile() async {
     if (!isLive) return;
     try {
-      final latest = await _repository.messages(peer.appointmentId!);
+      final latest = await _repository.messages(_thread);
       final known = messages.map((m) => m.id).toSet();
       final arrived = latest.where((m) => !known.contains(m.id)).toList();
       if (arrived.isEmpty) return;
@@ -212,9 +220,9 @@ class ChatController extends GetxController {
     isLoading.value = true;
     error.value = null;
     try {
-      messages.value = await _repository.messages(peer.appointmentId!);
+      messages.value = await _repository.messages(_thread);
       // Opening the thread is reading it.
-      _socket.markRead(peer.appointmentId!);
+      _socket.markRead(_thread);
     } on AppException catch (e) {
       error.value = e.message;
     } finally {
@@ -228,8 +236,8 @@ class ChatController extends GetxController {
     if (isLive) {
       // Stop any indicator we left showing on the other side.
       _socket
-        ..setTyping(peer.appointmentId!, isTyping: false)
-        ..leaveThread(peer.appointmentId!);
+        ..setTyping(_thread, isTyping: false)
+        ..leaveThread(_thread);
     }
     for (final subscription in _subscriptions) {
       subscription.cancel();
@@ -257,21 +265,21 @@ class ChatController extends GetxController {
   /// thing. The stop is what the timer is really for.
   void _announceTyping() {
     if (!isLive) return;
-    final appointmentId = peer.appointmentId!;
+    final thread = _thread;
 
     if (inputController.text.trim().isEmpty) {
       _typingDebounce?.cancel();
-      _socket.setTyping(appointmentId, isTyping: false);
+      _socket.setTyping(thread, isTyping: false);
       return;
     }
 
     if (_typingDebounce?.isActive != true) {
-      _socket.setTyping(appointmentId, isTyping: true);
+      _socket.setTyping(thread, isTyping: true);
     }
     _typingDebounce?.cancel();
     _typingDebounce = Timer(
       const Duration(seconds: 2),
-      () => _socket.setTyping(appointmentId, isTyping: false),
+      () => _socket.setTyping(thread, isTyping: false),
     );
   }
 
@@ -284,7 +292,7 @@ class ChatController extends GetxController {
       return;
     }
 
-    final appointmentId = peer.appointmentId!;
+    final thread = _thread;
     final clientId = 'c-${DateTime.now().microsecondsSinceEpoch}';
 
     // Shown immediately, marked pending.
@@ -298,7 +306,7 @@ class ChatController extends GetxController {
       id: clientId,
       text: text,
       sentAt: DateTime.now(),
-      author: MessageAuthor.patient,
+      author: MessageAuthor.me,
       isPending: true,
       clientId: clientId,
     );
@@ -307,12 +315,12 @@ class ChatController extends GetxController {
     _scrollToLatest();
 
     _typingDebounce?.cancel();
-    _socket.setTyping(appointmentId, isTyping: false);
+    _socket.setTyping(thread, isTyping: false);
 
     isSending.value = true;
     try {
       final viaSocket = await _socket.sendMessage(
-        appointmentId: appointmentId,
+        thread: thread,
         body: text,
         clientId: clientId,
       );
@@ -324,7 +332,7 @@ class ChatController extends GetxController {
       // so if the socket send did land after all, the server returns that same
       // message instead of storing a second one.
       final stored = await _repository.send(
-        appointmentId: appointmentId,
+        thread: thread,
         body: text,
         clientId: clientId,
       );
@@ -348,7 +356,7 @@ class ChatController extends GetxController {
         id: 'local-${DateTime.now().microsecondsSinceEpoch}',
         text: text,
         sentAt: DateTime.now(),
-        author: MessageAuthor.patient,
+        author: MessageAuthor.me,
       ),
     );
     inputController.clear();
@@ -400,7 +408,7 @@ class ChatController extends GetxController {
     }
 
     _socket.react(
-      appointmentId: peer.appointmentId!,
+      thread: _thread,
       messageId: message.id,
       kind: next,
     );
@@ -460,7 +468,7 @@ class ChatController extends GetxController {
       return;
     }
 
-    final appointmentId = peer.appointmentId!;
+    final thread = _thread;
     final clientId = 'a-${DateTime.now().microsecondsSinceEpoch}';
     final cancelToken = CancelToken();
     _uploads[clientId] = cancelToken;
@@ -470,7 +478,7 @@ class ChatController extends GetxController {
         id: clientId,
         text: '',
         sentAt: DateTime.now(),
-        author: MessageAuthor.patient,
+        author: MessageAuthor.me,
         isPending: true,
         clientId: clientId,
         kind: _kindOf(picked.mime),
@@ -490,7 +498,7 @@ class ChatController extends GetxController {
 
     try {
       final uploaded = await _uploader.upload(
-        appointmentId: appointmentId,
+        thread: thread,
         attachment: picked,
         cancelToken: cancelToken,
         onProgress: (progress) {
@@ -502,7 +510,7 @@ class ChatController extends GetxController {
       );
 
       final sent = await _socket.sendMessage(
-        appointmentId: appointmentId,
+        thread: thread,
         body: '',
         clientId: clientId,
         attachment: uploaded.toJson(),
@@ -512,7 +520,7 @@ class ChatController extends GetxController {
       // the stored row. Only fall back to HTTP when it did not.
       if (sent == null) {
         final stored = await _repository.send(
-          appointmentId: appointmentId,
+          thread: thread,
           body: '',
           clientId: clientId,
           attachment: uploaded.toJson(),

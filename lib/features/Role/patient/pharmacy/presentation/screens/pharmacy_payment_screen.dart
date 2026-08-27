@@ -66,6 +66,19 @@ class PharmacyPaymentScreen extends GetView<PharmacyCartController> {
               isEditing: controller.hasSavedAddress.value,
               onSaved: controller.saveAddress,
             ),
+            // Only while this order is going somewhere other than home, so
+            // there is always a way back from a one-off change.
+            if (controller.isOverridingAddress) ...[
+              AppSpacing.gapV(AppSpacing.xxs),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: controller.useProfileAddress,
+                child: Text(
+                  AppStrings.useMyProfileAddress.tr,
+                  style: AppTextStyles.bodyMedium.rc(AppColors.primary600),
+                ),
+              ),
+            ],
             AppSpacing.gapV(AppSpacing.lg),
             AppButton(
               label: AppStrings.placeOrder.trParams({
@@ -149,7 +162,7 @@ class _AddressCard extends StatelessWidget {
   /// Plain values, so the caller's `Obx` is what tracks them.
   final DeliveryAddress address;
   final bool isEditing;
-  final ValueChanged<DeliveryAddress> onSaved;
+  final void Function(DeliveryAddress address, {bool saveToProfile}) onSaved;
 
   @override
   Widget build(BuildContext context) {
@@ -179,12 +192,15 @@ class _AddressCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: AppTextStyles.titleSmall.rc(AppColors.gray900),
                       ),
-                      Text(
-                        address.line2,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.bodyMedium.rc(AppColors.gray400),
-                      ),
+                      // The city stands in when there is no second line, so a
+                      // one-line address does not print an empty row under it.
+                      if (address.secondLine.isNotEmpty)
+                        Text(
+                          address.secondLine,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.bodyMedium.rc(AppColors.gray400),
+                        ),
                     ]
                   : [
                       Text(
@@ -200,12 +216,17 @@ class _AddressCard extends StatelessWidget {
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () async {
-              final saved = await LocationDialog.show(
+              final edit = await LocationDialog.show(
                 context,
                 address: address,
                 isEditing: isEditing,
+                // A change here is for this delivery; the dialog carries the
+                // opt-in for making it the patient's standing address.
+                offerSaveToProfile: true,
               );
-              if (saved != null) onSaved(saved);
+              if (edit != null) {
+                onSaved(edit.address, saveToProfile: edit.saveToProfile);
+              }
             },
             child: Text(
               // "Add" until an address has been saved once, then "Change".

@@ -66,6 +66,19 @@ class DoctorSummary extends StatelessWidget {
                 ),
               ],
             ),
+            // How many people that rating is based on. A patient choosing
+            // between practitioners could see a score but not the consultation
+            // history behind it; a 5.0 from one review reads very differently
+            // from a 4.3 from forty.
+            if (doctor.patientsSeen > 0) ...[
+              AppSpacing.gapV(AppSpacing.xs2),
+              Text(
+                AppStrings.patientsSeen.trParams({
+                  'count': '${doctor.patientsSeen}',
+                }),
+                style: AppTextStyles.bodyMedium.rc(AppColors.textSecondary),
+              ),
+            ],
             AppSpacing.gapV(AppSpacing.xs),
             Row(
               mainAxisSize: MainAxisSize.min,

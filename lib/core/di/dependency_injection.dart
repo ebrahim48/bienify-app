@@ -1,3 +1,4 @@
+import '../services/avatar_service.dart';
 import 'package:get/get.dart';
 import '../widgets/app_snackbar.dart';
 import '../utils/app_navigator.dart';
@@ -228,19 +229,27 @@ class DependencyInjection {
   }
 
   static void _registerAccount(bool mock) {
+    // Registered after the account repository below, which it reads.
     Get.put<AccountRepository>(
       mock
-          ? const MockAccountRepository()
-          : ApiAccountRepository(Get.find<ApiClient>()),
+          ? MockAccountRepository()
+          : ApiAccountRepository(
+              Get.find<ApiClient>(),
+              Get.find<AttachmentUploader>(),
+            ),
       permanent: true,
     );
+    Get.put<AvatarService>(AvatarService(), permanent: true);
   }
 
   static void _registerRiderRole(bool mock) {
     Get.put<RiderRepository>(
       mock
           ? const StaticRiderRepository()
-          : ApiRiderRepository(Get.find<ApiClient>()),
+          : ApiRiderRepository(
+              Get.find<ApiClient>(),
+              Get.find<AttachmentUploader>(),
+            ),
       permanent: true,
     );
   }
@@ -249,7 +258,10 @@ class DependencyInjection {
     Get.put<DoctorPracticeRepository>(
       mock
           ? StaticDoctorPracticeRepository()
-          : ApiDoctorPracticeRepository(Get.find<ApiClient>()),
+          : ApiDoctorPracticeRepository(
+              Get.find<ApiClient>(),
+              Get.find<AttachmentUploader>(),
+            ),
       permanent: true,
     );
   }

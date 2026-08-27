@@ -1,3 +1,5 @@
+import 'package:bienify_app/features/Role/patient/chat/domain/entities/conversation.dart';
+import 'package:bienify_app/features/Role/patient/pharmacy/domain/entities/pharmacy.dart';
 import 'package:bienify_app/app.dart';
 import 'package:bienify_app/core/di/dependency_injection.dart';
 import 'package:bienify_app/core/localization/app_translations.dart';
@@ -10,7 +12,6 @@ import 'package:bienify_app/features/Role/patient/doctors/data/static/doctor_moc
 import 'package:bienify_app/features/Role/patient/doctors/presentation/bindings/doctors_bindings.dart';
 import 'package:bienify_app/features/Role/patient/doctors/presentation/screens/doctor_details_screen.dart';
 import 'package:bienify_app/features/Role/patient/doctors/presentation/screens/doctor_search_screen.dart';
-import 'package:bienify_app/features/Role/patient/pharmacy/data/static/pharmacy_mock_data.dart';
 import 'package:bienify_app/features/Role/patient/pharmacy/presentation/controllers/order_tracking_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -156,7 +157,20 @@ void main() {
   });
 
   testWidgets('Chat', (tester) async {
-    await pump(tester, const ChatScreen(), binding: ChatBinding());
+    // Every route into chat carries the person being talked to. The binding
+    // used to fall back to the sample conversation when none was given, so a
+    // thread could open with a doctor the user had never messaged.
+    await pump(
+      tester,
+      const ChatScreen(),
+      binding: ChatBinding(),
+      arguments: const ConversationPeer(
+        id: 'doctor-1',
+        name: 'Dr Reed',
+        specialty: 'Cardiology',
+        isOnline: true,
+      ),
+    );
     await settleImages(tester);
     await expectLater(find.byType(ChatScreen), matchesGoldenFile('chat.png'));
   });
@@ -165,13 +179,28 @@ void main() {
     // The courier thread is this same screen with a different peer, so the
     // only thing worth checking is that the header takes on the rider's name
     // and headshot rather than a doctor's.
+    // The peer is built from the courier actually carrying the order, so one
+    // has to be assigned. `rider` is null until then — it used to name the same
+    // person on every order whether or not anybody had taken it.
+    final tracking = Get.put(OrderTrackingController());
+    // The delivery is the thread. Without one there is no conversation to
+    // open, and `rider` is null — which is the state before anybody claims it.
+    tracking.watchedDeliveryId = 'delivery-1';
+    tracking.courier.value = const Courier(
+      id: 'rider-1',
+      name: 'Rider Arif',
+      rating: 4.9,
+      reviewCount: 128,
+      vehicleType: 'motorbike',
+    );
+
     await pump(
       tester,
       const ChatScreen(),
       binding: ChatBinding(),
-      arguments: Get.put(OrderTrackingController()).rider,
+      arguments: tracking.rider,
     );
-    expect(find.text(PharmacyMockData.riderName), findsOneWidget);
+    expect(find.text('Rider Arif'), findsOneWidget);
 
     await settleImages(tester);
     await expectLater(

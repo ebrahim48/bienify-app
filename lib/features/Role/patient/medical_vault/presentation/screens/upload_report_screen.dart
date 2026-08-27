@@ -27,7 +27,11 @@ class UploadReportScreen extends GetView<TestResultsController> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AppSpacing.gapV(AppSpacing.base),
-          Obx(() => _Banner(facility: controller.facilityName)),
+          Obx(
+            () => _Banner(
+              facility: controller.hasFacility ? controller.facilityName : null,
+            ),
+          ),
           AppSpacing.gapV(AppSpacing.base),
           const _NoteLabel(),
           AppSpacing.gapV(AppSpacing.xs),
@@ -82,7 +86,9 @@ class UploadReportScreen extends GetView<TestResultsController> {
 class _Banner extends StatelessWidget {
   const _Banner({required this.facility});
 
-  final String facility;
+  /// Null when no centre is on the order, which is a different sentence rather
+  /// than the same one with a placeholder in it.
+  final String? facility;
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +109,9 @@ class _Banner extends StatelessWidget {
           ),
           AppSpacing.gapV(AppSpacing.xs2),
           Text(
-            AppStrings.testCompleteBody.trParams({'facility': facility}),
+            facility == null
+                ? AppStrings.testCompleteBodyNoFacility.tr
+                : AppStrings.testCompleteBody.trParams({'facility': facility!}),
             style: AppTextStyles.bodyLarge.rc(AppColors.link),
           ),
         ],

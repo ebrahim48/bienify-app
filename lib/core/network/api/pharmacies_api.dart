@@ -34,6 +34,9 @@ class PharmaciesApi {
   Future<dynamic> updateMemedicines({required String id, Object? body}) =>
       _c.patch(ApiConstants.updatePharmaciesMeMedicines(id), body: body);
 
+  /// `GET /api/v1/pharmacies/me/stats`
+  Future<dynamic> getMestats() => _c.get(ApiConstants.pharmaciesMeStats);
+
   /// `GET /api/v1/pharmacies/me/orders`
   Future<dynamic> getMeorders({Map<String, dynamic>? query}) =>
       _c.get(ApiConstants.pharmaciesMeOrders, query: query);

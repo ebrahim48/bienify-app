@@ -1,11 +1,13 @@
+import '../../../patient/pharmacy/domain/entities/pharmacy.dart';
 import 'package:get/get.dart';
 
 import '../../../../../core/constants/app_strings.dart';
 import '../../../../../core/exceptions/app_exceptions.dart';
+import '../../../../../core/models/chat_thread.dart';
 import '../../../../../core/network/mappers.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../core/widgets/app_snackbar.dart';
-import '../../data/static/rider_data.dart';
+import '../../../patient/chat/domain/entities/conversation.dart';
 import '../../domain/entities/rider.dart';
 import '../../domain/repositories/rider_repository.dart';
 
@@ -111,19 +113,65 @@ class RiderOrdersController extends GetxController {
 
   /// "Track LIVE" opens the map on that job.
   ///
-  /// The map's own figures — the road, the arrival window, how many turns are
-  /// left — come from a routing service the app does not have, so they stay
-  /// the design's. The job itself is the real one.
+  /// Built here rather than through the fixture factory: a live controller
+  /// reaching into `RiderData` was how the road name, arrival window and step
+  /// count came to be constants wrapped around a real job.
+  /// The job's route, for the map. Null until the read lands, and null on a
+  /// delivery whose ends nobody has coordinates for.
+  final Rxn<DeliveryRoute> route = Rxn<DeliveryRoute>();
+
   void track(DeliveryRequest request) {
-    active.value = RiderData.activeDeliveryFor(request);
+    active.value = ActiveDelivery(request: request, status: request.status);
+    _loadRoute(request.id);
     isNoteVisible.value = false;
     Get.toNamed<void>(AppRoutes.riderTracking);
   }
 
+  /// Where the parcel is coming from and going to.
+  ///
+  /// The courier's map drew two compile-time constants, so every job showed
+  /// the same road between the same two pins whatever they were carrying.
+  Future<void> _loadRoute(String deliveryId) async {
+    route.value = null;
+    try {
+      route.value = await _repository.route(deliveryId);
+    } on AppException {
+      // The sheet below the map still names both ends from the job itself, so
+      // a failed read costs the pins rather than the screen.
+    }
+  }
+
   void toggleNote() => isNoteVisible.value = !isNoteVisible.value;
 
-  /// The courier's own thread with the customer.
-  void openChat() => Get.toNamed<void>(AppRoutes.chat);
+  /// The courier's thread with the customer on this job.
+  ///
+  /// The delivery *is* the thread — the same machinery a consultation uses,
+  /// with the two people on the parcel instead of a doctor and a patient. It
+  /// navigated with no peer at all before, which fell through to the chat
+  /// binding's fallback: a sample conversation with a doctor the courier had
+  /// never spoken to.
+  void openChat() {
+    final job = active.value;
+    if (job == null) {
+      AppSnackbar.info(AppStrings.noActiveDelivery.tr);
+      return;
+    }
+
+    Get.toNamed<void>(
+      AppRoutes.chat,
+      arguments: ConversationPeer(
+        // The customer, not the delivery: presence is per person, and the
+        // header asks about whoever is on the other end.
+        id: job.request.customerId,
+        thread: ChatThread.delivery(job.request.id),
+        name: job.request.customerName,
+        // Where the parcel is going, which is what a courier needs under the
+        // name. `specialty` is the field's name from the doctor thread this
+        // screen shares a widget with.
+        specialty: job.request.customerAddress,
+      ),
+    );
+  }
 
   /// A parcel moves one step at a time, and the server refuses a jump: a job
   /// goes from claimed, to collected, to on the road, to handed over.
@@ -174,7 +222,7 @@ class RiderOrdersController extends GetxController {
     }
 
     final moved = job.copyWith(status: next);
-    active.value = RiderData.activeDeliveryFor(moved);
+    active.value = ActiveDelivery(request: moved, status: next);
 
     final index = requests.indexWhere((r) => r.id == job.id);
     if (index != -1) requests[index] = requests[index].copyWith(status: next);

@@ -29,6 +29,10 @@ class SelectMedicinesBinding extends Bindings {
     final prescription = Get.find<PrescriptionController>();
     final cart = Get.find<PharmacyCartController>();
     cart.store.value ??= prescription.selectedStore;
+    // A prescription says what to take, not what it costs. The shop's own
+    // catalogue is what prices the script — without it every line on this
+    // screen read $0.00 and the basket totalled nothing.
+    cart.loadStoreCatalogue();
   }
 }
 

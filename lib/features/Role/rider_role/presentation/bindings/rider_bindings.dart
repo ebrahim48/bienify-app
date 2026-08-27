@@ -21,6 +21,16 @@ class RiderShellBinding extends Bindings {
   }
 }
 
+/// The guide is reached before the shell exists — it is what a courier reads
+/// on their way into applying — so it puts up the one controller its masthead
+/// needs rather than the whole shell.
+class RiderGuideBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.put(RiderHomeController());
+  }
+}
+
 /// The application is its own flow, entered from the guide.
 class RiderApplicationBinding extends Bindings {
   @override

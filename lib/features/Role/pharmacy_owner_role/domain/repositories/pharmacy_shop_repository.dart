@@ -53,4 +53,7 @@ abstract class PharmacyShopRepository {
   });
 
   Future<List<ShopNotification>> notifications();
+
+  /// The dashboard figures — `GET /pharmacies/me/stats`.
+  Future<ShopStats> stats();
 }

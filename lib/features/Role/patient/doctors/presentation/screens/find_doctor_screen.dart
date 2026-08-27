@@ -90,20 +90,26 @@ class _CategoryGrid extends StatelessWidget {
             (constraints.maxWidth - gutter * (FindDoctorScreen._columns - 1)) /
             FindDoctorScreen._columns;
 
-        return Wrap(
-          spacing: gutter,
-          runSpacing: gutter,
-          children: [
-            for (final category in controller.categories)
-              SizedBox(
-                width: itemWidth,
-                child: DoctorCategoryCard(
-                  category: category,
-                  isSelected: controller.isSelected(category),
-                  onTap: () => controller.select(category),
+        // The specialties are read from the doctors on the platform, so they
+        // arrive after the first frame. Without the `Obx` the grid drew once,
+        // empty, and never again — it was a compile-time list before, which is
+        // why it needed no watcher.
+        return Obx(
+          () => Wrap(
+            spacing: gutter,
+            runSpacing: gutter,
+            children: [
+              for (final category in controller.categories)
+                SizedBox(
+                  width: itemWidth,
+                  child: DoctorCategoryCard(
+                    category: category,
+                    isSelected: controller.isSelected(category),
+                    onTap: () => controller.select(category),
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         );
       },
     );

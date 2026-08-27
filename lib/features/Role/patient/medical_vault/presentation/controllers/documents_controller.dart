@@ -4,7 +4,6 @@ import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/routes/app_routes.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
-import '../../../chat/data/static/chat_mock_data.dart';
 import '../../domain/entities/medical_record.dart';
 import '../../domain/repositories/vault_repository.dart';
 
@@ -62,9 +61,14 @@ class DocumentsController extends GetxController {
 
   void openOrderHistory() => Get.toNamed<void>(AppRoutes.orderHistory);
 
-  /// Support reuses the existing chat screen, with Bienify as the peer.
-  void openSupportChat() =>
-      Get.toNamed<void>(AppRoutes.chat, arguments: ChatMockData.support);
+  /// Support chat is a marked seam, like the call beneath it.
+  ///
+  /// This opened the chat screen against `bienify-support` — an account that
+  /// exists nowhere. With no appointment behind it the thread runs in local
+  /// mode, so a patient typed their problem, received a canned reply 900ms
+  /// later, and believed support had answered. Nobody was reading it. Saying
+  /// there is no channel yet is worse UI and better behaviour.
+  void openSupportChat() => AppSnackbar.info(AppStrings.supportComingSoon.tr);
 
   /// UI-only: placing a real call is a marked seam.
   void callSupport() => AppSnackbar.info(AppStrings.callWithUs.tr);

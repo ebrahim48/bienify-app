@@ -45,7 +45,7 @@ void main() {
     id: id,
     text: text,
     sentAt: DateTime(2026, 2, 20, 9),
-    author: MessageAuthor.patient,
+    author: MessageAuthor.me,
     reactions: reactions,
     kind: kind,
     attachment: attachment,

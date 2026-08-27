@@ -10,7 +10,11 @@ import 'package:bienify_app/features/Role/doctor_role/presentation/screens/write
 import 'package:bienify_app/features/Role/patient/main/presentation/bindings/main_binding.dart';
 import 'package:bienify_app/features/Role/patient/main/presentation/screens/main_shell_screen.dart';
 import 'package:bienify_app/features/Role/patient/profile/presentation/bindings/profile_bindings.dart';
+import 'package:bienify_app/features/Role/doctor_role/presentation/screens/doctor_profile_screen.dart';
 import 'package:bienify_app/features/Role/patient/profile/presentation/screens/order_history_screen.dart';
+import 'package:bienify_app/features/Role/patient/profile/presentation/screens/profile_screen.dart';
+import 'package:bienify_app/features/Role/pharmacy_owner_role/presentation/screens/shop_profile_screen.dart';
+import 'package:bienify_app/features/Role/rider_role/presentation/screens/rider_profile_screen.dart';
 import 'package:bienify_app/features/Role/pharmacy_owner_role/presentation/bindings/shop_bindings.dart';
 import 'package:bienify_app/features/Role/pharmacy_owner_role/presentation/screens/shop_shell_screen.dart';
 import 'package:bienify_app/features/Role/rider_role/presentation/bindings/rider_bindings.dart';
@@ -228,4 +232,41 @@ void main() {
       });
     }
   }
+
+  // The four Profile tabs, on a viewport too short for their content.
+  //
+  // Each pinned its log-out bar with a trailing `Spacer`, which cannot shrink:
+  // the doctor's overflowed by 34px on a running emulator whose content area
+  // was 423pt tall. A `Spacer` is only safe when the content is guaranteed to
+  // fit, and four menu rows plus a profile card are not.
+  //
+  // 400pt is deliberately shorter than the 640 the size matrix starts at —
+  // that matrix never got small enough to catch this.
+  group('profile tabs survive a short viewport', () {
+    final profiles = <String, (Widget, Bindings)>{
+      'patient': (const ProfileScreen(), ProfileBinding()),
+      'doctor': (const DoctorProfileScreen(), DoctorProfileBinding()),
+      'shop': (const ShopProfileScreen(), ShopProfileBinding()),
+      'rider': (const RiderProfileScreen(), RiderProfileBinding()),
+    };
+
+    for (final entry in profiles.entries) {
+      testWidgets('${entry.key} profile does not overflow at 360x400', (
+        tester,
+      ) async {
+        await pumpAt(
+          tester,
+          entry.value.$1,
+          const Size(360, 400),
+          binding: entry.value.$2,
+        );
+
+        expect(tester.takeException(), isNull);
+
+        // The bar stays pinned rather than scrolling away with the content,
+        // which is the reason the `Spacer` was there in the first place.
+        expect(find.text('Log out'), findsOneWidget);
+      });
+    }
+  });
 }

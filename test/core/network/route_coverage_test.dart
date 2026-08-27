@@ -34,10 +34,10 @@ void main() {
   });
 
   test('the backend serves the number of routes we think it does', () {
-    // 150 with chat attachments:
-    // `POST /consultations/:id/attachments/upload-url` joins the two lapse
-    // remedies, the doctor's refund and the lab-order review.
-    expect(routes, hasLength(150));
+    // 161 with the courier thread: `GET`/`POST /deliveries/:id/messages` and
+    // its attachment presign join the door photo, chat attachments, the two
+    // lapse remedies, the doctor's refund and the lab-order review.
+    expect(routes, hasLength(161));
   });
 
   test('every backend route has a constant holding its exact path', () {

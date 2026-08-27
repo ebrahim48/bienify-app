@@ -39,6 +39,34 @@ abstract class VaultRepository {
   /// caller's side and a half-done version of it is a bug: the bytes go
   /// straight to S3 against a presigned URL, then the record is created
   /// against the key that came back. The API never sees the file itself.
+  /// The patient's own result for a test their doctor ordered.
+  ///
+  /// One call, not two: the record has to belong to the patient and be attached
+  /// to the order in the same breath, or the order completes with nothing to
+  /// read. The server files it, shares it with the requesting doctor and moves
+  /// the order to `completed`.
+  Future<void> uploadLabResult({
+    required String labOrderId,
+    required String path,
+    required String fileName,
+    required String mimeType,
+    String? notes,
+    void Function(double progress)? onProgress,
+  });
+
+  /// Where the patient chose to be tested. Advances the order to
+  /// `facility_selected` — the tracker's second circle.
+  Future<void> selectTestingCentre({
+    required String labOrderId,
+    required String testingCentreId,
+  });
+
+  /// Accepting or declining a test the doctor raised. Declining cancels it.
+  Future<void> respondToLabOrder({
+    required String labOrderId,
+    required bool accept,
+  });
+
   Future<UploadedDocument> uploadDocument({
     required String path,
     required String fileName,

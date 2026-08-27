@@ -12,21 +12,12 @@ import '../../../../../../core/theme/app_spacing.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/utils/responsive.dart';
 import '../../../../../../core/widgets/app_avatar.dart';
-import '../../data/static/pharmacy_mock_data.dart';
+import '../../domain/entities/pharmacy.dart';
 import '../controllers/order_tracking_controller.dart';
 
 /// Live courier tracking on a real map, with the route sheet below it.
 class LiveTrackingScreen extends GetView<OrderTrackingController> {
   const LiveTrackingScreen({super.key});
-
-  static const LatLng _courier = LatLng(
-    PharmacyMockData.courierLatitude,
-    PharmacyMockData.courierLongitude,
-  );
-  static const LatLng _destination = LatLng(
-    PharmacyMockData.destinationLatitude,
-    PharmacyMockData.destinationLongitude,
-  );
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +25,7 @@ class LiveTrackingScreen extends GetView<OrderTrackingController> {
       backgroundColor: AppColors.surface,
       body: Stack(
         children: [
-          Positioned.fill(child: _Map()),
+          Positioned.fill(child: _Map(controller: controller)),
           SafeArea(
             child: Padding(
               padding: AppSpacing.pagePadding,
@@ -61,38 +52,77 @@ class LiveTrackingScreen extends GetView<OrderTrackingController> {
 }
 
 class _Map extends StatelessWidget {
+  const _Map({required this.controller});
+
+  final OrderTrackingController controller;
+
+  /// Santo Domingo, used only to frame an empty map before the first position
+  /// arrives — never as a pin. The four constants this file used to hold were
+  /// drawn as real markers, so every order showed the same courier on the same
+  /// road whatever the delivery was actually doing.
+  static const LatLng _fallbackCentre = LatLng(18.4861, -69.9312);
+
   @override
   Widget build(BuildContext context) {
-    return GoogleMap(
-      initialCameraPosition: const CameraPosition(
-        target: LiveTrackingScreen._courier,
-        zoom: 12.5,
-      ),
-      markers: {
-        const Marker(
-          markerId: MarkerId('courier'),
-          position: LiveTrackingScreen._courier,
+    return Obx(() {
+      final route = controller.route.value;
+      final courier = route?.courier;
+      final pickup = route?.pickup;
+      final dropoff = route?.dropoff;
+
+      final centre = courier ?? dropoff ?? pickup;
+
+      final markers = <Marker>{
+        if (courier != null)
+          Marker(
+            markerId: const MarkerId('courier'),
+            position: LatLng(courier.lat, courier.lng),
+            infoWindow: InfoWindow(title: AppStrings.courier.tr),
+          ),
+        if (pickup != null)
+          Marker(
+            markerId: const MarkerId('pickup'),
+            position: LatLng(pickup.lat, pickup.lng),
+            infoWindow: InfoWindow(title: pickup.label),
+          ),
+        if (dropoff != null)
+          Marker(
+            markerId: const MarkerId('destination'),
+            position: LatLng(dropoff.lat, dropoff.lng),
+            infoWindow: InfoWindow(title: dropoff.label),
+          ),
+      };
+
+      // Only drawn when both ends are known. A line to a pin that is not there
+      // would be a guess at a route.
+      final line = courier != null && dropoff != null
+          ? <Polyline>{
+              Polyline(
+                polylineId: const PolylineId('route'),
+                points: [
+                  LatLng(courier.lat, courier.lng),
+                  LatLng(dropoff.lat, dropoff.lng),
+                ],
+                color: AppColors.gray950,
+                width: 4,
+              ),
+            }
+          : const <Polyline>{};
+
+      return GoogleMap(
+        initialCameraPosition: CameraPosition(
+          target: centre == null
+              ? _fallbackCentre
+              : LatLng(centre.lat, centre.lng),
+          zoom: 12.5,
         ),
-        const Marker(
-          markerId: MarkerId('destination'),
-          position: LiveTrackingScreen._destination,
-        ),
-      },
-      polylines: {
-        const Polyline(
-          polylineId: PolylineId('route'),
-          points: [
-            LiveTrackingScreen._courier,
-            LiveTrackingScreen._destination,
-          ],
-          color: AppColors.gray950,
-          width: 4,
-        ),
-      },
-      myLocationButtonEnabled: false,
-      zoomControlsEnabled: false,
-      mapToolbarEnabled: false,
-    );
+        markers: markers,
+        polylines: line,
+        myLocationButtonEnabled: false,
+        zoomControlsEnabled: false,
+        mapToolbarEnabled: false,
+      );
+    });
   }
 }
 
@@ -177,50 +207,57 @@ class _RouteSheet extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                PharmacyMockData.routeTitle,
-                style: AppTextStyles.titleLarge.rc(AppColors.authInk),
-              ),
-              AppSpacing.gapV(AppSpacing.xs2),
-              Text(
-                PharmacyMockData.arrivingAt,
-                style: AppTextStyles.bodyLarge.rc(AppColors.gray500),
-              ),
-              AppSpacing.gapV(AppSpacing.sm),
-              Row(
-                children: [
-                  for (var index = 0; index < 4; index++) ...[
-                    Expanded(
-                      child: Container(
-                        height: AppSizes.xs.h,
-                        decoration: BoxDecoration(
-                          color: index == 0
-                              ? AppColors.actionFill
-                              : AppColors.gray100,
-                          borderRadius: AppRadius.rFull,
-                        ),
-                      ),
+              Obx(() {
+                final route = controller.route.value;
+                final reached = controller.routeStepsReached;
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      controller.routeStatusLabel,
+                      style: AppTextStyles.titleLarge.rc(AppColors.authInk),
                     ),
-                    if (index != 3) AppSpacing.gapH(AppSpacing.xs2),
+                    AppSpacing.gapV(AppSpacing.xs2),
+                    // An arrival time used to sit here — "Arriving 10:45 AM",
+                    // from a constant. Nothing estimates one: there is no
+                    // routing engine and no distance calculation behind this
+                    // screen, so any time shown would be invented. What is
+                    // known is when the courier last reported.
+                    Text(
+                      controller.routeSubtitle,
+                      style: AppTextStyles.bodyLarge.rc(AppColors.gray500),
+                    ),
+                    AppSpacing.gapV(AppSpacing.sm),
+                    Row(
+                      children: [
+                        for (var index = 0; index < 4; index++) ...[
+                          Expanded(
+                            child: Container(
+                              height: AppSizes.xs.h,
+                              decoration: BoxDecoration(
+                                color: index < reached
+                                    ? AppColors.actionFill
+                                    : AppColors.gray100,
+                                borderRadius: AppRadius.rFull,
+                              ),
+                            ),
+                          ),
+                          if (index != 3) AppSpacing.gapH(AppSpacing.xs2),
+                        ],
+                      ],
+                    ),
+                    AppSpacing.gapV(AppSpacing.xs),
+                    Text(
+                      AppStrings.stepsLeft.trParams({
+                        'count': '${4 - reached}',
+                      }),
+                      style: AppTextStyles.bodyMedium.rc(AppColors.gray900),
+                    ),
+                    AppSpacing.gapV(AppSpacing.base),
+                    _RouteEnds(route: route),
                   ],
-                ],
-              ),
-              AppSpacing.gapV(AppSpacing.xs),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    AppStrings.stepsLeft.trParams({'count': '3'}),
-                    style: AppTextStyles.bodyMedium.rc(AppColors.gray900),
-                  ),
-                  Text(
-                    PharmacyMockData.latestArrival,
-                    style: AppTextStyles.bodyMedium.rc(AppColors.gray400),
-                  ),
-                ],
-              ),
-              AppSpacing.gapV(AppSpacing.base),
-              const _RouteEnds(),
+                );
+              }),
               AppSpacing.gapV(AppSpacing.base),
               _Rider(controller: controller),
             ],
@@ -232,7 +269,9 @@ class _RouteSheet extends StatelessWidget {
 }
 
 class _RouteEnds extends StatelessWidget {
-  const _RouteEnds();
+  const _RouteEnds({required this.route});
+
+  final DeliveryRoute? route;
 
   @override
   Widget build(BuildContext context) {
@@ -251,7 +290,7 @@ class _RouteEnds extends StatelessWidget {
                     .copyWith(letterSpacing: 1),
               ),
               Text(
-                PharmacyMockData.pickupFrom,
+                route?.pickup?.label ?? AppStrings.notRecorded.tr,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.titleSmall.rc(AppColors.authInk),
@@ -278,16 +317,10 @@ class _RouteEnds extends StatelessWidget {
                     .copyWith(letterSpacing: 1),
               ),
               Text(
-                PharmacyMockData.deliverTo,
+                route?.dropoff?.label ?? AppStrings.notRecorded.tr,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.titleSmall.rc(AppColors.authInk),
-              ),
-              Text(
-                PharmacyMockData.deliverToAddress,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.bodySmall.rc(AppColors.gray400),
               ),
             ],
           ),
@@ -304,44 +337,72 @@ class _Rider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const AppAvatar(
-          name: PharmacyMockData.riderName,
-          size: 48,
-          fallbackAsset: AppAssets.rider,
-        ),
-        AppSpacing.gapH(AppSpacing.sm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                PharmacyMockData.riderName,
-                style: AppTextStyles.titleSmall.rc(AppColors.gray900),
+    return Obx(() {
+      final person = controller.courier.value;
+
+      // Nobody has taken the order yet. Saying so beats naming a courier who
+      // is not carrying it, which is what a fixture here did for every order.
+      if (person == null) {
+        return Row(
+          children: [
+            Expanded(
+              child: Text(
+                AppStrings.noCourierYet.tr,
+                style: AppTextStyles.bodyMedium.rc(AppColors.gray400),
               ),
-              Row(
-                children: [
-                  Icon(
-                    Icons.star_rounded,
-                    size: AppSizes.lg.w,
-                    color: AppColors.star,
-                  ),
-                  AppSpacing.gapH(AppSpacing.xxs),
-                  Text(
-                    '${PharmacyMockData.riderRating}'
-                    '(${PharmacyMockData.riderReviews} reviews)',
-                    style: AppTextStyles.bodySmall.rc(AppColors.gray400),
-                  ),
-                ],
-              ),
-            ],
+            ),
+          ],
+        );
+      }
+
+      return Row(
+        children: [
+          AppAvatar(
+            name: person.name,
+            imageUrl: person.photoUrl.isEmpty ? null : person.photoUrl,
+            size: 48,
+            fallbackAsset: AppAssets.rider,
           ),
-        ),
-        _ChatAction(onTap: controller.openRiderChat),
-      ],
-    );
+          AppSpacing.gapH(AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  person.name,
+                  style: AppTextStyles.titleSmall.rc(AppColors.gray900),
+                ),
+                Row(
+                  children: [
+                    if (person.hasRating) ...[
+                      Icon(
+                        Icons.star_rounded,
+                        size: AppSizes.lg.w,
+                        color: AppColors.star,
+                      ),
+                      AppSpacing.gapH(AppSpacing.xxs),
+                      Text(
+                        '${person.rating.toStringAsFixed(1)} '
+                        '${AppStrings.reviewsCount.trParams({'count': '${person.reviewCount}'})}',
+                        style: AppTextStyles.bodySmall.rc(AppColors.gray400),
+                      ),
+                    ] else
+                      // A new courier has no score. Printing 4.9 for them, as
+                      // the fixture did, is a recommendation nobody made.
+                      Text(
+                        AppStrings.noRatingsYet.tr,
+                        style: AppTextStyles.bodySmall.rc(AppColors.gray400),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          _ChatAction(onTap: controller.openRiderChat),
+        ],
+      );
+    });
   }
 }
 

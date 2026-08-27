@@ -337,12 +337,27 @@ void main() {
   });
 
   testWidgets('Review shop', (tester) async {
+    // The screen renders the order that was tapped — it drew the first demo
+    // store for everybody before, under a *rider's* rating and review count.
     await pump(
       tester,
       const ReviewShopScreen(),
       binding: AccountBinding(),
       size: const Size(390, 1000),
+      arguments: OrderHistoryEntry(
+        id: 'order-1',
+        reference: '#RX8841',
+        storeName: 'MedPlus Pharmacy',
+        pharmacyId: 'ph-1',
+        storeAddress: '123 Main Street, Apt 4B',
+        storeCity: 'New York, NY 10001',
+        placedOn: DateTime(2026, 8, 20),
+        itemCount: 3,
+        total: 66.50,
+        state: OrderState.delivered,
+      ),
     );
+    await tester.pumpAndSettle();
     await settleImages(tester);
     await expectLater(
       find.byType(ReviewShopScreen),
@@ -420,6 +435,10 @@ void main() {
       const PrescriptionDetailsScreen(),
       binding: DocumentsBinding(),
       size: const Size(390, 1020),
+      // The screen renders the script that was opened. It fell back to the
+      // design's sample, so a patient arriving without one saw medications,
+      // doses and a prescribing doctor that had nothing to do with them.
+      arguments: MedicalMockData.prescriptions().first,
     );
     await settleImages(tester);
     await expectLater(
@@ -504,6 +523,13 @@ void main() {
       binding: TestResultsBinding(),
       size: const Size(390, 1800),
     );
+    // The sheet is built from the order that was opened, so one has to be
+    // open. It used to render from a `const` fixture and needed no order at
+    // all — which is exactly how it came to show another patient's details.
+    final controller = Get.find<TestResultsController>();
+    controller.selected.value = MedicalMockData.testOrders.first;
+    controller.orderDocument.value = MedicalMockData.document;
+    await tester.pump();
     await settleImages(tester);
     await expectLater(
       find.byType(TestOrderScreen),
@@ -518,8 +544,10 @@ void main() {
       binding: TestResultsBinding(),
       size: const Size(390, 2100),
     );
-    Get.find<TestResultsController>().centre.value =
-        MedicalMockData.centres.first;
+    final booked = Get.find<TestResultsController>();
+    booked.selected.value = MedicalMockData.testOrders.first;
+    booked.orderDocument.value = MedicalMockData.document;
+    booked.centre.value = MedicalMockData.centres.first;
     await tester.pump();
     expect(find.text('I Completed My Test'), findsOneWidget);
 
@@ -639,10 +667,14 @@ void main() {
       matchesGoldenFile('report_review_refer.png'),
     );
 
+    // `furtherTestRequested` no longer renders a follow-up card.
+    // `PATCH /lab-orders/:id/review` carries a message and nothing else, so the
+    // card was drawing a fixture — a named test ("Cardiac Markers") that no
+    // doctor had ordered, which the patient could act on. Asserting it is gone
+    // is the point: it must not come back without an endpoint behind it.
     controller.outcome.value = ReviewOutcome.furtherTestRequested;
     await tester.pumpAndSettle();
-    expect(find.text('Cardiac Markers'), findsOneWidget);
-    expect(find.text('Request sent'), findsOneWidget);
+    expect(find.text('Cardiac Markers'), findsNothing);
     await settleImages(tester);
     await expectLater(
       find.byType(ReportReviewScreen),

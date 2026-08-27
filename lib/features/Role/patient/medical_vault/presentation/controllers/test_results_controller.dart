@@ -7,7 +7,6 @@ import '../../../../../../core/routes/app_routes.dart';
 import '../../../../../../core/services/attachment_picker_service.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../../chat/presentation/widgets/attachment_sheet.dart';
-import '../../data/static/medical_mock_data.dart';
 import '../../domain/entities/medical_record.dart';
 import '../../domain/repositories/vault_repository.dart';
 
@@ -127,44 +126,139 @@ class TestResultsController extends GetxController {
   /// the upload form, a read one opens the doctor's review.
   void openAction(TestOrder order) {
     selected.value = order;
+    orderDocument.value = order.document;
     switch (order.stage) {
       case TestStage.requestSent:
         Get.toNamed<void>(AppRoutes.testOrder);
       case TestStage.awaitingUpload:
         Get.toNamed<void>(AppRoutes.uploadTestReport);
       case TestStage.awaitingReview:
-        _seedUploadedReport();
+        hasDocument.value = true;
+        outcome.value = ReviewOutcome.pending;
         Get.toNamed<void>(AppRoutes.reportReview);
       case TestStage.reviewed:
-        _seedUploadedReport();
-        outcome.value = ReviewOutcome.followUpOffered;
+        hasDocument.value = true;
+        // What the doctor actually said, rather than a fixture that assumed
+        // every review offered a follow-up.
+        outcome.value = order.reviewMessage == null
+            ? ReviewOutcome.pending
+            : ReviewOutcome.messaged;
         Get.toNamed<void>(AppRoutes.reportReview);
     }
   }
 
-  /// A card past the upload step already has a report and a note attached —
-  /// the review screen renders both, so they have to be there.
-  void _seedUploadedReport() {
-    hasDocument.value = true;
-    if (note.value.isEmpty) note.value = MedicalMockData.patientNote;
-  }
-
   void openTestingCentres() => Get.toNamed<void>(AppRoutes.testingCentres);
 
-  void selectCentre(TestingCentre value) {
+  /// True while the facility choice is being saved.
+  final RxBool isSavingCentre = false.obs;
+
+  /// Records where the patient chose to be tested.
+  ///
+  /// This used to set a local field and pop the sheet — the choice lived in
+  /// memory until the app was closed, and the order never knew about it. The
+  /// server needs it: nothing may reach the lab states until a facility is on
+  /// the order, because a sample cannot be collected somewhere nobody named.
+  Future<void> selectCentre(TestingCentre value) async {
+    final order = selected.value;
     centre.value = value;
+
+    // The picker is also reachable from the vault's own testing-centre list,
+    // with no order in hand. That is a browse, not a choice to record.
+    if (order == null || order.stage != TestStage.requestSent) {
+      Get.back<void>();
+      return;
+    }
+
+    isSavingCentre.value = true;
+    try {
+      await _repository.selectTestingCentre(
+        labOrderId: order.id,
+        testingCentreId: value.id,
+      );
+      await load();
+      selected.value = allOrders.firstWhereOrNull((o) => o.id == order.id);
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    } finally {
+      isSavingCentre.value = false;
+    }
     Get.back<void>();
+  }
+
+  /// True while an accept/decline is in flight.
+  final RxBool isResponding = false.obs;
+
+  /// Whether the patient still owes the doctor an answer.
+  ///
+  /// Only a brand-new order can be answered — once accepted it moves on, and a
+  /// declined one is cancelled. The server enforces the same rule; this keeps
+  /// the buttons off a screen where pressing them would only produce an error.
+  bool get canRespond =>
+      selected.value != null &&
+      selected.value!.stage == TestStage.requestSent &&
+      !hasFacility;
+
+  /// Accepting or declining a test the doctor raised.
+  ///
+  /// The endpoint has existed since the platform routes were written and no
+  /// screen ever called it, so a patient had no way to refuse a test — the
+  /// order simply sat in `requested` for ever.
+  Future<void> respond({required bool accept}) async {
+    final order = selected.value;
+    if (order == null || isResponding.value) return;
+
+    isResponding.value = true;
+    try {
+      await _repository.respondToLabOrder(
+        labOrderId: order.id,
+        accept: accept,
+      );
+      await load();
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    } finally {
+      isResponding.value = false;
+    }
+
+    if (accept) {
+      // Accepting is only half the step; the order cannot move until a centre
+      // is chosen, so send them straight there.
+      selected.value = allOrders.firstWhereOrNull((o) => o.id == order.id);
+      openTestingCentres();
+    } else {
+      AppSnackbar.success(AppStrings.testDeclined.tr);
+      Get.back<void>();
+    }
   }
 
   /// The facility shown on the order sheet and the upload banner: whichever
   /// centre was picked, otherwise the one already on the order.
+  ///
+  /// Falls back to a prompt rather than a fixture. Naming a real clinic the
+  /// patient never chose is worse than an empty state — they would turn up
+  /// somewhere the order does not point at.
   String get facilityName =>
       centre.value?.name ??
       selected.value?.facility ??
-      MedicalMockData.defaultFacility;
+      AppStrings.noFacilityChosen.tr;
+
+  /// True once a centre is actually on the order, so a screen can tell
+  /// "not chosen yet" from a real name.
+  bool get hasFacility =>
+      centre.value != null || selected.value?.facility != null;
 
   String get doctorName =>
-      selected.value?.orderedBy ?? MedicalMockData.orderingDoctor;
+      selected.value?.orderedBy ?? AppStrings.yourDoctor.tr;
+
+  /// The signed order sheet for whichever order is open.
+  ///
+  /// Built from the order row and the signed-in account. It used to be a
+  /// `const` fixture on every screen that showed it, so a patient opening
+  /// their own order read another person's name, date of birth, insurer and
+  /// member id, under a doctor and a DEA registration that existed nowhere.
+  final Rxn<TestOrderDocument> orderDocument = Rxn<TestOrderDocument>();
 
   void completedTest() => Get.toNamed<void>(AppRoutes.uploadTestReport);
 
@@ -217,20 +311,40 @@ class TestResultsController extends GetxController {
       return;
     }
 
+    final order = selected.value;
+
     uploadProgress.value = 0;
     try {
-      await _repository.uploadDocument(
-        path: picked.file.path,
-        fileName: picked.name,
-        mimeType: picked.mime,
-        // Radiology films and lab printouts are filed differently, and the
-        // screen already knows which list the patient came from.
-        type: discipline.value == ResultDiscipline.radiology
-            ? VaultRecordType.imaging
-            : VaultRecordType.labReport,
-        notes: note.value,
-        onProgress: (value) => uploadProgress.value = value,
-      );
+      if (order == null) {
+        // Reached from the vault rather than from an order: this is a document
+        // the patient is filing for themselves, with nothing to attach it to.
+        await _repository.uploadDocument(
+          path: picked.file.path,
+          fileName: picked.name,
+          mimeType: picked.mime,
+          // Radiology films and lab printouts are filed differently, and the
+          // screen already knows which list the patient came from.
+          type: discipline.value == ResultDiscipline.radiology
+              ? VaultRecordType.imaging
+              : VaultRecordType.labReport,
+          notes: note.value,
+          onProgress: (value) => uploadProgress.value = value,
+        );
+      } else {
+        // Against an order, filing the result is what completes it and sends
+        // it to the doctor. The generic vault upload used to be called here
+        // instead: the document landed in the patient's vault, the order stayed
+        // where it was, and the doctor was never told anything had arrived.
+        await _repository.uploadLabResult(
+          labOrderId: order.id,
+          path: picked.file.path,
+          fileName: picked.name,
+          mimeType: picked.mime,
+          notes: note.value,
+          onProgress: (value) => uploadProgress.value = value,
+        );
+        await load();
+      }
       outcome.value = ReviewOutcome.pending;
       Get.toNamed<void>(AppRoutes.resultsSubmitted);
     } on AppException catch (e) {
@@ -261,9 +375,17 @@ class TestResultsController extends GetxController {
   /// Whatever the patient types into that section.
   final RxString replyNote = ''.obs;
 
-  bool get hasRequest => outcome.value == ReviewOutcome.furtherTestRequested;
+  /// Whether the doctor's review asked for another test.
+  ///
+  /// Always false today: `PATCH /lab-orders/:id/review` carries a message and
+  /// nothing else, so there is no follow-up request on the wire to render. The
+  /// card used to draw `MedicalMockData.followUpRequest` — a fixture the
+  /// patient could act on, describing a test no doctor had ordered. Hiding it
+  /// is the honest state until the endpoint carries one.
+  bool get hasRequest => false;
 
-  FollowUpRequest get request => MedicalMockData.followUpRequest;
+  /// What the doctor wrote when they reviewed the result.
+  String get reviewMessage => selected.value?.reviewMessage ?? '';
 
   /// Accepting the follow-up starts a consultation, which the booking flow
   /// already owns — the doctor directory is its entry point.

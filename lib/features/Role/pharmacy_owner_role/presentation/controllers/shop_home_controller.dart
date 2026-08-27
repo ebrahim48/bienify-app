@@ -28,6 +28,11 @@ class ShopHomeController extends GetxController {
 
   final RxList<StockAlert> alerts = <StockAlert>[].obs;
 
+  /// The four dashboard tiles. Zeroed until the read lands, so the owner does
+  /// not see a figure that belongs to nobody — they used to be hardcoded, and
+  /// showed the same day's trade to every shop on the platform.
+  final Rx<ShopStats> stats = const ShopStats().obs;
+
   final RxBool isLoading = true.obs;
   final RxnString error = RxnString();
 
@@ -41,8 +46,16 @@ class ShopHomeController extends GetxController {
     isLoading.value = true;
     error.value = null;
     try {
-      shop.value = await _repository.shop();
-      alerts.value = await _repository.stockAlerts();
+      // Three independent reads, run together so the dashboard costs one
+      // round trip's latency rather than three.
+      final results = await Future.wait([
+        _repository.shop(),
+        _repository.stockAlerts(),
+        _repository.stats(),
+      ]);
+      shop.value = results[0] as Shop;
+      alerts.value = results[1] as List<StockAlert>;
+      stats.value = results[2] as ShopStats;
     } on AppException catch (e) {
       error.value = e.message;
     } finally {

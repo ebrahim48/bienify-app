@@ -1,12 +1,14 @@
+import '../../../../../../core/models/chat_thread.dart';
 import '../entities/conversation.dart';
 
-/// The messages exchanged during a consultation.
+/// The messages in a thread — a consultation, or a delivery between a
+/// customer and their courier.
 abstract class ConversationRepository {
   /// Every thread the patient has, most recently active first.
   Future<List<ConversationThread>> threads();
 
-  /// The thread for [appointmentId], oldest first.
-  Future<List<ChatMessage>> messages(String appointmentId);
+  /// The messages in [thread], oldest first.
+  Future<List<ChatMessage>> messages(ChatThread thread);
 
   /// Sends [body] and returns the message the server stored.
   /// Sends [body], optionally carrying the sender's own [clientId].
@@ -16,7 +18,7 @@ abstract class ConversationRepository {
   /// reached the server. Passing the id lets it return that one instead of
   /// storing a duplicate.
   Future<ChatMessage> send({
-    required String appointmentId,
+    required ChatThread thread,
     required String body,
     String? clientId,
     Map<String, dynamic>? attachment,

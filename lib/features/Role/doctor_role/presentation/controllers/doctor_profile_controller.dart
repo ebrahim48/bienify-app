@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+import '../../../../../core/services/avatar_service.dart';
 import 'package:get/get.dart';
 
 import '../../../../../core/constants/app_strings.dart';
@@ -15,7 +17,7 @@ import '../../domain/repositories/doctor_practice_repository.dart';
 /// My Wallet, Settings and Partner with Bienify are the patient app's own
 /// screens — the practitioner has the same wallet and the same legal pages, so
 /// they are navigated to rather than rebuilt.
-class DoctorProfileController extends GetxController {
+class DoctorProfileController extends GetxController with AvatarChanging {
   DoctorProfileController({
     DoctorPracticeRepository? repository,
     Logout? logout,
@@ -88,12 +90,26 @@ class DoctorProfileController extends GetxController {
 
   void openPartner() => Get.toNamed<void>(AppRoutes.becomePartner);
 
+  /// The practitioner's licences and their verification state.
+  ///
+  /// There was no way into this at all: `POST /doctors/me/credentials` had no
+  /// screen, so a doctor could not submit a licence and the admin approval
+  /// queue had nothing to inspect but a number typed on a form.
+  void openCredentials() => Get.toNamed<void>(AppRoutes.doctorCredentials);
+
   void openResultsToReview() =>
       Get.toNamed<void>(AppRoutes.doctorResultsToReview);
 
   void edit() => Get.toNamed<void>(AppRoutes.doctorEditProfile);
 
-  void changePhoto() => edit();
+  /// Changes the account photo.
+  ///
+  /// This opened the edit form, which has no photo field — so the control did
+  /// nothing at all, in all four roles.
+  Future<void> changePhoto(BuildContext context) => changePhotoWith(context);
+
+  @override
+  Future<void> reloadProfile() => load();
 
   /// Clears the session before leaving, so the next sign-in does not inherit
   /// this practitioner's tokens.

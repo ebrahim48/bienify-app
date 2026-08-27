@@ -1,3 +1,4 @@
+export 'api/config_api.dart';
 // The complete Bienify API surface, one class per domain.
 
 export 'api/admin_api.dart';

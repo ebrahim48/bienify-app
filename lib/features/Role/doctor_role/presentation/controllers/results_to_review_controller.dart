@@ -4,7 +4,6 @@ import '../../../../../core/constants/app_strings.dart';
 import '../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../core/widgets/app_snackbar.dart';
-import '../../data/static/doctor_orders_data.dart';
 import '../../domain/entities/test_request.dart';
 import '../../domain/repositories/doctor_practice_repository.dart';
 
@@ -19,9 +18,10 @@ import '../../domain/repositories/doctor_practice_repository.dart';
 /// `PATCH /lab-orders/:id/review` is what actually sends the doctor's note and
 /// moves the order to `reviewed`.
 ///
-/// Radiology still shows [DoctorOrdersData]: the backend models every order as
-/// a lab order and has no imaging equivalent, so there is nothing to read.
-/// See the note in `docs/API-GAPS.md`.
+/// Both segments are served by the API. Radiology used to draw
+/// [DoctorOrdersData] because the backend modelled every diagnostic as a lab
+/// order; imaging is a real order kind now, so the tab reads
+/// `GET /lab-orders?role=doctor&kind=imaging` like its neighbour.
 class ResultsToReviewController extends GetxController {
   ResultsToReviewController({DoctorPracticeRepository? repository})
     : _repository = repository ?? Get.find<DoctorPracticeRepository>();
@@ -30,6 +30,10 @@ class ResultsToReviewController extends GetxController {
 
   final RxList<ReviewPatient> patients = <ReviewPatient>[].obs;
   final RxList<TestRequest> requests = <TestRequest>[].obs;
+
+  /// The radiology segment. Its own list rather than a filter over [requests],
+  /// because the two are separate reads narrowed by `kind` server-side.
+  final RxList<TestRequest> imagingRequests = <TestRequest>[].obs;
 
   final RxBool isLoading = true.obs;
   final RxnString error = RxnString();
@@ -65,9 +69,11 @@ class ResultsToReviewController extends GetxController {
       final results = await Future.wait([
         _repository.reviewPatients(),
         _repository.labRequests(),
+        _repository.labRequests(imaging: true),
       ]);
       patients.value = results[0] as List<ReviewPatient>;
       requests.value = results[1] as List<TestRequest>;
+      imagingRequests.value = results[2] as List<TestRequest>;
     } on AppException catch (e) {
       error.value = e.message;
     } finally {
@@ -88,11 +94,8 @@ class ResultsToReviewController extends GetxController {
 
   /// The lab or radiology segment's rows, narrowed by the chip above them.
   List<TestRequest> get visibleRequests {
-    final kind = tab.value == ResultsTab.radiologyRequests
-        ? OrderKind.radiology
-        : OrderKind.lab;
-    final source = kind == OrderKind.radiology
-        ? DoctorOrdersData.radiologyRequests
+    final source = tab.value == ResultsTab.radiologyRequests
+        ? imagingRequests
         : requests;
     return source.where((r) => _matchesFilter(r.status)).toList();
   }
@@ -170,12 +173,11 @@ class ResultsToReviewController extends GetxController {
       return false;
     }
 
-    // Radiology is still [DoctorOrdersData] — the backend models every order
-    // as a lab order and has none of its own — so those rows carry ids like
-    // `rad-r-1`. Sending one reached the server and came back "Validation
-    // failed", which reads as a bug in the message rather than a feature that
-    // does not exist yet. Refuse it here, and say which it is.
-    if (order.kind == OrderKind.radiology || !_isServerId(order.id)) {
+    // Radiology rows used to be refused outright: they came from a fixture and
+    // carried ids like `rad-r-1`, which the server rejected as "Validation
+    // failed". They are real imaging orders now, so only the id check remains —
+    // and it only fires in mock mode.
+    if (!_isServerId(order.id)) {
       AppSnackbar.info(AppStrings.radiologyReviewUnavailable.tr);
       return false;
     }

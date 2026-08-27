@@ -1,10 +1,12 @@
+import '../../../../../../core/models/chat_thread.dart';
+
 /// Who the patient is talking to, shown in the chat header.
 class ConversationPeer {
   const ConversationPeer({
     required this.id,
     required this.name,
     required this.specialty,
-    this.appointmentId,
+    this.thread,
     this.photoUrl,
     this.photoAsset,
     this.isOnline = false,
@@ -12,13 +14,12 @@ class ConversationPeer {
 
   final String id;
 
-  /// The consultation this thread belongs to.
+  /// The conversation this thread belongs to — a consultation, or a delivery
+  /// the patient and their courier are both on.
   ///
-  /// Messages are keyed by appointment on the server — there is no general
-  /// inbox — so a thread opened outside one (a courier, support, a doctor the
-  /// patient has not booked) has nowhere to send to and shows the sample
-  /// conversation instead. See `docs/API-GAPS.md`.
-  final String? appointmentId;
+  /// Null when the screen was opened outside any conversation (support, a
+  /// doctor the patient has not booked), which has nowhere to send to.
+  final ChatThread? thread;
   final String name;
   final String specialty;
   final String? photoUrl;
@@ -30,11 +31,11 @@ class ConversationPeer {
   final bool isOnline;
 }
 
-/// One row of the message list: a consultation the patient has a thread with.
+/// One row of the message list.
 ///
-/// The server has no general inbox — `GET /consultations/threads` groups
-/// messages by appointment — so a thread is always a consultation, and [peer]
-/// carries the `appointmentId` the chat screen needs to send to.
+/// `GET /consultations/threads` groups messages by appointment, so a row in
+/// this list is always a consultation; [peer] carries the thread the chat
+/// screen sends to.
 class ConversationThread {
   const ConversationThread({
     required this.peer,
@@ -52,7 +53,7 @@ class ConversationThread {
 
   final int unreadCount;
 
-  String get appointmentId => peer.appointmentId ?? '';
+  String get appointmentId => peer.thread?.id ?? '';
 
   bool get hasUnread => unreadCount > 0;
 
@@ -63,7 +64,11 @@ class ConversationThread {
 }
 
 /// Which side of the thread a message sits on.
-enum MessageAuthor { patient, doctor }
+///
+/// Not `patient`/`doctor`: the same bubble serves a consultation and a
+/// courier thread, and which side a message lands on is decided by comparing
+/// its sender to the signed-in user — never by anyone's role.
+enum MessageAuthor { me, peer }
 
 /// What a bubble is carrying, which decides how it draws.
 enum MessageKind { text, image, video, audio, file }
@@ -202,7 +207,7 @@ class ChatMessage {
   /// to rather than in a banner that cannot say which file it means.
   final double? uploadProgress;
 
-  bool get isMine => author == MessageAuthor.patient;
+  bool get isMine => author == MessageAuthor.me;
 
   bool get hasAttachment => attachment != null;
 

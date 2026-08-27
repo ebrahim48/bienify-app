@@ -1,3 +1,4 @@
+import '../../../../../core/models/chat_thread.dart';
 import 'dart:async';
 
 import 'package:get/get.dart';
@@ -62,7 +63,9 @@ class DoctorMessagesController extends GetxController {
   /// this tab opened would otherwise never report in.
   void _subscribeToThreads() {
     for (final thread in threads) {
-      if (thread.id.isNotEmpty) _socket.joinThread(thread.id);
+      if (thread.id.isNotEmpty) {
+        _socket.joinThread(ChatThread.consultation(thread.id));
+      }
 
       final patientId = thread.patientUserId;
       if (patientId.isEmpty) continue;
@@ -117,7 +120,7 @@ class DoctorMessagesController extends GetxController {
         id: thread.patientUserId.isEmpty ? thread.id : thread.patientUserId,
         // A thread is keyed by its consultation, which is what makes the
         // messages behind it real rather than the sample conversation.
-        appointmentId: thread.id,
+        thread: ChatThread.consultation(thread.id),
         name: thread.patientName,
         // The doctor's side of the header shows why the patient is here, and
         // the preview is the nearest thing the list carries.

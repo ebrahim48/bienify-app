@@ -36,6 +36,10 @@ class DoctorsApi {
   Future<dynamic> createMeavailabilityexceptions({Object? body}) =>
       _c.post(ApiConstants.postDoctorsMeAvailabilityExceptions, body: body);
 
+  /// `POST /api/v1/doctors/me/credentials/upload-url`
+  Future<dynamic> createMecredentialsUploadUrl({Object? body}) =>
+      _c.post(ApiConstants.postDoctorsMeCredentialsUploadUrl, body: body);
+
   /// `POST /api/v1/doctors/me/credentials`
   Future<dynamic> createMecredentials({Object? body}) =>
       _c.post(ApiConstants.postDoctorsMeCredentials, body: body);

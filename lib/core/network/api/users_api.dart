@@ -25,4 +25,8 @@ class UsersApi {
   /// `POST /api/v1/users/me/avatar/upload-url`
   Future<dynamic> createMeavataruploadurl({Object? body}) =>
       _c.post(ApiConstants.postUsersMeAvatarUploadUrl, body: body);
+
+  /// `POST /api/v1/users/me/address/door-image/upload-url`
+  Future<dynamic> createMeaddressdoorimageuploadurl({Object? body}) =>
+      _c.post(ApiConstants.postUsersMeDoorImageUploadUrl, body: body);
 }
