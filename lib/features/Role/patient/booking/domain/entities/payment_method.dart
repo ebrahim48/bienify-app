@@ -14,6 +14,30 @@ enum PaymentMethod {
 
   /// Translation key for the row label.
   final String labelKey;
+
+  /// The server's own name for the payout destination this method files, or
+  /// null when it files none.
+  ///
+  /// `bank | mobile_money` is the whole enum `/wallet/payout-accounts`
+  /// accepts. tPago is a mobile-money wallet, so it belongs to the second.
+  String? get payoutKind => switch (this) {
+    PaymentMethod.bankTransfer => 'bank',
+    PaymentMethod.tpago => 'mobile_money',
+    _ => null,
+  };
+
+  /// Whether choosing this in the Wallet actually stores something.
+  ///
+  /// Apple/Google Pay, PayPal and cash are ways to settle a bill at the
+  /// moment of paying; the API has nowhere to keep them and the app has no
+  /// form for them. They used to be listed under "Add Account" anyway, and
+  /// picking one silently opened the debit-card form — so a courier choosing
+  /// Bank Transfer filed a card, which is not something they can be paid into.
+  bool get isStorable => this == PaymentMethod.debitCredit || payoutKind != null;
+
+  /// The methods the Wallet can genuinely add, in the design's order.
+  static List<PaymentMethod> get storable =>
+      values.where((method) => method.isStorable).toList(growable: false);
 }
 
 /// A stored-value balance that can offset part of the total.

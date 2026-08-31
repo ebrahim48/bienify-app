@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Profile builds only. The debug variant carries its own copy of this file.
+
+  A profile build is a development build: it is what `flutter run --profile`
+  produces to measure performance against the same local backend a debug build
+  talks to. It had no cleartext permission and no security config at all, so
+  every http:// request to that backend was blocked by Android before it left
+  the device — and Dio reports that as a connection error, which the app maps
+  to `NoInternetException`. Profiling the app therefore looked identical to
+  profiling it with the server switched off.
+
+  Release builds never see this file. `usesCleartextTraffic` stays absent from
+  the main manifest and no config is attached there, so shipped traffic
+  remains HTTPS-only.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

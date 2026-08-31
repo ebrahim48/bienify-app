@@ -7,6 +7,8 @@ import '../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../core/utils/app_navigator.dart';
 import '../../../../../core/widgets/app_snackbar.dart';
+import '../../../doctor_role/domain/entities/doctor_practice.dart'
+    show PayoutAccount;
 import '../../../patient/auth/domain/usecases/email_auth_usecases.dart';
 import '../../data/static/rider_data.dart';
 import '../../domain/entities/rider.dart';
@@ -64,6 +66,10 @@ class RiderProfileController extends GetxController with AvatarChanging {
       final loaded = await _repository.rider();
       rider.value = loaded;
       earnings.value = await _repository.earnings();
+      // Read alongside the figures rather than when the sheet opens, so the
+      // Withdraw button knows whether it has anywhere to pay before it is
+      // tapped.
+      await loadPayoutAccounts();
       fullName.value = loaded.name;
       email.value = loaded.email;
       // The server stores a free-text city and the pickers hold fixed lists,
@@ -88,6 +94,120 @@ class RiderProfileController extends GetxController with AvatarChanging {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  // ─── Payout ──────────────────────────────────────────────────────────────
+  //
+  // The Earnings tab drew a bar toward the platform minimum and offered
+  // nothing to do about it: a courier could watch money accumulate and never
+  // ask for any of it, though the endpoints have existed all along.
+
+  /// Where the courier can be paid. Empty until the first read lands, and
+  /// legitimately empty for a courier who has not added one.
+  final RxList<PayoutAccount> payoutAccounts = <PayoutAccount>[].obs;
+
+  final RxBool isRequestingPayout = false.obs;
+
+  /// The account a payout goes to: the courier's default, or their only one.
+  PayoutAccount? get defaultPayoutAccount {
+    if (payoutAccounts.isEmpty) return null;
+    return payoutAccounts.firstWhereOrNull((a) => a.isDefault) ??
+        payoutAccounts.first;
+  }
+
+  /// Why the last read of [payoutAccounts] failed, or null if it did not.
+  ///
+  /// Kept because "you have no payout accounts" and "we could not find out"
+  /// are different facts and the sheet must not state the first when it means
+  /// the second. This read used to swallow every failure and clear the list,
+  /// so a backend that was not running, an expired session and a 500 all
+  /// rendered as "Add a payout account first" — a courier who had a payout
+  /// account read that as the app losing it, and a courier who did not was
+  /// sent to a form that could not save either. The list is left untouched on
+  /// a failure for the same reason: accounts already read are still real.
+  final RxnString payoutAccountsError = RxnString();
+
+  Future<void> loadPayoutAccounts() async {
+    try {
+      payoutAccounts.value = await _repository.payoutAccounts();
+      payoutAccountsError.value = null;
+    } on AppException catch (e) {
+      payoutAccountsError.value = e.message;
+    }
+  }
+
+  /// Asks for a payout of [amount] into [accountId].
+  ///
+  /// Returns whether it was filed, so the sheet knows whether to close. The
+  /// figures are re-read either way: a request that succeeded moves money into
+  /// `pendingWithdrawal`, and the screen must not keep offering it twice.
+  Future<bool> requestPayout(double amount, String accountId) async {
+    if (isRequestingPayout.value) return false;
+    isRequestingPayout.value = true;
+    try {
+      await _repository.requestWithdrawal(
+        amount: amount,
+        payoutAccountId: accountId,
+      );
+    } on AppException catch (e) {
+      // The server owns the rules a courier can fall foul of — below the
+      // minimum, more than the balance, one already in flight — so its own
+      // words are shown rather than a guess at which one it was.
+      AppSnackbar.error(e.message);
+      return false;
+    } finally {
+      isRequestingPayout.value = false;
+    }
+    await load();
+    AppSnackbar.success(AppStrings.payoutRequested.tr);
+    return true;
+  }
+
+  final RxBool isSavingPayoutAccount = false.obs;
+
+  /// Files somewhere the courier can be paid, then re-reads the list so the
+  /// payout sheet can select it straight away.
+  ///
+  /// Returns whether it landed. It used to return nothing, which left the
+  /// caller unable to tell a saved account from a refused one — and nothing
+  /// called it at all: the method and its repository behind it existed, while
+  /// no screen in the rider role ever opened a form. A courier was told to
+  /// "add a payout account first" by a sheet that offered no way to add one.
+  Future<bool> addPayoutAccount({
+    required String kind,
+    required String displayName,
+    required String accountNumber,
+    String? bankName,
+  }) async {
+    if (isSavingPayoutAccount.value) return false;
+
+    final name = displayName.trim();
+    final number = accountNumber.trim();
+    // The server takes four digits at minimum; checking here names the field
+    // rather than returning a validation error about the whole body.
+    if (name.isEmpty || number.length < 4) {
+      AppSnackbar.info(AppStrings.payoutAccountNeedsDetails.tr);
+      return false;
+    }
+
+    isSavingPayoutAccount.value = true;
+    try {
+      await _repository.addPayoutAccount(
+        kind: kind,
+        displayName: name,
+        accountNumber: number,
+        bankName: bankName?.trim(),
+      );
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return false;
+    } finally {
+      isSavingPayoutAccount.value = false;
+    }
+
+    await loadPayoutAccounts();
+    AppSnackbar.success(AppStrings.payoutAccountAdded.tr);
+    return true;
   }
 
   void openWallet() => Get.toNamed<void>(AppRoutes.wallet);

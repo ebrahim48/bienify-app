@@ -32,6 +32,11 @@ class ApiAccountRepository implements AccountRepository {
   }
 
   @override
+  Future<void> deleteAccount() async {
+    await _api.delete(ApiConstants.deleteUsersMe);
+  }
+
+  @override
   Future<DeliveryAddress?> savedAddress() async {
     final data = await _api.getMap(ApiConstants.usersMe);
     return addressFrom(Api.map(data['profile'])['address']);

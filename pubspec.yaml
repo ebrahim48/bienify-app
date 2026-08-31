@@ -30,8 +30,13 @@ dependencies:
   hive_flutter: ^1.1.0
   path_provider: ^2.1.4
 
-  # Maps — nearby cash-payment points
+  # Maps — nearby cash-payment points, and live delivery tracking
   google_maps_flutter: ^2.9.0
+
+  # The courier's own position, reported while they are carrying a parcel.
+  # Without it nothing ever wrote `lastLocation`, so the customer's live map
+  # had a route and no courier on it.
+  geolocator: ^13.0.2
 
   # Media
   cached_network_image: ^3.4.1
@@ -50,6 +55,7 @@ dependencies:
   video_player: ^2.11.1
   open_filex: ^4.7.0
   emoji_picker_flutter: ^4.4.0
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

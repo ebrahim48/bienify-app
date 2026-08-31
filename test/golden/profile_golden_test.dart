@@ -1,6 +1,7 @@
 import 'package:bienify_app/app.dart';
 import 'package:bienify_app/core/di/dependency_injection.dart';
 import 'package:bienify_app/core/localization/app_translations.dart';
+import 'package:bienify_app/features/Role/patient/booking/domain/entities/payment_method.dart';
 import 'package:bienify_app/core/theme/app_theme.dart';
 import 'package:bienify_app/features/Role/patient/medical_vault/presentation/bindings/medical_vault_bindings.dart';
 import 'package:bienify_app/features/Role/patient/medical_vault/presentation/controllers/test_results_controller.dart';
@@ -377,9 +378,16 @@ void main() {
       matchesGoldenFile('payment_options.png'),
     );
 
-    await tester.tap(find.text('Paypal'));
+    // Bank Transfer rather than Paypal, which this used to tap. Payment
+    // Options now lists only the methods the Wallet can actually file — a
+    // card, a bank account, a mobile-money number — because picking any of
+    // the others opened the debit-card form and filed a card regardless.
+    await tester.tap(find.text('Bank Transfer'));
     await tester.pumpAndSettle();
-    expect(account.selectedMethodIndex.value, 4);
+    expect(account.selectedMethod, PaymentMethod.bankTransfer);
+
+    // And it is no longer offered a method it cannot store.
+    expect(find.text('Paypal'), findsNothing);
   });
 
   testWidgets('Saving a card masks it to the last four', (tester) async {

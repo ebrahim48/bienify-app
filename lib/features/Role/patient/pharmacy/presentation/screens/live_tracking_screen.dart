@@ -51,10 +51,70 @@ class LiveTrackingScreen extends GetView<OrderTrackingController> {
   }
 }
 
-class _Map extends StatelessWidget {
+/// The tracking map, with the courier's pin gliding between reports.
+///
+/// A courier reports every 15 metres, so a marker placed straight onto each
+/// new position jumps. The pin is therefore tweened between the last two
+/// **reported** positions — a visual smoothing of two measured points, never
+/// an invented third one: the distance and arrival time beside it stay exactly
+/// what the routing service measured, and are not derived from this.
+class _Map extends StatefulWidget {
   const _Map({required this.controller});
 
   final OrderTrackingController controller;
+
+  @override
+  State<_Map> createState() => _MapState();
+}
+
+class _MapState extends State<_Map> with SingleTickerProviderStateMixin {
+  OrderTrackingController get controller => widget.controller;
+
+  late final AnimationController _glide = AnimationController(
+    vsync: this,
+    // A touch longer than a brisk ping, so the pin is still travelling when
+    // the next position lands and the motion reads as continuous.
+    duration: const Duration(milliseconds: 1200),
+  );
+
+  /// Where the pin is drawn: between [_from] and [_to] as the glide runs.
+  LatLng? _from;
+  LatLng? _to;
+
+  /// The last reported position seen, so a rebuild that changes nothing about
+  /// the courier does not restart the animation.
+  MapPoint? _last;
+
+  @override
+  void dispose() {
+    _glide.dispose();
+    super.dispose();
+  }
+
+  /// Starts a glide to [next] when the courier has actually moved.
+  void _moveTo(MapPoint? next) {
+    if (next == null) return;
+    if (_last != null && _last!.lat == next.lat && _last!.lng == next.lng) return;
+
+    final target = LatLng(next.lat, next.lng);
+    // The first position is placed, not travelled to: gliding in from nowhere
+    // would send the pin across the city.
+    _from = _last == null ? target : (_currentPin() ?? target);
+    _to = target;
+    _last = next;
+    _glide.forward(from: 0);
+  }
+
+  LatLng? _currentPin() {
+    final from = _from;
+    final to = _to;
+    if (from == null || to == null) return null;
+    final t = Curves.easeOut.transform(_glide.value);
+    return LatLng(
+      from.latitude + (to.latitude - from.latitude) * t,
+      from.longitude + (to.longitude - from.longitude) * t,
+    );
+  }
 
   /// Santo Domingo, used only to frame an empty map before the first position
   /// arrives — never as a pin. The four constants this file used to hold were
@@ -72,11 +132,17 @@ class _Map extends StatelessWidget {
 
       final centre = courier ?? dropoff ?? pickup;
 
+      // Scheduled rather than called inline: this runs during build, and
+      // driving an animation from inside one is not allowed.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _moveTo(courier));
+
       final markers = <Marker>{
         if (courier != null)
           Marker(
             markerId: const MarkerId('courier'),
-            position: LatLng(courier.lat, courier.lng),
+            // The gliding position while a tween is running, the reported one
+            // otherwise.
+            position: _currentPin() ?? LatLng(courier.lat, courier.lng),
             infoWindow: InfoWindow(title: AppStrings.courier.tr),
           ),
         if (pickup != null)
@@ -93,34 +159,52 @@ class _Map extends StatelessWidget {
           ),
       };
 
-      // Only drawn when both ends are known. A line to a pin that is not there
-      // would be a guess at a route.
-      final line = courier != null && dropoff != null
-          ? <Polyline>{
+      // The road the courier is actually driving, routed server-side. Falls
+      // back to joining the two ends, and only when both are known — a line to
+      // a pin that is not there would be a guess at a route.
+      final points = route != null && route.hasRoad
+          ? [for (final p in route.path) LatLng(p.lat, p.lng)]
+          : (courier != null && dropoff != null
+                ? [
+                    LatLng(courier.lat, courier.lng),
+                    LatLng(dropoff.lat, dropoff.lng),
+                  ]
+                : const <LatLng>[]);
+
+      final line = points.isEmpty
+          ? const <Polyline>{}
+          : <Polyline>{
               Polyline(
                 polylineId: const PolylineId('route'),
-                points: [
-                  LatLng(courier.lat, courier.lng),
-                  LatLng(dropoff.lat, dropoff.lng),
-                ],
+                points: points,
                 color: AppColors.gray950,
                 width: 4,
               ),
-            }
-          : const <Polyline>{};
+            };
 
-      return GoogleMap(
-        initialCameraPosition: CameraPosition(
-          target: centre == null
-              ? _fallbackCentre
-              : LatLng(centre.lat, centre.lng),
-          zoom: 12.5,
+      // Rebuilt on every animation frame so the marker actually travels;
+      // `markers` and `line` are captured from the observable read above, so
+      // the `Obx` still tracks them.
+      return AnimatedBuilder(
+        animation: _glide,
+        builder: (context, _) => GoogleMap(
+          initialCameraPosition: CameraPosition(
+            target: centre == null
+                ? _fallbackCentre
+                : LatLng(centre.lat, centre.lng),
+            zoom: 12.5,
+          ),
+          markers: {
+            for (final marker in markers)
+              marker.markerId.value == 'courier' && _currentPin() != null
+                  ? marker.copyWith(positionParam: _currentPin())
+                  : marker,
+          },
+          polylines: line,
+          myLocationButtonEnabled: false,
+          zoomControlsEnabled: false,
+          mapToolbarEnabled: false,
         ),
-        markers: markers,
-        polylines: line,
-        myLocationButtonEnabled: false,
-        zoomControlsEnabled: false,
-        mapToolbarEnabled: false,
       );
     });
   }
@@ -218,11 +302,27 @@ class _RouteSheet extends StatelessWidget {
                       style: AppTextStyles.titleLarge.rc(AppColors.authInk),
                     ),
                     AppSpacing.gapV(AppSpacing.xs2),
-                    // An arrival time used to sit here — "Arriving 10:45 AM",
-                    // from a constant. Nothing estimates one: there is no
-                    // routing engine and no distance calculation behind this
-                    // screen, so any time shown would be invented. What is
-                    // known is when the courier last reported.
+                    // How long the courier is away, and how far.
+                    //
+                    // An arrival time used to sit here from a constant, and
+                    // was deleted because nothing estimated one. There is a
+                    // routing engine behind this screen now: the server asks
+                    // Directions for the road from the courier's last reported
+                    // position to where they are heading, and this is that
+                    // answer. Still absent — not zeroed — whenever the route
+                    // could not be established, which is why it is a separate
+                    // line above the subtitle rather than replacing it.
+                    if (route?.etaLabel != null ||
+                        route?.distanceLabel != null) ...[
+                      Text(
+                        [?route?.etaLabel, ?route?.distanceLabel].join(' · '),
+                        style: AppTextStyles.titleMedium.rc(
+                          AppColors.actionFill,
+                        ),
+                      ),
+                      AppSpacing.gapV(AppSpacing.xxs),
+                    ],
+                    // What is known regardless: when the courier last reported.
                     Text(
                       controller.routeSubtitle,
                       style: AppTextStyles.bodyLarge.rc(AppColors.gray500),

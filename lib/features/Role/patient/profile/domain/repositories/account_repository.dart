@@ -10,6 +10,15 @@ abstract class AccountRepository {
 
   Future<void> saveName(String name);
 
+  /// Closes the account — `DELETE /users/me`.
+  ///
+  /// A soft delete: the server marks the account `deleted` and revokes its
+  /// sessions rather than erasing anything, because the prescriptions, results
+  /// and orders attached to it are records other people are obliged to keep.
+  /// From the patient's side it is final — every sign-in path refuses a
+  /// deleted account.
+  Future<void> deleteAccount();
+
   /// The patient's one saved delivery address, or null if they have never
   /// entered one. Read at checkout so an order does not ask again.
   Future<DeliveryAddress?> savedAddress();

@@ -53,9 +53,29 @@ class BecomePartnerScreen extends GetView<PartnerController> {
             ),
           ),
           const Spacer(),
-          AppButton(
-            label: AppStrings.continueLabel.tr,
-            onPressed: controller.submitApplication,
+          // A pending application is a fact worth printing: the server refuses
+          // a second one, so a button that looks ready to file another is a
+          // control that cannot do what it offers.
+          Obx(
+            () => controller.isPending
+                ? Padding(
+                    padding: EdgeInsets.only(bottom: AppSpacing.sm.h),
+                    child: Text(
+                      AppStrings.partnerApplicationPending.tr,
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.bodyLarge.rc(AppColors.gray500),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+          Obx(
+            () => AppButton(
+              label: controller.actionLabel,
+              isLoading: controller.isSubmitting.value,
+              onPressed: controller.isPending
+                  ? null
+                  : controller.submitApplication,
+            ),
           ),
           AppSpacing.gapV(AppSpacing.md),
         ],

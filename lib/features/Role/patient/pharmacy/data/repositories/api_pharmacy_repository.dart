@@ -48,11 +48,19 @@ class ApiPharmacyRepository implements PharmacyRepository {
   }
 
   @override
-  Future<List<PharmacyStore>> stores({String query = ''}) async {
+  Future<List<PharmacyStore>> stores({
+    String query = '',
+    String city = '',
+  }) async {
     final term = query.trim();
+    final place = city.trim();
     final rows = await _api.getList(
       ApiConstants.pharmacies,
-      query: {if (term.isNotEmpty) 'search': term, 'limit': _pageSize},
+      query: {
+        if (term.isNotEmpty) 'search': term,
+        if (place.isNotEmpty) 'city': place,
+        'limit': _pageSize,
+      },
     );
     return rows.map(pharmacyFrom).toList();
   }
@@ -63,6 +71,8 @@ class ApiPharmacyRepository implements PharmacyRepository {
     required Map<String, int> quantitiesByMedicineId,
     required String deliveryAddress,
     String? prescriptionId,
+    double? deliveryLat,
+    double? deliveryLng,
   }) async {
     final data = await _api.postMap(
       ApiConstants.postMedicineOrders,
@@ -73,6 +83,13 @@ class ApiPharmacyRepository implements PharmacyRepository {
             {'medicineId': entry.key, 'quantity': entry.value},
         ],
         'deliveryAddress': deliveryAddress,
+        // Sent as a pair or not at all — one coordinate is not a place, and
+        // the server keeps ownership of a pin the client supplied rather than
+        // geocoding over the top of it.
+        if (deliveryLat != null && deliveryLng != null) ...{
+          'deliveryLat': deliveryLat,
+          'deliveryLng': deliveryLng,
+        },
         if (prescriptionId != null && prescriptionId.isNotEmpty)
           'prescriptionId': prescriptionId,
       },
@@ -161,5 +178,38 @@ class ApiPharmacyRepository implements PharmacyRepository {
       query: {'prescriptionId': prescriptionId},
     );
     return rows.map(pharmacyMatchFrom).toList();
+  }
+
+  @override
+  Future<void> cancelOrder(String orderId) async {
+    await _api.post(ApiConstants.postMedicineOrdersCancel(orderId));
+  }
+
+  @override
+  Future<void> reviewPharmacy({
+    required String orderId,
+    required int rating,
+  }) => _postReview(subjectKind: 'pharmacy', transactionId: orderId, rating: rating);
+
+  @override
+  Future<void> reviewRider({
+    required String deliveryId,
+    required int rating,
+  }) => _postReview(subjectKind: 'rider', transactionId: deliveryId, rating: rating);
+
+  /// One body shape for both, matching what the doctor review already sends.
+  Future<void> _postReview({
+    required String subjectKind,
+    required String transactionId,
+    required int rating,
+  }) async {
+    await _api.post(
+      ApiConstants.postReviews,
+      body: {
+        'subjectKind': subjectKind,
+        'transactionId': transactionId,
+        'rating': rating,
+      },
+    );
   }
 }

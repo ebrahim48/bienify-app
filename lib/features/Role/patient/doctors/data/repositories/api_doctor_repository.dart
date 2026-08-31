@@ -60,9 +60,10 @@ class ApiDoctorRepository implements DoctorRepository {
     return DoctorDetails(
       doctor: doctorFrom(json),
       experienceYears: Api.integer(json['yearsOfExperience']),
-      // The server does not count a doctor's patients; showing a fabricated
-      // number would be worse than showing none.
-      patientCount: '—',
+      // The patient count is no longer passed: it comes off `doctor` above,
+      // which `doctorFrom` fills from the server's `patientsSeen`. This used
+      // to hard-code '—' beside a comment claiming the server did not count
+      // them — it does, and had done since before that comment was written.
       workingTime: _workingTime(json['availability']),
       // Named, not coded: the tile used to read "en".
       languages: languages is List

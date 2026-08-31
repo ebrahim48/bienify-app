@@ -10,6 +10,7 @@ import '../../../../../../core/theme/app_spacing.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/utils/responsive.dart';
 import '../../../../../../core/widgets/app_button.dart';
+import '../../../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../../../core/widgets/app_card.dart';
 import '../../../../../../core/widgets/app_scaffold.dart';
 import '../../domain/entities/pharmacy.dart';
@@ -70,11 +71,34 @@ class OrderStatusScreen extends GetView<OrderTrackingController> {
                 ),
               ],
             ),
+            // Only while the server would still accept it. A cancel button on
+            // an order already with a rider is a control that can only fail.
+            if (controller.canCancel) ...[
+              AppSpacing.gapV(AppSpacing.sm),
+              AppButton(
+                label: AppStrings.cancelOrder.tr,
+                variant: AppButtonVariant.outlined,
+                radius: AppRadius.lg,
+                isLoading: controller.isCancelling.value,
+                onPressed: () => _confirmCancel(context),
+              ),
+            ],
             AppSpacing.gapV(AppSpacing.md),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _confirmCancel(BuildContext context) async {
+    final confirmed = await AppConfirmDialog.show(
+      context,
+      question: AppStrings.cancelOrderQuestion.tr,
+      confirmLabel: AppStrings.cancelOrder.tr,
+      denyLabel: AppStrings.keepOrder.tr,
+      confirmColor: AppColors.logoutFill,
+    );
+    if (confirmed ?? false) await controller.cancelOrder();
   }
 }
 

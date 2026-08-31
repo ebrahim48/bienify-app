@@ -60,6 +60,7 @@ class OrderHistoryEntry {
     this.pharmacyId = '',
     this.storeAddress = '',
     this.storeCity = '',
+    this.quantitiesByMedicineId = const {},
   });
 
   final String id;
@@ -76,6 +77,12 @@ class OrderHistoryEntry {
   final String storeCity;
   final DateTime placedOn;
   final int itemCount;
+
+  /// What was actually ordered, so it can be ordered again.
+  ///
+  /// Reorder opened an empty cart: the row knew how many items there were and
+  /// nothing about which. The payload has always carried them.
+  final Map<String, int> quantitiesByMedicineId;
   final double total;
   final OrderState state;
 

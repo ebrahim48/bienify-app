@@ -17,12 +17,13 @@ import '../../../../../../core/widgets/app_card.dart';
 import '../../../../../../core/widgets/app_scaffold.dart';
 import '../../../../../../core/widgets/app_top_bar.dart';
 import '../../../appointments/presentation/widgets/review_dialog.dart';
+import '../controllers/delivery_feedback_controller.dart';
 
 /// Shown once the courier marks the order delivered.
 ///
 /// The rating itself reuses the appointments `ReviewDialog`, so both flows
 /// collect feedback through the same blurred popup.
-class DeliveryFeedbackScreen extends StatelessWidget {
+class DeliveryFeedbackScreen extends GetView<DeliveryFeedbackController> {
   const DeliveryFeedbackScreen({super.key});
 
   static const double _photoHeight = 190;
@@ -111,6 +112,17 @@ class DeliveryFeedbackScreen extends StatelessWidget {
 
   Future<void> _review(BuildContext context) async {
     final stars = await ReviewDialog.show(context);
-    if (stars != null) AppNavigator.resetTo(AppRoutes.home);
+    if (stars == null) return;
+
+    // An order that was never dispatched has no courier to rate, so the screen
+    // simply closes rather than claiming a review was filed.
+    if (!controller.canReview) {
+      AppNavigator.resetTo(AppRoutes.home);
+      return;
+    }
+
+    if (await controller.submitRiderReview(stars)) {
+      AppNavigator.resetTo(AppRoutes.home);
+    }
   }
 }

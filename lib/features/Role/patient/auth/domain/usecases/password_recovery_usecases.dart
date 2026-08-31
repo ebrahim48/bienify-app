@@ -37,3 +37,21 @@ class ResetPassword {
     newPassword: newPassword,
   );
 }
+
+/// Changes the password of the signed-in account.
+///
+/// Not part of the three-step recovery above: it belongs to a patient who
+/// knows their password and wants a different one.
+class ChangePassword {
+  const ChangePassword(this._repository);
+
+  final AuthRepository _repository;
+
+  Future<void> call({
+    required String currentPassword,
+    required String newPassword,
+  }) => _repository.changePassword(
+    currentPassword: currentPassword,
+    newPassword: newPassword,
+  );
+}

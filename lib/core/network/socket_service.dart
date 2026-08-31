@@ -102,12 +102,26 @@ class ReceiptState {
 /// recovers by re-reading rather than by trusting a stream it may have gaps
 /// in.
 class SocketService {
-  SocketService({required TokenStore tokens}) : _tokens = tokens;
+  SocketService({required TokenStore tokens}) : _tokens = tokens {
+    // A refresh replaces the access token this socket authenticated with.
+    // Without this the handshake credential silently rots: the connection
+    // already open keeps working, but the next reconnect — a screen lock, a
+    // change of network — replays the expired token, is refused, and every
+    // retry after it replays the same dead token. The socket never comes back
+    // for the rest of the session while HTTP carries on working.
+    _tokenChanges = _tokens.changes.listen((_) => _onTokensChanged());
+  }
 
   final TokenStore _tokens;
 
+  StreamSubscription<void>? _tokenChanges;
+
   io.Socket? _socket;
   Timer? _heartbeat;
+
+  /// The access token the open socket handshook with, so a change can be told
+  /// from a rewrite of the same value.
+  String? _authedWith;
 
   /// Threads to re-join after a reconnect. The server forgets room membership
   /// when a socket drops, so without this a recovered connection would look
@@ -164,6 +178,8 @@ class SocketService {
       _log('not connecting: no access token');
       return;
     }
+
+    _authedWith = token;
 
     final socket = io.io(
       ApiConstants.baseUrl,
@@ -373,6 +389,37 @@ class SocketService {
     _heartbeat = null;
   }
 
+  /// Re-handshakes with the token that has just replaced the one in use.
+  ///
+  /// socket.io holds the auth payload it was built with and replays it on
+  /// every reconnect, so there is no way to hand it a new token but to build
+  /// a new socket. Rooms are restored by `connect`'s own rejoin, which reads
+  /// [_joined] — cleared by `disconnect`, so it is saved across the swap.
+  void _onTokensChanged() {
+    final token = _tokens.accessToken;
+    if (token == _authedWith) return;
+
+    // Signed out. `disconnect` is called on that path already; doing it here
+    // too is harmless and covers a sign-out that does not go through it.
+    if (token == null || token.isEmpty) {
+      disconnect();
+      return;
+    }
+
+    // Nothing to re-authenticate: a socket that was never opened will pick up
+    // the new token whenever something connects it.
+    if (_socket == null) return;
+
+    _log('access token changed; reconnecting');
+    final rejoin = Set<ChatThread>.of(_joined);
+    disconnect();
+    connect();
+    // Restored after `connect`, not before: `disconnect` clears the set. The
+    // handshake is asynchronous, so `onConnect` runs well after this and
+    // finds the rooms waiting for it.
+    _joined.addAll(rejoin);
+  }
+
   /// Drops the connection — on sign-out, or when a role switch means the
   /// token no longer matches the user the socket authenticated as.
   void disconnect() {
@@ -380,10 +427,13 @@ class SocketService {
     _joined.clear();
     _socket?.dispose();
     _socket = null;
+    _authedWith = null;
     _connected.add(false);
   }
 
   void dispose() {
+    _tokenChanges?.cancel();
+    _tokenChanges = null;
     disconnect();
     _messages.close();
     _presence.close();

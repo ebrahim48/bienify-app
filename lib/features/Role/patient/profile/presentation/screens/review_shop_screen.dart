@@ -66,7 +66,7 @@ class ReviewShopScreen extends GetView<AccountController> {
           AppSpacing.gapV(AppSpacing.md),
           AppButton(
             label: AppStrings.writeReviews.tr,
-            onPressed: () => _review(context),
+            onPressed: () => _review(context, order),
           ),
           AppSpacing.gapV(AppSpacing.md),
         ],
@@ -74,9 +74,18 @@ class ReviewShopScreen extends GetView<AccountController> {
     );
   }
 
-  Future<void> _review(BuildContext context) async {
+  Future<void> _review(BuildContext context, OrderHistoryEntry? order) async {
     final stars = await ReviewDialog.show(context);
-    if (stars != null) Get.back<void>();
+    if (stars == null) return;
+
+    // No order means the screen was opened without one, and there is nothing
+    // to attach a rating to — the server derives the shop from the order.
+    if (order == null) {
+      Get.back<void>();
+      return;
+    }
+
+    if (await controller.submitShopReview(order, stars)) Get.back<void>();
   }
 }
 

@@ -67,7 +67,7 @@ class HomeScreen extends GetView<HomeController> {
               photoUrl: controller.patientPhotoUrl,
               location: controller.location,
               onProfileTap: controller.openProfile,
-              onLocationTap: controller.changeLocation,
+              onLocationTap: () => controller.changeLocation(context),
               onCartTap: controller.openCart,
               onMessagesTap: controller.openMessages,
               onNotificationsTap: controller.openNotifications,

@@ -23,6 +23,14 @@ abstract class VaultRepository {
   ///
   /// Sharing is per-record and per-doctor: a patient hands over one document,
   /// not their whole history.
+  /// A time-limited URL for the file behind a vault record, with the name it
+  /// should be saved under.
+  ///
+  /// Signed by the server: the bucket is private, so the key alone opens
+  /// nothing, and the signature is why the download must not carry the app's
+  /// `Authorization` header.
+  Future<({String url, String fileName})> recordDownloadUrl(String recordId);
+
   Future<void> shareRecord({
     required String recordId,
     required String doctorUserId,

@@ -67,15 +67,47 @@ class PrescriptionController extends GetxController {
     isLoadingMatches.value = true;
     try {
       final scripts = await _vault.prescriptions();
-      final script = scripts.isEmpty ? null : scripts.first;
-      prescription.value = script;
+      // All of them, not just the newest. A patient holding two live scripts
+      // had no way to say which one they were filling — the screen matched
+      // shops against `scripts.first` and ranked them for a prescription the
+      // patient may not have meant.
+      prescriptions.value = scripts;
+      prescription.value = scripts.isEmpty ? null : scripts.first;
 
-      matches.value = script == null
-          ? await _pharmacy.stores()
-          : await _pharmacy.bestMatches(script.id);
+      await _loadMatches();
+    } on AppException {
+      matches.clear();
+    } finally {
+      isLoadingMatches.value = false;
+    }
+  }
 
-      selectedStoreId.value = matches.isEmpty ? null : matches.first.id;
-      searchArea.value = matches.isEmpty ? '' : matches.first.address;
+  /// Ranks shops against whichever prescription is currently chosen.
+  Future<void> _loadMatches() async {
+    final script = prescription.value;
+    matches.value = script == null
+        ? await _pharmacy.stores()
+        : await _pharmacy.bestMatches(script.id);
+
+    selectedStoreId.value = matches.isEmpty ? null : matches.first.id;
+    searchArea.value = matches.isEmpty ? '' : matches.first.address;
+  }
+
+  /// Every prescription the server has issued this patient.
+  final RxList<DigitalPrescription> prescriptions = <DigitalPrescription>[].obs;
+
+  /// Whether the patient has more than one to choose between. With one script
+  /// there is nothing to pick, and a picker offering a single option is noise.
+  bool get hasPrescriptionChoice => prescriptions.length > 1;
+
+  /// Switches which script the shops are ranked against.
+  Future<void> selectPrescription(DigitalPrescription script) async {
+    if (prescription.value?.id == script.id) return;
+    prescription.value = script;
+
+    isLoadingMatches.value = true;
+    try {
+      await _loadMatches();
     } on AppException {
       matches.clear();
     } finally {

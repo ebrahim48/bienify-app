@@ -4,4 +4,10 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Lets a profile build reach a local backend over plain HTTP, the same
+         way a debug build can. Without it Android blocks every http:// request
+         and the app reports a phone with no signal. See the config for why
+         this never reaches a release build. -->
+    <application android:networkSecurityConfig="@xml/network_security_config" />
 </manifest>

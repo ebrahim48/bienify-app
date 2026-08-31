@@ -5,6 +5,7 @@ import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/routes/app_routes.dart';
 import '../../../../../../core/services/attachment_picker_service.dart';
+import '../../../../../../core/services/file_download_service.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../../chat/presentation/widgets/attachment_sheet.dart';
 import '../../domain/entities/medical_record.dart';
@@ -19,11 +20,14 @@ class TestResultsController extends GetxController {
   TestResultsController({
     VaultRepository? repository,
     AttachmentPickerService? picker,
+    FileDownloadService? downloads,
   }) : _repository = repository ?? Get.find<VaultRepository>(),
-       _picker = picker ?? Get.find<AttachmentPickerService>();
+       _picker = picker ?? Get.find<AttachmentPickerService>(),
+       _downloads = downloads ?? FileDownloadService();
 
   final VaultRepository _repository;
   final AttachmentPickerService _picker;
+  final FileDownloadService _downloads;
 
   final RxList<TestOrder> allOrders = <TestOrder>[].obs;
 
@@ -391,6 +395,37 @@ class TestResultsController extends GetxController {
   /// already owns — the doctor directory is its entry point.
   void acceptFollowUp() => Get.toNamed<void>(AppRoutes.search);
 
-  /// UI-only: PDF export is a marked seam.
-  void downloadDocument() => AppSnackbar.info(AppStrings.downloadPdf.tr);
+  /// True once the lab's report is in the vault, which is the only state in
+  /// which there is a file to download.
+  bool get hasDownloadableResult =>
+      (selected.value?.resultRecordId ?? '').isNotEmpty;
+
+  /// Fetches the lab's report and hands it to the device.
+  ///
+  /// It used to print a snackbar and save nothing. The file lives in the
+  /// vault, so this asks the server to sign a URL for that record and then
+  /// downloads it — the signature is why the bytes are fetched with a bare
+  /// client rather than the app's authenticated one.
+  Future<void> downloadDocument() async {
+    final recordId = selected.value?.resultRecordId;
+    if (recordId == null || recordId.isEmpty) {
+      // No report has been filed yet, so there is nothing to hand over.
+      AppSnackbar.info(AppStrings.resultNotReadyToDownload.tr);
+      return;
+    }
+
+    final ({String url, String fileName}) signed;
+    try {
+      signed = await _repository.recordDownloadUrl(recordId);
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    }
+
+    if (signed.url.isEmpty) {
+      AppSnackbar.error(AppStrings.cannotOpenFile.tr);
+      return;
+    }
+    await _downloads.openRemote(url: signed.url, fileName: signed.fileName);
+  }
 }

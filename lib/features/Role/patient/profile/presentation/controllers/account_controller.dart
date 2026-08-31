@@ -1,11 +1,15 @@
 import '../../../pharmacy/domain/entities/pharmacy.dart';
 import '../../../pharmacy/domain/repositories/pharmacy_repository.dart';
+import '../../../pharmacy/presentation/controllers/pharmacy_cart_controller.dart';
 import 'package:get/get.dart';
 
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/routes/app_routes.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
+import '../../../../doctor_role/domain/entities/doctor_practice.dart'
+    show PayoutAccount;
+import '../../../booking/domain/entities/payment_method.dart';
 import '../../../wallet/domain/repositories/wallet_repository.dart';
 import '../../domain/entities/profile.dart';
 
@@ -28,6 +32,11 @@ class AccountController extends GetxController {
 
   final RxList<OrderHistoryEntry> orders = <OrderHistoryEntry>[].obs;
   final RxList<WalletCard> cards = <WalletCard>[].obs;
+
+  /// Where money is paid *out* to. Listed alongside the cards because the
+  /// Wallet is where both are added, and a courier who filed a bank account
+  /// here had no way to see that it had been stored.
+  final RxList<PayoutAccount> payoutAccounts = <PayoutAccount>[].obs;
 
   final RxDouble balance = 0.0.obs;
 
@@ -64,11 +73,15 @@ class AccountController extends GetxController {
       // `List.of`: a repository may hand back a const list, and saving a card
       // then throws "Cannot add to an unmodifiable list".
       cards.value = List.of(summary.cards);
-      transactions.value = summary.transactions;
+      // `List.of` for the same reason as the cards above: a repository may hand
+      // back a const list, and a top-up inserting its new row into one throws
+      // "Cannot add to an unmodifiable list".
+      transactions.value = List.of(summary.transactions);
       _totalSpent.value = summary.totalSpent;
       _addedThisMonth.value = summary.addedThisMonth;
       _spentOrderCount.value = summary.spentOrderCount;
       orders.value = await _repository.orders();
+      payoutAccounts.value = await _repository.payoutAccounts();
     } on AppException catch (e) {
       error.value = e.message;
     } finally {
@@ -114,10 +127,34 @@ class AccountController extends GetxController {
 
   void selectMethod(int index) => selectedMethodIndex.value = index;
 
-  /// Payment Options continues to the card form. The design's Next leads
-  /// there for every method; the non-card ones gain their own step when those
-  /// are designed.
-  void continueToCardForm() => Get.toNamed<void>(AppRoutes.addDebitCard);
+  /// The methods Payment Options offers, which are the ones that store
+  /// something. See [PaymentMethod.isStorable].
+  List<PaymentMethod> get methodOptions => PaymentMethod.storable;
+
+  /// The method currently picked, guarded against an index left over from a
+  /// previous visit.
+  PaymentMethod get selectedMethod {
+    final options = methodOptions;
+    final index = selectedMethodIndex.value;
+    return index >= 0 && index < options.length ? options[index] : options.first;
+  }
+
+  /// Payment Options continues to the form the chosen method actually needs.
+  ///
+  /// It used to open the debit-card form whichever of the six methods was
+  /// selected, so the choice was decorative: picking Bank Transfer collected a
+  /// card number, expiry and CVV and filed the result to `/wallet/cards`. A
+  /// courier who added their bank here was then told by the payout sheet to
+  /// add a payout account, because none had been created — the money-in list
+  /// and the money-out list are separate, and only the first was ever written.
+  void continueToAccountForm() {
+    final kind = selectedMethod.payoutKind;
+    if (kind == null) {
+      Get.toNamed<void>(AppRoutes.addDebitCard);
+      return;
+    }
+    Get.toNamed<void>(AppRoutes.addPayoutAccount, arguments: kind);
+  }
 
   void openAccounts() => Get.toNamed<void>(AppRoutes.walletAccounts);
 
@@ -160,6 +197,26 @@ class AccountController extends GetxController {
       'Dec',
     ];
     return '${months[at.month - 1]} ${at.day}';
+  }
+
+  /// Rates the shop that filled [order].
+  ///
+  /// The dialog used to collect the stars and navigate away without sending
+  /// them anywhere, so every shop rating a patient gave was discarded at the
+  /// moment they gave it. Returns whether it landed, so the screen only
+  /// closes on a review that exists.
+  Future<bool> submitShopReview(OrderHistoryEntry order, int rating) async {
+    try {
+      await _pharmacy.reviewPharmacy(orderId: order.id, rating: rating);
+    } on AppException catch (e) {
+      // The server refuses a second review of the same order, and an order
+      // that is not delivered yet. Both are worth saying out loud rather than
+      // silently pretending the rating was taken.
+      AppSnackbar.error(e.message);
+      return false;
+    }
+    AppSnackbar.success(AppStrings.reviewSubmitted.tr);
+    return true;
   }
 
   /// Opening an order shows the shop it came from, which is where a review is
@@ -211,9 +268,55 @@ class AccountController extends GetxController {
     return '${at.day} ${months[at.month - 1]} ${at.year}';
   }
 
-  /// Re-ordering resumes the pharmacy flow at the basket.
-  void reorder(OrderHistoryEntry order) =>
-      Get.toNamed<void>(AppRoutes.pharmacyCart);
+  /// Puts the previous order's lines back in the basket, then opens it.
+  ///
+  /// It opened an empty cart, so "Reorder" ordered nothing — the patient had
+  /// to remember what they had bought and find each medicine again.
+  ///
+  /// The medicines are re-read rather than trusted from the old row: a price
+  /// or a stock level from weeks ago is not what the patient would be
+  /// charged, and anything the shop no longer carries is dropped rather than
+  /// added as a line the checkout would refuse.
+  Future<void> reorder(OrderHistoryEntry order) async {
+    if (order.quantitiesByMedicineId.isEmpty) {
+      AppSnackbar.info(AppStrings.reorderNothingToAdd.tr);
+      return;
+    }
+
+    final List<Medicine> stock;
+    try {
+      stock = await _pharmacy.searchMedicines(pharmacyId: order.pharmacyId);
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    }
+
+    final cart = Get.isRegistered<PharmacyCartController>()
+        ? Get.find<PharmacyCartController>()
+        : Get.put(PharmacyCartController());
+
+    var added = 0;
+    for (final entry in order.quantitiesByMedicineId.entries) {
+      final medicine = stock.firstWhereOrNull((m) => m.id == entry.key);
+      if (medicine == null) continue;
+      for (var i = 0; i < entry.value; i++) {
+        cart.addMedicine(medicine);
+      }
+      added++;
+    }
+
+    if (added == 0) {
+      // Every line has gone from the shop's shelf. Saying so beats opening an
+      // empty basket that looks like the reorder simply failed.
+      AppSnackbar.info(AppStrings.reorderNothingToAdd.tr);
+      return;
+    }
+    if (added < order.quantitiesByMedicineId.length) {
+      AppSnackbar.info(AppStrings.reorderPartial.tr);
+    }
+
+    Get.toNamed<void>(AppRoutes.pharmacyCart);
+  }
 
   /// The promo strip opens the catalogue.
   void openPromo() => Get.toNamed<void>(AppRoutes.uploadPrescription);
@@ -223,6 +326,64 @@ class AccountController extends GetxController {
   void openPaymentOptions() => Get.toNamed<void>(AppRoutes.paymentOptions);
 
   void openAddCard() => Get.toNamed<void>(AppRoutes.addDebitCard);
+
+  void openTopUp() => Get.toNamed<void>(AppRoutes.walletTopUp);
+
+  /// Folds a completed top-up into what the Wallet is showing.
+  ///
+  /// The balance comes from the server's own `balanceAfterMinor` rather than
+  /// being added up here, and the row is inserted rather than triggering a
+  /// reload — a full `load()` blanks and repaints a screen the patient is
+  /// looking at, to show something already known.
+  void applyTopUp(WalletTopUp result) {
+    balance.value = result.balanceAfter;
+    transactions.insert(0, result.transaction);
+    _addedThisMonth.value += result.transaction.amount;
+  }
+
+  final RxBool isSavingPayoutAccount = false.obs;
+
+  /// Files somewhere the account holder can be paid, and adds it to the list
+  /// the Wallet and the payout sheet both read.
+  ///
+  /// Returns whether it landed, so the form knows whether to close.
+  Future<bool> savePayoutAccount({
+    required String kind,
+    required String displayName,
+    required String accountNumber,
+    String? bankName,
+  }) async {
+    if (isSavingPayoutAccount.value) return false;
+
+    final name = displayName.trim();
+    final number = accountNumber.trim();
+    // The server masks down to the last four digits, so fewer than four is a
+    // number it cannot store. Checked here to name the field rather than
+    // return a validation error about the whole body.
+    if (name.isEmpty || number.length < 4) {
+      AppSnackbar.info(AppStrings.payoutAccountNeedsDetails.tr);
+      return false;
+    }
+
+    isSavingPayoutAccount.value = true;
+    try {
+      final saved = await _repository.addPayoutAccount(
+        kind: kind,
+        displayName: name,
+        accountNumber: number,
+        bankName: bankName?.trim(),
+      );
+      payoutAccounts.add(saved);
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return false;
+    } finally {
+      isSavingPayoutAccount.value = false;
+    }
+
+    AppSnackbar.success(AppStrings.payoutAccountAdded.tr);
+    return true;
+  }
 
   void addPaymentMethod() => openPaymentOptions();
 

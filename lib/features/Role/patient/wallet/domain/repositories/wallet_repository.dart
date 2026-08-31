@@ -1,3 +1,5 @@
+import '../../../../doctor_role/domain/entities/doctor_practice.dart'
+    show PayoutAccount;
 import '../../../profile/domain/entities/profile.dart';
 
 /// The patient's stored balance, the cards behind it and what has moved
@@ -24,6 +26,20 @@ abstract class WalletRepository {
     required int expiryYear,
   });
 
+  /// Adds money to the wallet by charging a card the patient has already
+  /// saved — `POST /wallet/topup`.
+  ///
+  /// The card is named, not carried: `GET /wallet/cards` strips the gateway
+  /// token before it leaves the server, so the app has none to send and the
+  /// server looks it up against the id. [idempotencyKey] must stay the same
+  /// across retries of one attempt, or a lost response becomes a second
+  /// charge.
+  Future<WalletTopUp> topUp({
+    required int amountMinor,
+    required String savedCardId,
+    required String idempotencyKey,
+  });
+
   /// Returns the card as the server left it, so a caller can update its list
   /// without re-reading one that another device may have changed underneath.
   Future<WalletCard> makeCardDefault(String cardId);
@@ -32,6 +48,38 @@ abstract class WalletRepository {
 
   /// The patient's medicine orders, as My Order History lists them.
   Future<List<OrderHistoryEntry>> orders();
+
+  // ─── Payout destinations ────────────────────────────────────────────────
+  //
+  // Where money is paid *out* to, as opposed to the cards above, which are how
+  // it is taken *in*. Two separate collections on the server, and the Wallet
+  // knew only about the first: its "Add Account" button offered Bank Transfer
+  // among the methods, ignored whichever was chosen, and filed a card. A
+  // courier who added their bank there was then told by the payout sheet to
+  // "add a payout account first", because none had ever been created.
+
+  /// `GET /wallet/payout-accounts`.
+  Future<List<PayoutAccount>> payoutAccounts();
+
+  /// `POST /wallet/payout-accounts`. [kind] is `bank` or `mobile_money`, which
+  /// is the whole enum the server accepts.
+  Future<PayoutAccount> addPayoutAccount({
+    required String kind,
+    required String displayName,
+    required String accountNumber,
+    String? bankName,
+  });
+}
+
+/// What a completed top-up left behind.
+class WalletTopUp {
+  const WalletTopUp({required this.transaction, required this.balanceAfter});
+
+  final WalletTransaction transaction;
+
+  /// The server's own figure, not one the app added up. A balance computed
+  /// locally drifts the moment a charge lands from another device.
+  final double balanceAfter;
 }
 
 /// One read of the wallet screen.

@@ -13,11 +13,14 @@ import 'auth_remote_data_source.dart';
 /// * any 6-digit code is accepted **except** `000000`, which fails, so the
 ///   error path is reachable;
 /// * `wrong@bienify.app` always fails to sign in;
+/// * `wrongpassword` is refused as a current password, so Change Password's
+///   failure path is walkable offline;
 /// * every call is delayed to exercise the loading states.
 class MockAuthRemoteDataSource implements AuthRemoteDataSource {
   static const Duration _latency = Duration(milliseconds: 900);
   static const String _rejectedCode = '000000';
   static const String _rejectedEmail = 'wrong@bienify.app';
+  static const String _rejectedPassword = 'wrongpassword';
 
   UserModel _user = const UserModel(id: 'mock-user-1');
 
@@ -164,6 +167,19 @@ class MockAuthRemoteDataSource implements AuthRemoteDataSource {
     required String resetToken,
     required String newPassword,
   }) => _delayed(() {});
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) => _delayed(() {
+    // The live server answers 401 when the current password is wrong, so the
+    // stand-in has to reach that branch too — a mock that always succeeds
+    // documents a screen that cannot fail.
+    if (currentPassword == _rejectedPassword) {
+      throw UnauthorizedException('Current password is incorrect');
+    }
+  });
 
   @override
   Future<void> logout(String token) => _delayed(() {

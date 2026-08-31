@@ -11,6 +11,7 @@ class DoctorModel extends Doctor {
     super.reviewCount,
     super.consultationFee,
     super.isAvailable,
+    super.patientsSeen,
   });
 
   factory DoctorModel.fromJson(Map<String, dynamic> json) {
@@ -23,6 +24,7 @@ class DoctorModel extends Doctor {
       reviewCount: (json['review_count'] as num?)?.toInt() ?? 0,
       consultationFee: (json['consultation_fee'] as num?)?.toDouble() ?? 0,
       isAvailable: json['is_available'] as bool? ?? true,
+      patientsSeen: (json['patients_seen'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -35,5 +37,6 @@ class DoctorModel extends Doctor {
     'review_count': reviewCount,
     'consultation_fee': consultationFee,
     'is_available': isAvailable,
+    'patients_seen': patientsSeen,
   };
 }

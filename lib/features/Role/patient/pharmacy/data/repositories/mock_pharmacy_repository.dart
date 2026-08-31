@@ -31,7 +31,10 @@ class MockPharmacyRepository implements PharmacyRepository {
   }
 
   @override
-  Future<List<PharmacyStore>> stores({String query = ''}) async {
+  Future<List<PharmacyStore>> stores({
+    String query = '',
+    String city = '',
+  }) async {
     return PharmacyMockData.nearbyStores;
   }
 
@@ -41,6 +44,8 @@ class MockPharmacyRepository implements PharmacyRepository {
     required Map<String, int> quantitiesByMedicineId,
     required String deliveryAddress,
     String? prescriptionId,
+    double? deliveryLat,
+    double? deliveryLng,
   }) async {
     return 'mock-order-1';
   }
@@ -83,4 +88,26 @@ class MockPharmacyRepository implements PharmacyRepository {
   @override
   Future<List<PharmacyStore>> bestMatches(String prescriptionId) async =>
       List.of(PharmacyMockData.matches);
+
+  /// Accepted offline: there is no order behind the mock to move, and the
+  /// tracking screen's job is to show that the action completed.
+  @override
+  Future<void> cancelOrder(String orderId) async {}
+
+  // Both accept the rating and keep nothing: the offline build has no reviews
+  // list to read one back from, and what these screens need from a stand-in is
+  // that the submit succeeds so the flow continues. Tests that assert on what
+  // was filed use their own recording fake.
+
+  @override
+  Future<void> reviewPharmacy({
+    required String orderId,
+    required int rating,
+  }) async {}
+
+  @override
+  Future<void> reviewRider({
+    required String deliveryId,
+    required int rating,
+  }) async {}
 }

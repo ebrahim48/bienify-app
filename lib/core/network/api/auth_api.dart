@@ -42,6 +42,10 @@ class AuthApi {
   Future<dynamic> createPasswordreset({Object? body}) =>
       _c.post(ApiConstants.postAuthPasswordReset, body: body);
 
+  /// `POST /api/v1/auth/credentials`
+  Future<dynamic> createCredentials({Object? body}) =>
+      _c.post(ApiConstants.postAuthCredentials, body: body);
+
   /// `POST /api/v1/auth/refresh`
   Future<dynamic> createRefresh({Object? body}) =>
       _c.post(ApiConstants.postAuthRefresh, body: body);

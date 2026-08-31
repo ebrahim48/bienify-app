@@ -57,6 +57,28 @@ class NoInternetException extends AppException {
     : super(message ?? 'No internet connection', details);
 }
 
+/// The device has a network, but nothing answered at the API's address.
+///
+/// Split out of [NoInternetException] — which it still extends, so every
+/// existing `on NoInternetException` catch keeps working — because the two
+/// have completely different remedies and were indistinguishable. A phone in
+/// airplane mode and a backend that is not running both surfaced as "Cannot
+/// reach the server. Check your connection.", so a stopped `npm run dev`, a
+/// dropped `adb reverse` tunnel and a release build blocking cleartext HTTP
+/// all read as the user's own signal being bad. Time was spent looking for a
+/// bug in live tracking, rider status and chat, which were each working: the
+/// server was simply not up.
+///
+/// [origin] is the base URL the request was actually sent to, which is the
+/// one fact that tells these apart and was nowhere in the old message.
+class ServerUnreachableException extends NoInternetException {
+  ServerUnreachableException(this.origin, [String? details])
+    : super('Cannot reach the server at $origin.', details);
+
+  /// Scheme, host and port of the API the app is built against.
+  final String origin;
+}
+
 /// Exception thrown when an API request times out.
 ///
 /// This occurs when the server takes too long to respond, typically due to:

@@ -9,7 +9,6 @@ import '../../../../../../core/utils/responsive.dart';
 import '../../../../../../core/widgets/app_button.dart';
 import '../../../../../../core/widgets/app_scaffold.dart';
 import '../../../../../../core/widgets/app_top_bar.dart';
-import '../../../booking/domain/entities/payment_method.dart';
 import '../../../booking/presentation/widgets/payment_method_tile.dart';
 import '../controllers/account_controller.dart';
 
@@ -40,30 +39,35 @@ class PaymentOptionsScreen extends GetView<AccountController> {
           Expanded(
             child: SingleChildScrollView(
               child: Obx(
-                () => Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (
-                      var index = 0;
-                      index < PaymentMethod.values.length;
-                      index++
-                    ) ...[
-                      PaymentMethodTile(
-                        method: PaymentMethod.values[index],
-                        isSelected:
-                            index == controller.selectedMethodIndex.value,
-                        onTap: () => controller.selectMethod(index),
-                      ),
-                      AppSpacing.gapV(AppSpacing.sm),
+                () {
+                  // Only the methods that actually store something. Apple and
+                  // Google Pay, PayPal and cash are ways to settle a bill at
+                  // the moment of paying — the API has nowhere to keep them
+                  // and there is no form for them — yet they were listed here
+                  // under "Add Account", and picking one silently opened the
+                  // debit-card form.
+                  final methods = controller.methodOptions;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (var index = 0; index < methods.length; index++) ...[
+                        PaymentMethodTile(
+                          method: methods[index],
+                          isSelected:
+                              index == controller.selectedMethodIndex.value,
+                          onTap: () => controller.selectMethod(index),
+                        ),
+                        AppSpacing.gapV(AppSpacing.sm),
+                      ],
                     ],
-                  ],
-                ),
+                  );
+                },
               ),
             ),
           ),
           AppButton(
             label: AppStrings.next.tr,
-            onPressed: controller.continueToCardForm,
+            onPressed: controller.continueToAccountForm,
           ),
           AppSpacing.gapV(AppSpacing.md),
         ],

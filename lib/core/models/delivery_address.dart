@@ -10,6 +10,8 @@ class DeliveryAddress {
     required this.line1,
     this.line2 = '',
     this.city = '',
+    this.lat,
+    this.lng,
     this.note,
     this.doorImageKey,
   });
@@ -20,6 +22,17 @@ class DeliveryAddress {
 
   final String line2;
   final String city;
+
+  /// Where this address actually is, when the device knew.
+  ///
+  /// The server geocodes the typed line as a fallback, but geocoding free text
+  /// is a guess; a fix taken standing at the door is not. Null means "not
+  /// pinned", never "at the origin".
+  final double? lat;
+  final double? lng;
+
+  /// True once there is a pin to send with an order.
+  bool get isPinned => lat != null && lng != null;
 
   /// Standing instructions for the courier.
   final String? note;
@@ -39,10 +52,14 @@ class DeliveryAddress {
   String get singleLine =>
       [line1, line2, city].map((p) => p.trim()).where((p) => p.isNotEmpty).join(', ');
 
+  /// Every field is carried. An omitted one silently reverts to its default,
+  /// which is how a courier's own masthead once reset itself to zero.
   DeliveryAddress copyWith({
     String? line1,
     String? line2,
     String? city,
+    double? lat,
+    double? lng,
     String? note,
     String? doorImageKey,
   }) {
@@ -50,6 +67,8 @@ class DeliveryAddress {
       line1: line1 ?? this.line1,
       line2: line2 ?? this.line2,
       city: city ?? this.city,
+      lat: lat ?? this.lat,
+      lng: lng ?? this.lng,
       note: note ?? this.note,
       doorImageKey: doorImageKey ?? this.doorImageKey,
     );
@@ -61,6 +80,8 @@ class DeliveryAddress {
     'line1': line1.trim(),
     if (line2.trim().isNotEmpty) 'line2': line2.trim(),
     if (city.trim().isNotEmpty) 'city': city.trim(),
+    if (lat != null) 'lat': lat,
+    if (lng != null) 'lng': lng,
     if ((note ?? '').trim().isNotEmpty) 'note': note!.trim(),
     if ((doorImageKey ?? '').isNotEmpty) 'doorImageKey': doorImageKey,
   };

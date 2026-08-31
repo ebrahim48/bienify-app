@@ -1,11 +1,14 @@
 import 'package:get/get.dart';
 
+import '../../../auth/domain/usecases/email_auth_usecases.dart';
+import '../../../auth/domain/usecases/password_recovery_usecases.dart';
 import '../controllers/account_controller.dart';
 import '../controllers/add_card_controller.dart';
 import '../controllers/change_password_controller.dart';
 import '../controllers/partner_controller.dart';
 import '../controllers/profile_controller.dart';
 import '../controllers/settings_controller.dart';
+import '../controllers/top_up_controller.dart';
 
 /// Route bindings for the account section.
 
@@ -26,7 +29,12 @@ class SettingsBinding extends Bindings {
 class ChangePasswordBinding extends Bindings {
   @override
   void dependencies() {
-    Get.put(ChangePasswordController());
+    Get.put(
+      ChangePasswordController(
+        changePassword: Get.find<ChangePassword>(),
+        logout: Get.find<Logout>(),
+      ),
+    );
   }
 }
 
@@ -45,6 +53,16 @@ class AccountBinding extends Bindings {
   void dependencies() {
     if (Get.isRegistered<AccountController>()) return;
     Get.put(AccountController());
+  }
+}
+
+/// Add Money charges a card the account owns and updates the balance it
+/// shows, so it needs both.
+class TopUpBinding extends Bindings {
+  @override
+  void dependencies() {
+    AccountBinding().dependencies();
+    Get.put(TopUpController());
   }
 }
 

@@ -108,10 +108,20 @@ class _Map extends StatelessWidget {
               infoWindow: InfoWindow(title: dropoff.label),
             ),
         },
-        // Only with both ends known. A line to a pin that is not there would
-        // be a guess at a road.
+        // The road the server routed, when it could. Falls back to joining the
+        // two ends — which is a guess at a road, so it is only drawn when
+        // there is nothing better and both ends are actually known.
         polylines: {
-          if (courier != null && dropoff != null)
+          if (route != null && route.hasRoad)
+            Polyline(
+              polylineId: const PolylineId('route'),
+              points: [
+                for (final point in route.path) LatLng(point.lat, point.lng),
+              ],
+              color: AppColors.gray950,
+              width: 4,
+            )
+          else if (courier != null && dropoff != null)
             Polyline(
               polylineId: const PolylineId('route'),
               points: [
@@ -231,11 +241,29 @@ class _RouteSheet extends GetView<RiderOrdersController> {
               }),
               style: AppTextStyles.bodyMedium.rc(AppColors.gray600),
             ),
+            // Measured along the road by the routing service, not estimated
+            // here. A "15 min away" chip used to sit on this screen from a
+            // constant; this one is absent whenever nothing routed the
+            // journey, rather than falling back to a number.
+            Obx(() {
+              final route = controller.route.value;
+              final eta = route?.etaLabel;
+              final distance = route?.distanceLabel;
+              if (eta == null && distance == null) return const SizedBox.shrink();
+              return Padding(
+                padding: EdgeInsets.only(top: AppSpacing.xxs.h),
+                child: Text(
+                  [?eta, ?distance].join(' · '),
+                  style: AppTextStyles.titleSmall.rc(AppColors.actionFill),
+                ),
+              );
+            }),
             AppSpacing.gapV(AppSpacing.sm),
             _Endpoints(request: delivery.request),
             AppSpacing.gapV(AppSpacing.sm),
             _CustomerRow(
               name: delivery.request.customerName,
+              photoUrl: delivery.request.customerPhotoUrl,
               unread: delivery.unreadMessages,
             ),
             AppSpacing.gapV(AppSpacing.sm),
@@ -356,11 +384,19 @@ class _Endpoints extends StatelessWidget {
 }
 
 class _CustomerRow extends GetView<RiderOrdersController> {
-  const _CustomerRow({required this.name, required this.unread});
+  const _CustomerRow({
+    required this.name,
+    required this.photoUrl,
+    required this.unread,
+  });
 
   /// Whose parcel this is. Without it the disc drew a bundled headshot of a
   /// doctor in place of the customer.
   final String name;
+
+  /// Their own picture. Null falls through to initials — no stock face stands
+  /// in for the person the courier is about to meet.
+  final String? photoUrl;
 
   final int unread;
 
@@ -370,7 +406,7 @@ class _CustomerRow extends GetView<RiderOrdersController> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        AppAvatar(name: name, size: 36),
+        AppAvatar(name: name, imageUrl: photoUrl, size: 36),
         AppSpacing.gapH(AppSpacing.xs),
         Expanded(
           child: Text(

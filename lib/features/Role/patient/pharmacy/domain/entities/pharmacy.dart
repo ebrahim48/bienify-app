@@ -182,6 +182,9 @@ class DeliveryRoute {
     this.pickup,
     this.dropoff,
     this.reportedAt,
+    this.path = const [],
+    this.distanceMeters,
+    this.etaSeconds,
   });
 
   final String status;
@@ -193,7 +196,91 @@ class DeliveryRoute {
   /// live one, and the sheet says so.
   final DateTime? reportedAt;
 
+  /// The road itself, decoded from the server's polyline.
+  ///
+  /// Empty when nothing could route the journey — no key configured, no
+  /// coordinates, or the provider was down. The map then joins the pins with a
+  /// straight line, which is what it always drew: a line that is honestly a
+  /// guess rather than a road nobody checked.
+  final List<MapPoint> path;
+
+  /// Along the road, from the courier to wherever they are heading next.
+  /// Null when nothing measured it — never a zero standing in for unknown.
+  final int? distanceMeters;
+
+  /// Driving time to that same point, in seconds.
+  final int? etaSeconds;
+
   bool get hasAnyPoint => courier != null || pickup != null || dropoff != null;
+
+  /// Whether the road came back, as opposed to two pins and a straight line.
+  bool get hasRoad => path.length > 1;
+
+  /// Moves the courier without disturbing anything else.
+  ///
+  /// Every field is carried through explicitly, which is the whole point: a
+  /// pushed position arrives several times a minute, and both tracking screens
+  /// rebuilt this object by hand to apply one. Each omitted field reverted to
+  /// its default on every ping — so the road and the arrival time, which the
+  /// socket payload does not carry, were wiped the moment the courier moved.
+  /// The map drew a route on open and lost it a few seconds later.
+  DeliveryRoute movedTo(
+    MapPoint courier, {
+    String? status,
+    DateTime? reportedAt,
+  }) => DeliveryRoute(
+    status: status ?? this.status,
+    courier: courier,
+    pickup: pickup,
+    dropoff: dropoff,
+    reportedAt: reportedAt ?? DateTime.now(),
+    // Kept as it was. The road is re-routed by the server as the courier moves
+    // away from where it was calculated, and arrives on the next read; until
+    // then the last known road is a better answer than none.
+    path: path,
+    distanceMeters: distanceMeters,
+    etaSeconds: etaSeconds,
+  );
+
+  /// Moves the parcel to a new state without claiming the courier reported.
+  ///
+  /// Separate from [movedTo] because that one takes a position and stamps
+  /// `reportedAt` with now. A courier marking a parcel collected is not a
+  /// position report — they may not have sent one at all yet — and reusing
+  /// `movedTo` here would restart the "last seen" clock on a courier who has
+  /// not moved, which is precisely the invented freshness the tracking sheet
+  /// must not show.
+  DeliveryRoute withStatus(String status) => DeliveryRoute(
+    status: status,
+    courier: courier,
+    pickup: pickup,
+    dropoff: dropoff,
+    reportedAt: reportedAt,
+    path: path,
+    distanceMeters: distanceMeters,
+    etaSeconds: etaSeconds,
+  );
+
+  /// `1.2 km`, or `450 m` under a kilometre. Null when unmeasured, so a caller
+  /// omits the chip rather than printing `0.0 km`.
+  String? get distanceLabel {
+    final metres = distanceMeters;
+    if (metres == null) return null;
+    return metres < 1000
+        ? '$metres m'
+        : '${(metres / 1000).toStringAsFixed(1)} km';
+  }
+
+  /// `18 min`, or `1 h 05 min` past the hour. Rounded up: a courier eight
+  /// seconds away is not "0 min".
+  String? get etaLabel {
+    final seconds = etaSeconds;
+    if (seconds == null) return null;
+    final minutes = (seconds / 60).ceil();
+    if (minutes < 60) return '$minutes min';
+    final hours = minutes ~/ 60;
+    return '$hours h ${(minutes % 60).toString().padLeft(2, '0')} min';
+  }
 }
 
 /// The courier carrying an order, as the tracking sheet shows them.

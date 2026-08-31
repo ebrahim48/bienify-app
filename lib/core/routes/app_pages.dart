@@ -60,6 +60,7 @@ import '../../features/Role/patient/medical_vault/presentation/screens/testing_c
 import '../../features/Role/patient/medical_vault/presentation/screens/upload_report_screen.dart';
 import '../../features/Role/patient/profile/presentation/bindings/profile_bindings.dart';
 import '../../features/Role/patient/profile/presentation/screens/add_card_screen.dart';
+import '../../features/Role/patient/profile/presentation/screens/add_payout_account_screen.dart';
 import '../../features/Role/patient/profile/presentation/screens/become_partner_screen.dart';
 import '../../features/Role/patient/profile/presentation/screens/change_password_screen.dart';
 import '../../features/Role/patient/profile/presentation/screens/legal_screen.dart';
@@ -68,6 +69,7 @@ import '../../features/Role/patient/profile/presentation/screens/payment_options
 import '../../features/Role/patient/profile/presentation/screens/profile_screen.dart';
 import '../../features/Role/patient/profile/presentation/screens/review_shop_screen.dart';
 import '../../features/Role/patient/profile/presentation/screens/settings_screen.dart';
+import '../../features/Role/patient/profile/presentation/screens/top_up_screen.dart';
 import '../../features/Role/patient/profile/presentation/screens/wallet_accounts_screen.dart';
 import '../../features/Role/patient/profile/presentation/screens/wallet_screen.dart';
 import '../../features/Role/patient/pharmacy/presentation/bindings/pharmacy_bindings.dart';
@@ -318,6 +320,7 @@ abstract class AppPages {
     GetPage(
       name: AppRoutes.deliveryFeedback,
       page: () => const DeliveryFeedbackScreen(),
+      binding: DeliveryFeedbackBinding(),
       transition: Transition.fadeIn,
     ),
 
@@ -411,6 +414,22 @@ abstract class AppPages {
       name: AppRoutes.addDebitCard,
       page: () => const AddCardScreen(),
       binding: AddCardBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.addPayoutAccount,
+      page: () => const AddPayoutAccountScreen(),
+      // The same binding Payment Options uses: the account controller owns the
+      // payout list this form appends to.
+      binding: AccountBinding(),
+      transition: _transition,
+      transitionDuration: _transitionDuration,
+    ),
+    GetPage(
+      name: AppRoutes.walletTopUp,
+      page: () => const TopUpScreen(),
+      binding: TopUpBinding(),
       transition: _transition,
       transitionDuration: _transitionDuration,
     ),

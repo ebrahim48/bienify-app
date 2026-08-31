@@ -44,6 +44,13 @@ class MockVaultRepository implements VaultRepository {
     _profile = profile;
   }
 
+  /// No file exists offline, so this reports the truth rather than handing
+  /// back a URL that downloads nothing.
+  @override
+  Future<({String url, String fileName})> recordDownloadUrl(
+    String recordId,
+  ) async => (url: '', fileName: '');
+
   @override
   Future<void> shareRecord({
     required String recordId,

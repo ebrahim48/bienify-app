@@ -5,7 +5,6 @@ class DoctorDetails {
   const DoctorDetails({
     required this.doctor,
     required this.experienceYears,
-    required this.patientCount,
     required this.workingTime,
     required this.languages,
     required this.biography,
@@ -16,8 +15,24 @@ class DoctorDetails {
 
   final int experienceYears;
 
-  /// Patients treated, pre-formatted because the design shows `2.7k+`.
-  final String patientCount;
+  /// Patients treated, formatted for the stat tile — the design shows `2.7k+`.
+  ///
+  /// Derived from [Doctor.patientsSeen] rather than carried as its own field.
+  /// It used to be a `String` on this constructor, and the API repository
+  /// passed the literal `'—'` with a comment saying the server did not count a
+  /// doctor's patients. The server does: `GET /doctors/:id` has been answering
+  /// with `patientsSeen` — distinct patients from completed appointments — and
+  /// the mapper has been reading it into the doctor all along. The tile said
+  /// "—" over the caption "Patients" on every profile regardless. Deriving it
+  /// here means there is no field left to hard-code.
+  String get patientCount {
+    final seen = doctor.patientsSeen;
+    if (seen < 1000) return '$seen';
+    // `2.7k+` rather than `2,700`: the tile is narrow, and the trailing plus is
+    // honest about the rounding rather than implying an exact figure.
+    final thousands = (seen / 1000).toStringAsFixed(1);
+    return '${thousands.endsWith('.0') ? thousands.substring(0, thousands.length - 2) : thousands}k+';
+  }
 
   /// e.g. `Sun-Sat, 9AM - 5PM`.
   final String workingTime;

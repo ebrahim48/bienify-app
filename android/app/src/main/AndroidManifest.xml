@@ -4,6 +4,15 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 
+    <!-- The courier keeps reporting while carrying a parcel, including with
+         the screen off. Android throttles a backgrounded app to a few location
+         updates an hour without a foreground service, so the courier froze on
+         the customer's map the moment their phone locked. The service type is
+         required from Android 14. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+
     <!-- Selfie, ID card, licence and vehicle photos. The camera is optional
          hardware: a tablet without one still installs, and the picker falls
          back to the gallery. -->
@@ -58,7 +67,13 @@
                 (enabling "Maps JavaScript API" or "Maps SDK for iOS" does
                 not cover Android).
              2. Billing is enabled on that project — the Maps SDK refuses
-                requests without it, even inside the free tier.
+                requests without it, even inside the free tier. This is what
+                had actually happened: the key that used to sit here belonged
+                to a project with billing off, and Google answered every
+                request with "REQUEST_DENIED: You must enable Billing", so the
+                map drew a blank grid. The key here now is the one from the
+                backend's own `.env`, which billing is enabled on — checked by
+                calling the Geocoding API with each of them.
              3. If the key has an "Android apps" restriction, this package
                 and the signing certificate must be listed:
                   package: com.example.bienify_app
@@ -70,7 +85,7 @@
              extracted from it, so an unrestricted key is a billable one. -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDzIh16RvM4ajB6XGdl9adsVJJUGJP13wU"/>
+            android:value="AIzaSyB83H_qMryFnxRWfWNJvmNBR6pCkxfJP0E"/>
 
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

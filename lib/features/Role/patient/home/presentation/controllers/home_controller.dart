@@ -1,6 +1,8 @@
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 import '../../../../../../core/constants/app_strings.dart';
+import '../../../../../../core/models/delivery_address.dart';
 import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/routes/app_routes.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
@@ -10,6 +12,8 @@ import '../../../doctors/domain/entities/doctor.dart';
 import '../../domain/entities/home_feed.dart';
 import '../../domain/entities/lab_request.dart';
 import '../../domain/usecases/home_usecases.dart';
+import '../../../pharmacy/presentation/widgets/location_dialog.dart';
+import '../../../profile/domain/repositories/account_repository.dart';
 
 /// Loading lifecycle of the Home feed.
 enum HomeStatus { initial, loading, success, failure }
@@ -20,10 +24,14 @@ enum HomeStatus { initial, loading, success, failure }
 /// source of truth for skeleton / content / error rather than a flag per
 /// section.
 class HomeController extends GetxController {
-  HomeController({required GetHomeFeed getHomeFeed})
-    : _getHomeFeed = getHomeFeed;
+  HomeController({required GetHomeFeed getHomeFeed, AccountRepository? account})
+    : _getHomeFeed = getHomeFeed,
+      _account = account ?? Get.find<AccountRepository>();
 
   final GetHomeFeed _getHomeFeed;
+
+  /// The saved address, which is where the feed's city comes from.
+  final AccountRepository _account;
 
   final Rx<HomeStatus> status = HomeStatus.initial.obs;
   final Rx<HomeFeed> feed = const HomeFeed.empty().obs;
@@ -111,7 +119,40 @@ class HomeController extends GetxController {
   /// The header avatar is the entry point into the account section.
   void openProfile() => Get.toNamed<void>(AppRoutes.profile);
 
-  void changeLocation() => AppSnackbar.info(location);
+  /// Changes where "nearby" means.
+  ///
+  /// It re-printed the current city in a snackbar, which looked like a picker
+  /// and did nothing. The feed's location is the patient's saved address city
+  /// (`home.service.ts`), so changing it means editing that address — and the
+  /// feed is re-read afterwards, because the doctors and shops on it are now
+  /// actually filtered by the city rather than merely labelled with it.
+  Future<void> changeLocation(BuildContext context) async {
+    // Read before the dialog opens: awaiting first and then using `context`
+    // would be using it across an async gap, on a screen that may be gone.
+    DeliveryAddress? saved;
+    try {
+      saved = await _account.savedAddress();
+    } on AppException {
+      // An address that will not load still lets the patient type a new one.
+      saved = null;
+    }
+    if (!context.mounted) return;
+
+    final edit = await LocationDialog.show(
+      context,
+      address: saved ?? const DeliveryAddress(line1: ''),
+      isEditing: saved != null,
+    );
+    if (edit == null) return;
+
+    try {
+      await _account.saveAddress(edit.address);
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+      return;
+    }
+    await load();
+  }
 
   /// Reviewing an order is the first step of the booking flow, so it opens
   /// the ordering doctor's profile.

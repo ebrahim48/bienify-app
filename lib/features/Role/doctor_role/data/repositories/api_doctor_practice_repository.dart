@@ -169,8 +169,13 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
 
     // What has actually left the wallet, which the earnings summary does not
     // carry — it reports what is available and what is still pending.
+    // `paid` is the server's word for money that has actually left. This read
+    // `completed`, which is not one of the four states a withdrawal can be in
+    // (`pending`, `approved`, `paid`, `rejected`), so the filter matched
+    // nothing and every doctor's paid-out total was £0 however much they had
+    // been paid.
     final paidOut = ApiClient.listFrom(results[2])
-        .where((w) => Api.str(w['status']) == 'completed')
+        .where((w) => Api.str(w['status']) == 'paid')
         .fold(0.0, (sum, w) => sum + Api.majorUnits(w['amountMinor']));
 
     final consultations = ApiClient.listFrom(results[1])

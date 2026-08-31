@@ -3,16 +3,25 @@ import 'package:get/get.dart';
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/routes/app_routes.dart';
+import '../../../../../../core/services/account_deletion_service.dart';
+import '../../../../../../core/services/support_service.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../domain/entities/medical_record.dart';
 import '../../domain/repositories/vault_repository.dart';
 
 /// Backs My Health Profile and the two record lists behind it.
 class DocumentsController extends GetxController {
-  DocumentsController({VaultRepository? repository})
-    : _repository = repository ?? Get.find<VaultRepository>();
+  DocumentsController({
+    VaultRepository? repository,
+    SupportService? support,
+    AccountDeletionService? deletion,
+  }) : _repository = repository ?? Get.find<VaultRepository>(),
+       _support = support ?? SupportService(),
+       _deletion = deletion ?? AccountDeletionService();
 
   final VaultRepository _repository;
+  final SupportService _support;
+  final AccountDeletionService _deletion;
 
   final RxBool isLoading = true.obs;
 
@@ -61,20 +70,20 @@ class DocumentsController extends GetxController {
 
   void openOrderHistory() => Get.toNamed<void>(AppRoutes.orderHistory);
 
-  /// Support chat is a marked seam, like the call beneath it.
+  /// Writes to the support address the platform publishes.
   ///
-  /// This opened the chat screen against `bienify-support` — an account that
-  /// exists nowhere. With no appointment behind it the thread runs in local
-  /// mode, so a patient typed their problem, received a canned reply 900ms
-  /// later, and believed support had answered. Nobody was reading it. Saying
-  /// there is no channel yet is worse UI and better behaviour.
-  void openSupportChat() => AppSnackbar.info(AppStrings.supportComingSoon.tr);
+  /// It used to open the chat screen against `bienify-support` — an account
+  /// that exists nowhere. With no appointment behind it the thread ran in
+  /// local mode, so a patient typed their problem, received a canned reply
+  /// 900ms later, and believed support had answered. Nobody was reading it.
+  /// A mail composer addressed to a real inbox is a channel that exists.
+  Future<void> openSupportChat() => _support.openChat();
 
-  /// UI-only: placing a real call is a marked seam.
-  void callSupport() => AppSnackbar.info(AppStrings.callWithUs.tr);
+  /// Dials the published support number.
+  Future<void> callSupport() => _support.call();
 
-  /// UI-only: account deletion is a marked seam, so this acknowledges it.
-  void deleteAccount() => AppSnackbar.info(AppStrings.deleteAccount.tr);
+  /// Confirmed in the screen first, then actually closed on the server.
+  Future<void> deleteAccount() => _deletion.deleteAccount();
 
   // ─── All Prescriptions ───────────────────────────────────────────────────
 
@@ -126,10 +135,6 @@ class DocumentsController extends GetxController {
   };
 
   // ─── Prescription detail ─────────────────────────────────────────────────
-
-  /// UI-only: PDF export is a marked seam, so this acknowledges the tap.
-  void download(DigitalPrescription prescription) =>
-      AppSnackbar.info(AppStrings.downloadPrescription.tr);
 
   /// `March 31, 2026` — hand-formatted, matching the other date labels.
   String issuedLabel(DateTime at) {

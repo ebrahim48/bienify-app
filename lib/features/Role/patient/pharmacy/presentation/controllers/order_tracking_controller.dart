@@ -256,16 +256,52 @@ class OrderTrackingController extends GetxController {
 
     final lat = payload['lat'];
     final lng = payload['lng'];
+    final status = payload['status'] == null ? null : '${payload['status']}';
     final current = route.value;
-    if (lat == null || lng == null || current == null) return;
 
-    route.value = DeliveryRoute(
-      status: '${payload['status'] ?? current.status}',
-      courier: MapPoint(lat: Api.decimal(lat), lng: Api.decimal(lng)),
-      pickup: current.pickup,
-      dropoff: current.dropoff,
-      reportedAt: payload['at'] == null ? DateTime.now() : Api.date(payload['at']),
-    );
+    // An event with no coordinates is a state change, not a position: the
+    // server broadcasts one when the courier collects the parcel or sets off,
+    // and a delivery whose courier has not pinged yet has nowhere to put on
+    // the map. It used to be discarded wholesale, so the progress bar — which
+    // reads this status — sat on "ready" while the parcel was already on the
+    // road, and only caught up when the poll came round. The pin is left
+    // exactly where it was; only the state moves.
+    if (lat == null || lng == null) {
+      if (status == null) return;
+      if (current == null) {
+        // Nothing read yet, so this carries the state and the read still has
+        // to fetch both ends — the same reasoning as the position branch
+        // below, which is why it also asks for the route rather than waiting
+        // for the poll.
+        route.value = DeliveryRoute(status: status);
+        loadRoute();
+      } else {
+        route.value = current.withStatus(status);
+      }
+      return;
+    }
+
+    final at = payload['at'] == null ? null : Api.date(payload['at']);
+    final courier = MapPoint(lat: Api.decimal(lat), lng: Api.decimal(lng));
+
+    // A push before the first read is not dropped. It used to be: the initial
+    // route read swallows its failure, so one failed read left this returning
+    // early on every ping afterwards and the map never came alive, however
+    // faithfully the courier reported.
+    if (current == null) {
+      route.value = DeliveryRoute(
+        status: status ?? 'in_transit',
+        courier: courier,
+        reportedAt: at ?? DateTime.now(),
+      );
+      // The road and both ends still have to be read; the poll would get there
+      // within its interval, but not before the patient has been looking at a
+      // lone pin for half a minute.
+      loadRoute();
+      return;
+    }
+
+    route.value = current.movedTo(courier, status: status, reportedAt: at);
   }
 
   void stopTrackingUpdates() {
@@ -297,6 +333,44 @@ class OrderTrackingController extends GetxController {
     Get.toNamed<void>(AppRoutes.chat, arguments: peer);
   }
 
+  /// Whether the order can still be called off, which the server decides by
+  /// status. False while there is no order loaded, so the button never appears
+  /// over an empty screen.
+  bool get canCancel => order.value?.isCancellable ?? false;
+
+  final RxBool isCancelling = false.obs;
+
+  /// Calls the order off.
+  ///
+  /// The server supported this from the start and the app offered no way to
+  /// reach it, so a patient who ordered by mistake could only watch it come.
+  /// Confirmed by the screen first; this does the work and reports the result.
+  Future<void> cancelOrder() async {
+    final placed = order.value;
+    if (placed == null || isCancelling.value) return;
+
+    isCancelling.value = true;
+    try {
+      await _repository.cancelOrder(placed.id);
+    } on AppException catch (e) {
+      // The pharmacy may have dispatched it between the screen drawing the
+      // button and the tap landing, and the server says so.
+      AppSnackbar.error(e.message);
+      return;
+    } finally {
+      isCancelling.value = false;
+    }
+
+    AppSnackbar.success(AppStrings.orderCancelled.tr);
+    AppNavigator.resetTo(AppRoutes.home);
+  }
+
   /// Closing live tracking stands in for the delivery completing.
-  void finishDelivery() => Get.offNamed<void>(AppRoutes.deliveryFeedback);
+  /// Carries the delivery id across, because the feedback screen rates the
+  /// courier and the server identifies one from the delivery. Without it the
+  /// stars collected there had nothing to attach to.
+  void finishDelivery() => Get.offNamed<void>(
+    AppRoutes.deliveryFeedback,
+    arguments: watchedDeliveryId,
+  );
 }

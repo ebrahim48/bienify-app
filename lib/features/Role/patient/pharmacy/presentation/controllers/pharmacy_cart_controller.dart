@@ -457,6 +457,11 @@ class PharmacyCartController extends GetxController {
         pharmacyId: pharmacyId,
         quantitiesByMedicineId: quantitiesByMedicineId,
         deliveryAddress: address.value.singleLine,
+        // Null unless the patient pinned it, in which case the server keeps
+        // the pin instead of geocoding the address line — a guess that
+        // returns nothing at all without a Maps key configured.
+        deliveryLat: address.value.lat,
+        deliveryLng: address.value.lng,
       );
     } on AppException catch (e) {
       AppSnackbar.error(e.message);

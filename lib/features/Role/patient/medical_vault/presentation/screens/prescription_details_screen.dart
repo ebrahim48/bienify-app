@@ -95,8 +95,10 @@ class PrescriptionDetailsScreen extends GetView<DocumentsController> {
               ],
             ),
           ),
-          AppSpacing.gapV(AppSpacing.base),
-          _DownloadCard(onTap: () => controller.download(prescription)),
+          // No download card. A digital prescription is rows on the server,
+          // not a stored file — there is no PDF anywhere to fetch, and the
+          // card printed a snackbar and saved nothing. It comes back when the
+          // API can render one.
           AppSpacing.gapV(AppSpacing.md),
         ],
       ),
@@ -331,32 +333,3 @@ class _Detail extends StatelessWidget {
   }
 }
 
-class _DownloadCard extends StatelessWidget {
-  const _DownloadCard({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      hasShadow: false,
-      onTap: onTap,
-      padding: EdgeInsets.symmetric(vertical: AppSpacing.base.h),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.download_rounded,
-            size: AppSizes.xl.w,
-            color: AppColors.link,
-          ),
-          AppSpacing.gapV(AppSpacing.xs2),
-          Text(
-            AppStrings.downloadPrescription.tr,
-            style: AppTextStyles.bodyLarge.rc(AppColors.gray900),
-          ),
-        ],
-      ),
-    );
-  }
-}

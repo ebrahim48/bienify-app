@@ -118,6 +118,7 @@ class TestOrder {
     this.facility,
     this.reviewMessage,
     this.document,
+    this.resultRecordId,
   });
 
   final String id;
@@ -138,6 +139,13 @@ class TestOrder {
   /// The signed order sheet, built from this same row. Carried here so the
   /// detail screen does not have to re-fetch to render it.
   final TestOrderDocument? document;
+
+  /// The vault record holding the lab's report, once one has been attached.
+  ///
+  /// Null until the result arrives, and what the Download button needs: the
+  /// file lives in the vault, so downloading it is a vault read, not a
+  /// lab-order one.
+  final String? resultRecordId;
 
   /// `Dr. Reed`.
   final String orderedBy;

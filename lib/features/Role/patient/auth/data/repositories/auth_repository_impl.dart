@@ -166,7 +166,15 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     final user = await _remote.saveProfileDetails(
       token: _token,
-      body: {'name': name, 'gender': gender.value, 'age_range': ageRange.label},
+      // `ageRange`, not `age_range`. `PATCH /users/me` validates with a zod
+      // object, which strips keys it does not know — so the snake_case spelling
+      // was accepted with a 200 and thrown away, and every patient who picked
+      // an age bracket had it discarded on the way in.
+      body: {
+        'name': name,
+        'gender': gender.value,
+        'ageRange': ageRange.label,
+      },
     );
     return _persistUser(user);
   }
@@ -211,6 +219,21 @@ class AuthRepositoryImpl implements AuthRepository {
   }) {
     return _remote.resetPassword(
       resetToken: resetToken,
+      newPassword: newPassword,
+    );
+  }
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) {
+    // Deliberately not clearing the session here. The server has revoked every
+    // refresh token including this device's, but signing out is a navigation
+    // decision the caller owns — the same reason `saveCard` leaves navigation
+    // to its screen.
+    return _remote.changePassword(
+      currentPassword: currentPassword,
       newPassword: newPassword,
     );
   }

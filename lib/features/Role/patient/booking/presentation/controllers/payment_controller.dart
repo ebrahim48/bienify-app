@@ -97,6 +97,20 @@ class PaymentController extends GetxController with SubmissionMixin {
 
   void toggleWallet(bool value) => useWallet.value = value;
 
+  /// Whether paying from the wallet would be refused for want of balance.
+  ///
+  /// The server takes the whole bill from the wallet, so "short" means short
+  /// of the total, not of some part of it.
+  bool get isWalletShort =>
+      useWallet.value && wallet.value.balance < _fee;
+
+  /// Opens Add Money and re-reads the balance on the way back, so the screen
+  /// stops saying the wallet is short the moment it is not.
+  Future<void> topUp() async {
+    await Get.toNamed<void>(AppRoutes.walletTopUp);
+    await _loadBalance();
+  }
+
   /// True while a document is being stored.
   final RxBool isAttaching = false.obs;
 
