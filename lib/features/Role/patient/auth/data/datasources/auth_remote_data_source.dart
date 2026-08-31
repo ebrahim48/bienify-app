@@ -36,10 +36,13 @@ abstract class AuthRemoteDataSource {
     required Map<String, dynamic> body,
   });
 
-  /// `POST /auth/register` — a standalone, unauthenticated account creation,
-  /// not an update to whatever phone-verified session led here. It answers
-  /// with a full session, the same shape [loginWithEmail] does.
-  Future<AuthSessionModel> saveCredentials({required Map<String, dynamic> body});
+  /// `POST /auth/credentials` — attaches the email and password to the
+  /// account the phone step already created, and answers with that user.
+  /// The session in hand is the one that stays.
+  Future<UserModel> saveCredentials({
+    required String token,
+    required Map<String, dynamic> body,
+  });
 
   Future<Map<String, dynamic>> requestPasswordResetOtp(String phoneNumber);
 
@@ -148,13 +151,13 @@ class ApiAuthRemoteDataSource implements AuthRemoteDataSource {
   }
 
   @override
-  Future<AuthSessionModel> saveCredentials({
+  Future<UserModel> saveCredentials({
+    required String token,
     required Map<String, dynamic> body,
   }) async {
-
-    final data = await _api.postMap(ApiConstants.postAuthRegister, body: body);
-    return AuthSessionModel.fromJson(data);
-
+    // The bearer token comes from the client's own session, so `token` is
+    // accepted only to satisfy the interface.
+    //
     // `/auth/credentials`, not `/auth/register`. The phone step has already
     // created the account and issued this session; `register` builds a *new*
     // user, so sending profile-setup step 2 there left the patient with two
@@ -168,7 +171,6 @@ class ApiAuthRemoteDataSource implements AuthRemoteDataSource {
     return UserModel.fromJson(
       user is Map ? user.cast<String, dynamic>() : data,
     );
-
   }
 
   /// Texts a recovery code to [phoneNumber].

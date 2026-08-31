@@ -61,16 +61,6 @@ class DigitalPrescription {
 /// prescriptions Bienify holds for them.
 enum PrescriptionSource { uploads, medicalVault }
 
-/// What an uploaded file is, for the server's own record-type enum.
-enum VaultRecordType {
-  labReport,
-  imaging,
-  prescriptionScan,
-  dischargeSummary,
-  vaccination,
-  other,
-}
-
 /// A file the patient uploaded themselves.
 class UploadedDocument {
   const UploadedDocument({

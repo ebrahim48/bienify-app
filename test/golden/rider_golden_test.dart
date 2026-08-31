@@ -78,9 +78,8 @@ void main() {
   }
 
   testWidgets('How It Works', (tester) async {
-    // The masthead names the signed-in courier now, so the screen needs the
-    // controller that reads them — it drew the fixture courier before, on a
-    // page a real courier opens.
+    // The masthead names the signed-in account now — not the fixture courier
+    // it drew before, and not a courier profile the reader has yet to have.
     await pump(
       tester,
       const RiderGuideScreen(),
@@ -88,7 +87,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Rider Arif'), findsOneWidget);
+    expect(find.text('Mohammod Jakuan'), findsOneWidget);
     expect(find.text('Apply Rider?'), findsOneWidget);
 
     await settleImages(tester);

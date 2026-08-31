@@ -18,26 +18,23 @@ import '../../domain/repositories/vault_repository.dart';
 class DocumentsController extends GetxController {
   DocumentsController({
     VaultRepository? repository,
-
     DocumentPickerService? documentPicker,
-  }) : _repository = repository ?? Get.find<VaultRepository>(),
-       _documentPicker = documentPicker ?? DocumentPickerService();
-
-  final VaultRepository _repository;
-  final DocumentPickerService _documentPicker;
-
     SupportService? support,
     AccountDeletionService? deletion,
   }) : _repository = repository ?? Get.find<VaultRepository>(),
+       _documentPicker = documentPicker ?? DocumentPickerService(),
        _support = support ?? SupportService(),
        _deletion = deletion ?? AccountDeletionService();
 
   final VaultRepository _repository;
+  final DocumentPickerService _documentPicker;
   final SupportService _support;
   final AccountDeletionService _deletion;
 
-
   final RxBool isLoading = true.obs;
+
+  /// True while a picked file is uploading, so the button can say so and a
+  /// second tap cannot start a parallel upload.
   final RxBool isUploading = false.obs;
 
   /// Set when the vault cannot be read. An empty history and an unreachable
@@ -116,8 +113,15 @@ class DocumentsController extends GetxController {
   void openPrescription(DigitalPrescription prescription) =>
       Get.toNamed<void>(AppRoutes.prescriptionDetails, arguments: prescription);
 
+  /// Files a document the patient picked off their phone.
+  ///
+  /// This used to append another copy of the sample upload, so the list grew
+  /// by one every tap and nothing ever reached the vault. The record the
+  /// server creates is what goes into [uploads] — not a locally invented one,
+  /// which would carry an id no later removal could match.
   Future<void> uploadPrescription() async {
     if (isUploading.value) return;
+
     final file = await _documentPicker.pick();
     if (file == null) return;
 
@@ -125,10 +129,9 @@ class DocumentsController extends GetxController {
     try {
       final fileName = file.path.split('/').last;
       final document = await _repository.uploadDocument(
-        bytes: await file.readAsBytes(),
+        path: file.path,
         fileName: fileName,
-        contentType: contentTypeForPath(fileName),
-        title: fileName,
+        mimeType: contentTypeForPath(fileName),
         type: VaultRecordType.other,
       );
       uploads.insert(0, document);

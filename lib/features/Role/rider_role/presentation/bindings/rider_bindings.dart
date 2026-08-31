@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../controllers/rider_application_controller.dart';
+import '../controllers/rider_guide_controller.dart';
 import '../controllers/rider_home_controller.dart';
 import '../controllers/rider_orders_controller.dart';
 import '../controllers/rider_profile_controller.dart';
@@ -21,13 +22,17 @@ class RiderShellBinding extends Bindings {
   }
 }
 
-/// The guide is reached before the shell exists — it is what a courier reads
-/// on their way into applying — so it puts up the one controller its masthead
-/// needs rather than the whole shell.
+/// The guide is reached before the shell exists — it is what an applicant
+/// reads on their way into applying — so it puts up the one controller its
+/// masthead needs rather than the whole shell.
+///
+/// That controller reads the *account*, not the courier profile. It put up
+/// the dashboard's before, which asks the server for a courier the reader has
+/// not become yet and is refused.
 class RiderGuideBinding extends Bindings {
   @override
   void dependencies() {
-    Get.put(RiderHomeController());
+    Get.put(RiderGuideController());
   }
 }
 

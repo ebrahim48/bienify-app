@@ -4,22 +4,14 @@ import 'package:get/get.dart';
 
 import '../../../../../../core/constants/app_icons.dart';
 import '../../../../../../core/constants/app_strings.dart';
-import '../../../../../../core/exceptions/app_exceptions.dart';
-import '../../../../../../core/services/photo_picker_service.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_radius.dart';
 import '../../../../../../core/theme/app_sizes.dart';
 import '../../../../../../core/theme/app_spacing.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
-import '../../../../../../core/utils/mime_type.dart';
 import '../../../../../../core/utils/responsive.dart';
-import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../../../../../core/widgets/app_svg_icon.dart';
 import '../../../../../../core/widgets/blurred_dialog.dart';
-
-import '../../../medical_vault/domain/entities/medical_record.dart';
-import '../../../medical_vault/domain/repositories/vault_repository.dart';
-import '../../domain/entities/pharmacy.dart';
 
 import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/models/delivery_address.dart';
@@ -47,25 +39,42 @@ class LocationEdit {
 ///
 /// One dialog for both: the title and confirm label switch on [isEditing],
 /// which is what distinguishes "Add Location" from "Change Location".
+///
+/// The street lines used to be `Text` widgets, so the dialog that offered to
+/// add a location could not accept one — it round-tripped whatever it was
+/// given, which for a patient with nothing saved was the empty string.
 class LocationDialog extends StatefulWidget {
   const LocationDialog({
     super.key,
     required this.address,
     required this.isEditing,
+    this.offerSaveToProfile = false,
   });
 
   final DeliveryAddress address;
   final bool isEditing;
 
-  /// Resolves to the saved address, or `null` if dismissed.
-  static Future<DeliveryAddress?> show(
+  /// Whether to offer "Also save to my profile".
+  ///
+  /// True at checkout, where the edit applies to this delivery unless the
+  /// patient says otherwise. False when the dialog *is* the profile editor,
+  /// where saving is the whole point and a toggle would be nonsense.
+  final bool offerSaveToProfile;
+
+  /// Resolves to the edit, or `null` if dismissed.
+  static Future<LocationEdit?> show(
     BuildContext context, {
     required DeliveryAddress address,
     required bool isEditing,
+    bool offerSaveToProfile = false,
   }) {
-    return showBlurredDialog<DeliveryAddress>(
+    return showBlurredDialog<LocationEdit>(
       context: context,
-      builder: (_) => LocationDialog(address: address, isEditing: isEditing),
+      builder: (_) => LocationDialog(
+        address: address,
+        isEditing: isEditing,
+        offerSaveToProfile: offerSaveToProfile,
+      ),
     );
   }
 
@@ -74,15 +83,18 @@ class LocationDialog extends StatefulWidget {
 }
 
 class _LocationDialogState extends State<LocationDialog> {
+  late final TextEditingController _line1 = TextEditingController(
+    text: widget.address.line1,
+  );
+  late final TextEditingController _line2 = TextEditingController(
+    text: widget.address.line2,
+  );
+  late final TextEditingController _city = TextEditingController(
+    text: widget.address.city,
+  );
   late final TextEditingController _note = TextEditingController(
     text: widget.address.note ?? '',
   );
-  String? _doorImage;
-  bool _isUploadingDoorImage = false;
-
-
-  final VaultRepository _vault = Get.find<VaultRepository>();
-  final PhotoPickerService _photoPicker = PhotoPickerService();
 
   String? _doorImageKey;
   bool _uploading = false;
@@ -96,55 +108,52 @@ class _LocationDialogState extends State<LocationDialog> {
   /// Off by default: a change made at checkout is for that delivery.
   bool _saveToProfile = false;
 
-
-  static const _allowedExtensions = {'jpg', 'jpeg', 'png'};
+  /// Set when the patient tries to save with no street, so the requirement is
+  /// stated where it is broken rather than in a snackbar over the dialog.
+  String? _line1Error;
 
   @override
   void initState() {
     super.initState();
-
-    _doorImage = widget.address.doorImageName;
-
     _doorImageKey = widget.address.doorImageKey;
     _lat = widget.address.lat;
     _lng = widget.address.lng;
-
   }
 
   @override
   void dispose() {
+    _line1.dispose();
+    _line2.dispose();
+    _city.dispose();
     _note.dispose();
     super.dispose();
   }
 
+  /// Uploads a photo of the door so the courier can recognise it.
+  ///
+  /// The same presign-then-PUT the avatar and credential flows use. It used
+  /// to set the literal string 'door.jpg', so the field looked filled and no
+  /// image existed anywhere.
   Future<void> _attachDoorImage() async {
-    if (_isUploadingDoorImage) return;
-    final file = await _photoPicker.pick(PhotoSource.gallery);
-    if (file == null) return;
+    if (_uploading) return;
 
-    final fileName = file.path.split('/').last;
-    final extension = fileName.contains('.')
-        ? fileName.split('.').last.toLowerCase()
-        : '';
-    if (!_allowedExtensions.contains(extension)) {
-      AppSnackbar.error(AppStrings.onlyJpgPngAllowed.tr);
-      return;
-    }
+    final source = await AttachmentSheet.show(context);
+    if (source == null) return;
 
-    setState(() => _isUploadingDoorImage = true);
+    setState(() => _uploading = true);
     try {
-      final document = await _vault.uploadDocument(
-        bytes: await file.readAsBytes(),
-        fileName: fileName,
-        contentType: contentTypeForPath(fileName),
-        title: 'Delivery door photo — $fileName',
-        type: VaultRecordType.other,
+      final picked = await Get.find<AttachmentPickerService>().pick(source);
+      if (picked == null) return;
+
+      final key = await Get.find<AccountRepository>().uploadDoorImage(
+        path: picked.file.path,
+        mimeType: picked.mime,
       );
-      setState(() => _doorImage = document.fileName);
+      if (mounted) setState(() => _doorImageKey = key);
     } on AppException catch (e) {
       AppSnackbar.error(e.message);
     } finally {
-      setState(() => _isUploadingDoorImage = false);
+      if (mounted) setState(() => _uploading = false);
     }
   }
 
@@ -180,14 +189,13 @@ class _LocationDialogState extends State<LocationDialog> {
   }
 
   void _save() {
+    final line1 = _line1.text.trim();
+    if (line1.isEmpty) {
+      setState(() => _line1Error = AppStrings.streetRequired.tr);
+      return;
+    }
+
     Navigator.of(context).pop(
-
-      DeliveryAddress(
-        line1: widget.address.line1,
-        line2: widget.address.line2,
-        note: _note.text.trim().isEmpty ? null : _note.text.trim(),
-        doorImageName: _doorImage,
-
       LocationEdit(
         address: DeliveryAddress(
           line1: line1,
@@ -201,10 +209,19 @@ class _LocationDialogState extends State<LocationDialog> {
         // Not offered means this dialog *is* the profile editor, so the edit
         // always lands on the profile.
         saveToProfile: widget.offerSaveToProfile ? _saveToProfile : true,
-
       ),
     );
   }
+
+  /// The shared field decoration: `_Field` already draws the border, so the
+  /// input inside it must not draw a second one.
+  InputDecoration _plain(String hint) => InputDecoration(
+    isDense: true,
+    border: InputBorder.none,
+    contentPadding: EdgeInsets.zero,
+    hintText: hint,
+    hintStyle: AppTextStyles.bodyLarge.rc(AppColors.gray400),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -236,19 +253,33 @@ class _LocationDialogState extends State<LocationDialog> {
           ),
           AppSpacing.gapV(AppSpacing.sm),
           _Field(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  widget.address.line1,
-                  style: AppTextStyles.titleSmall.rc(AppColors.gray900),
-                ),
-                Text(
-                  widget.address.line2,
-                  style: AppTextStyles.bodyMedium.rc(AppColors.gray400),
-                ),
-              ],
+            child: TextField(
+              controller: _line1,
+              autofocus: widget.address.line1.isEmpty,
+              textCapitalization: TextCapitalization.words,
+              cursorColor: AppColors.primary800,
+              style: AppTextStyles.titleSmall.rc(AppColors.gray900),
+              onChanged: (_) {
+                if (_line1Error != null) setState(() => _line1Error = null);
+              },
+              decoration: _plain(AppStrings.streetAndNumber.tr),
+            ),
+          ),
+          if (_line1Error != null) ...[
+            AppSpacing.gapV(AppSpacing.xxs),
+            Text(
+              _line1Error!,
+              style: AppTextStyles.bodySmall.rc(AppColors.error),
+            ),
+          ],
+          AppSpacing.gapV(AppSpacing.xs),
+          _Field(
+            child: TextField(
+              controller: _line2,
+              textCapitalization: TextCapitalization.words,
+              cursorColor: AppColors.primary800,
+              style: AppTextStyles.bodyLarge.rc(AppColors.gray900),
+              decoration: _plain(AppStrings.apartmentOrFloor.tr),
             ),
           ),
           AppSpacing.gapV(AppSpacing.xs),
@@ -296,28 +327,43 @@ class _LocationDialogState extends State<LocationDialog> {
           ),
           AppSpacing.gapV(AppSpacing.xs),
           _Field(
-            onTap: _isUploadingDoorImage ? null : _attachDoorImage,
+            child: TextField(
+              controller: _city,
+              textCapitalization: TextCapitalization.words,
+              cursorColor: AppColors.primary800,
+              style: AppTextStyles.bodyLarge.rc(AppColors.gray900),
+              decoration: _plain(AppStrings.cityLabel.tr),
+            ),
+          ),
+          AppSpacing.gapV(AppSpacing.xs),
+          _Field(
+            onTap: _attachDoorImage,
             child: Row(
               children: [
                 Expanded(
                   child: Text(
-                    _isUploadingDoorImage
+                    _uploading
                         ? AppStrings.uploading.tr
-                        : _doorImage ?? AppStrings.uploadDoorImage.tr,
+                        : _doorImageKey == null
+                        ? AppStrings.uploadDoorImage.tr
+                        : AppStrings.doorPhotoAttached.tr,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.bodyLarge.rc(
-                      _doorImage == null
+                      _doorImageKey == null
                           ? AppColors.gray400
                           : AppColors.gray900,
                     ),
                   ),
                 ),
-                if (_isUploadingDoorImage)
+                if (_uploading)
                   SizedBox(
-                    width: AppSizes.xl.w,
-                    height: AppSizes.xl.w,
-                    child: const CircularProgressIndicator(strokeWidth: 2),
+                    width: AppSizes.lg.w,
+                    height: AppSizes.lg.w,
+                    child: CircularProgressIndicator(
+                      strokeWidth: AppSizes.borderWidth * 2,
+                      color: AppColors.primary600,
+                    ),
                   )
                 else
                   AppSvgIcon(
@@ -334,15 +380,34 @@ class _LocationDialogState extends State<LocationDialog> {
               controller: _note,
               cursorColor: AppColors.primary800,
               style: AppTextStyles.bodyLarge.rc(AppColors.gray900),
-              decoration: InputDecoration(
-                isDense: true,
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
-                hintText: AppStrings.enterNote.tr,
-                hintStyle: AppTextStyles.bodyLarge.rc(AppColors.gray400),
-              ),
+              decoration: _plain(AppStrings.enterNote.tr),
             ),
           ),
+          if (widget.offerSaveToProfile) ...[
+            AppSpacing.gapV(AppSpacing.xs),
+            InkWell(
+              onTap: () => setState(() => _saveToProfile = !_saveToProfile),
+              borderRadius: AppRadius.rLg,
+              child: Row(
+                children: [
+                  Checkbox(
+                    value: _saveToProfile,
+                    onChanged: (v) => setState(() => _saveToProfile = v ?? false),
+                    activeColor: AppColors.primary600,
+                    visualDensity: VisualDensity.compact,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  AppSpacing.gapH(AppSpacing.xxs),
+                  Expanded(
+                    child: Text(
+                      AppStrings.alsoSaveToProfile.tr,
+                      style: AppTextStyles.bodyMedium.rc(AppColors.gray500),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           AppSpacing.gapV(AppSpacing.base),
           Material(
             color: AppColors.actionFill,

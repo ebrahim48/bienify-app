@@ -17,7 +17,10 @@ import '../utils/responsive.dart';
 ///
 /// A sheet rather than a dialog because it is a two-way choice at the foot of
 /// the screen, which is where both platforms put this.
-Future<File?> pickPhoto(BuildContext context) async {
+Future<File?> pickPhoto(
+  BuildContext context, {
+  PhotoFacing facing = PhotoFacing.rear,
+}) async {
   final source = await showModalBottomSheet<PhotoSource>(
     context: context,
     backgroundColor: AppColors.surface,
@@ -46,7 +49,7 @@ Future<File?> pickPhoto(BuildContext context) async {
   );
 
   if (source == null) return null;
-  return Get.find<PhotoPickerService>().pick(source);
+  return Get.find<PhotoPickerService>().pick(source, facing: facing);
 }
 
 class _SourceRow extends StatelessWidget {

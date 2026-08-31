@@ -15,11 +15,11 @@ import '../../../../../core/widgets/app_card.dart';
 import '../../../../../core/widgets/app_scaffold.dart';
 import '../../data/static/rider_data.dart';
 import '../../domain/entities/rider.dart';
-import '../controllers/rider_home_controller.dart';
+import '../controllers/rider_guide_controller.dart';
 import '../widgets/rider_widgets.dart';
 
 /// How It Works — the five steps, then the invitation to apply.
-class RiderGuideScreen extends GetView<RiderHomeController> {
+class RiderGuideScreen extends GetView<RiderGuideController> {
   const RiderGuideScreen({super.key});
 
   @override
@@ -31,12 +31,15 @@ class RiderGuideScreen extends GetView<RiderHomeController> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AppSpacing.gapV(AppSpacing.sm),
-          // The signed-in courier, not the design's sample one.
+          // The signed-in account, not the design's sample courier — and the
+          // account rather than the courier profile, which does not exist for
+          // anyone reading this page. No location: an applicant has no
+          // courier city yet, and the masthead leaves the line out.
           Obx(
             () => RiderMasthead(
-              name: controller.rider.value.name,
-              location: controller.rider.value.location,
-              photoUrl: controller.rider.value.photoUrl,
+              name: controller.name.value,
+              location: '',
+              photoUrl: controller.photoUrl.value,
               onNotifications: () =>
                   Get.toNamed<void>(AppRoutes.shopNotifications),
             ),

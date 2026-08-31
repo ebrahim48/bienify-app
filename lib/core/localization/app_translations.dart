@@ -349,9 +349,6 @@ class AppTranslations extends Translations {
     AppStrings.dropPrescriptionHere: 'Drop your prescription here',
     AppStrings.prescriptionFileTypes: 'PDF, JPG or PNG · up to 10 MB',
     AppStrings.browseFile: 'Browse File',
-    AppStrings.uploading: 'Uploading...',
-    AppStrings.prescriptionUploaded: 'Prescription uploaded',
-    AppStrings.documentUploaded: 'Document uploaded',
 
     AppStrings.bestMatches: 'Best Matches',
     AppStrings.prescriptionOf: '@doctor — Prescription',
@@ -394,7 +391,6 @@ class AppTranslations extends Translations {
     AppStrings.addLocation: 'Add Location',
     AppStrings.changeLocation: 'Change Location',
     AppStrings.uploadDoorImage: 'Upload Door Image',
-    AppStrings.onlyJpgPngAllowed: 'Please choose a JPG or PNG image',
     AppStrings.enterNote: 'Enter Note',
     AppStrings.streetAndNumber: 'Street and number',
     AppStrings.apartmentOrFloor: 'Apartment, floor (optional)',
@@ -502,6 +498,7 @@ class AppTranslations extends Translations {
     AppStrings.view: 'View',
     AppStrings.uploadPrescriptionAction: 'Upload Prescription',
     AppStrings.noUploadsYet: 'Nothing uploaded yet',
+    AppStrings.documentUploaded: 'Document uploaded',
     AppStrings.documentRemoved: 'Document removed',
 
     AppStrings.labReports: 'Lab Reports',
@@ -1484,9 +1481,6 @@ class AppTranslations extends Translations {
     AppStrings.dropPrescriptionHere: 'Suelta tu receta aquí',
     AppStrings.prescriptionFileTypes: 'PDF, JPG o PNG · hasta 10 MB',
     AppStrings.browseFile: 'Elegir archivo',
-    AppStrings.uploading: 'Subiendo...',
-    AppStrings.prescriptionUploaded: 'Receta subida',
-    AppStrings.documentUploaded: 'Documento subido',
 
     AppStrings.bestMatches: 'Mejores coincidencias',
     AppStrings.prescriptionOf: '@doctor — Receta',
@@ -1634,6 +1628,7 @@ class AppTranslations extends Translations {
     AppStrings.view: 'Ver',
     AppStrings.uploadPrescriptionAction: 'Subir receta',
     AppStrings.noUploadsYet: 'Aún no has subido nada',
+    AppStrings.documentUploaded: 'Documento subido',
     AppStrings.documentRemoved: 'Documento eliminado',
 
     AppStrings.labReports: 'Informes de laboratorio',

@@ -185,10 +185,15 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    final session = await _remote.saveCredentials(
+    final user = await _remote.saveCredentials(
+      token: _token,
       body: {'name': name, 'email': email, 'password': password},
     );
-    return _persist(session);
+    // `/auth/credentials` attaches to the session the phone step issued and
+    // answers with the user, not a session of its own — so the tokens already
+    // held are the ones that stay.
+    await _persistUser(user);
+    return _session ?? AuthSessionModel(accessToken: _token, user: user);
   }
 
   // ─── Password recovery ───────────────────────────────────────────────────
