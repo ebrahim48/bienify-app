@@ -69,7 +69,12 @@ class UploadPrescriptionScreen extends GetView<PrescriptionController> {
                     style: AppTextStyles.bodyMedium.rc(AppColors.gray400),
                   ),
                   AppSpacing.gapV(AppSpacing.base),
-                  _BrowseButton(onTap: () => controller.browseFile(context)),
+                  Obx(
+                    () => _BrowseButton(
+                      isLoading: controller.isUploading.value,
+                      onTap: controller.browseFile,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -82,8 +87,9 @@ class UploadPrescriptionScreen extends GetView<PrescriptionController> {
 }
 
 class _BrowseButton extends StatelessWidget {
-  const _BrowseButton({required this.onTap});
+  const _BrowseButton({required this.isLoading, required this.onTap});
 
+  final bool isLoading;
   final VoidCallback onTap;
 
   @override
@@ -93,16 +99,25 @@ class _BrowseButton extends StatelessWidget {
       borderRadius: AppRadius.rFull,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: onTap,
+        onTap: isLoading ? null : onTap,
         child: Padding(
           padding: EdgeInsets.symmetric(
             horizontal: AppSpacing.lg.w,
             vertical: AppSpacing.sm.h,
           ),
-          child: Text(
-            AppStrings.browseFile.tr,
-            style: AppTextStyles.titleSmall.rc(AppColors.actionLabel),
-          ),
+          child: isLoading
+              ? SizedBox(
+                  width: AppSizes.lg.w,
+                  height: AppSizes.lg.w,
+                  child: const CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.actionLabel,
+                  ),
+                )
+              : Text(
+                  AppStrings.browseFile.tr,
+                  style: AppTextStyles.titleSmall.rc(AppColors.actionLabel),
+                ),
         ),
       ),
     );

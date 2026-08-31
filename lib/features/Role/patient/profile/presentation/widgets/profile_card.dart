@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -11,6 +13,7 @@ import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/utils/responsive.dart';
 import '../../../../../../core/widgets/app_avatar.dart';
 import '../../../../../../core/widgets/app_card.dart';
+import '../../../../../../core/widgets/photo_upload_box.dart';
 import '../../domain/entities/profile.dart';
 
 /// The patient card at the top of Profile: name, masked phone, an Edit pill,
@@ -20,12 +23,14 @@ class ProfileCard extends StatelessWidget {
     super.key,
     required this.patient,
     required this.onEdit,
-    required this.onChangePhoto,
+    required this.onPhotoPicked,
+    this.isUploadingPhoto = false,
   });
 
   final PatientProfile patient;
   final VoidCallback onEdit;
-  final VoidCallback onChangePhoto;
+  final ValueChanged<File> onPhotoPicked;
+  final bool isUploadingPhoto;
 
   static const double _badge = 32;
 
@@ -72,7 +77,10 @@ class ProfileCard extends StatelessWidget {
               Positioned(
                 right: -AppSpacing.xs2.w,
                 bottom: 0,
-                child: _CameraBadge(onTap: onChangePhoto),
+                child: _CameraBadge(
+                  onPicked: onPhotoPicked,
+                  isBusy: isUploadingPhoto,
+                ),
               ),
             ],
           ),
@@ -127,15 +135,21 @@ class _EditPill extends StatelessWidget {
 }
 
 class _CameraBadge extends StatelessWidget {
-  const _CameraBadge({required this.onTap});
+  const _CameraBadge({required this.onPicked, required this.isBusy});
 
-  final VoidCallback onTap;
+  final ValueChanged<File> onPicked;
+  final bool isBusy;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: onTap,
+      onTap: isBusy
+          ? null
+          : () async {
+              final file = await pickPhoto(context);
+              if (file != null) onPicked(file);
+            },
       child: Container(
         width: ProfileCard._badge.w,
         height: ProfileCard._badge.w,
@@ -150,14 +164,20 @@ class _CameraBadge extends StatelessWidget {
           ],
         ),
         alignment: Alignment.center,
-        // Material's camera rather than `camera.svg`: the icon file draws an
-        // outlined body with no lens, and the design's mark is a filled navy
-        // silhouette with one.
-        child: Icon(
-          Icons.photo_camera,
-          size: AppSizes.xl.w,
-          color: AppColors.authInk,
-        ),
+        child: isBusy
+            ? SizedBox(
+                width: AppSizes.lg.w,
+                height: AppSizes.lg.w,
+                child: const CircularProgressIndicator(strokeWidth: 2),
+              )
+            // Material's camera rather than `camera.svg`: the icon file draws
+            // an outlined body with no lens, and the design's mark is a
+            // filled navy silhouette with one.
+            : Icon(
+                Icons.photo_camera,
+                size: AppSizes.xl.w,
+                color: AppColors.authInk,
+              ),
       ),
     );
   }

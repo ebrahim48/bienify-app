@@ -345,6 +345,9 @@ class AppStrings {
   static const String dropPrescriptionHere = 'drop_prescription_here';
   static const String prescriptionFileTypes = 'prescription_file_types';
   static const String browseFile = 'browse_file';
+  static const String uploading = 'uploading';
+  static const String prescriptionUploaded = 'prescription_uploaded';
+  static const String documentUploaded = 'document_uploaded';
 
   static const String bestMatches = 'best_matches';
   static const String prescriptionOf = 'prescription_of';
@@ -386,6 +389,7 @@ class AppStrings {
   static const String addLocation = 'add_location';
   static const String changeLocation = 'change_location';
   static const String uploadDoorImage = 'upload_door_image';
+  static const String onlyJpgPngAllowed = 'only_jpg_png_allowed';
   static const String enterNote = 'enter_note';
   static const String streetAndNumber = 'street_and_number';
   static const String apartmentOrFloor = 'apartment_or_floor';

@@ -30,68 +30,50 @@ class ProfileScreen extends GetView<ProfileController> {
       // fixed heading, card and five rows; `profile_golden_test.dart` guards
       // that it still fits at 320pt with 1.3× text.
       scrollable: false,
-      // The content scrolls while the log-out bar stays pinned to the foot.
-      //
-      // It used to be a trailing `Spacer`, which assumes the content always
-      // fits and cannot shrink when it does not: the equivalent doctor screen
-      // overflowed by 34px on a short viewport.
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                const ScreenTopGap(),
-                Text(
-                  AppStrings.profileTitle.tr,
-                  style: AppTextStyles.headlineLarge.rc(AppColors.authInk),
-                ),
-                AppSpacing.gapV(AppSpacing.base),
-                Obx(
-                  () => ProfileCard(
-                    patient: controller.patient.value,
-                    onEdit: controller.edit,
-                    onChangePhoto: () => controller.changePhoto(context),
-                  ),
-                ),
-                AppSpacing.gapV(AppSpacing.md),
-                AppMenuRow(
-                  label: AppStrings.myHealthProfile.tr,
-                  labelColor: AppColors.authInk,
-                  onTap: controller.openHealthProfile,
-                ),
-                AppMenuRow(
-                  label: AppStrings.myTestsAndResults.tr,
-                  labelColor: AppColors.authInk,
-                  onTap: controller.openTestsAndResults,
-                ),
-                AppMenuRow(
-                  label: AppStrings.myDeliveryAddress.tr,
-                  labelColor: AppColors.authInk,
-                  onTap: () => controller.editDeliveryAddress(context),
-                ),
-                AppMenuRow(
-                  label: AppStrings.myWallet.tr,
-                  labelColor: AppColors.authInk,
-                  onTap: controller.openWallet,
-                ),
-                AppMenuRow(
-                  label: AppStrings.settings.tr,
-                  labelColor: AppColors.authInk,
-                  onTap: controller.openSettings,
-                ),
-                AppMenuRow(
-                  label: AppStrings.partnerWithBienify.tr,
-                  labelColor: AppColors.authInk,
-                  onTap: controller.openPartner,
-                ),
-                ],
-              ),
+          const ScreenTopGap(),
+          Text(
+            AppStrings.profileTitle.tr,
+            style: AppTextStyles.headlineLarge.rc(AppColors.authInk),
+          ),
+          AppSpacing.gapV(AppSpacing.base),
+          Obx(
+            () => ProfileCard(
+              patient: controller.patient.value,
+              onEdit: controller.edit,
+              onPhotoPicked: controller.uploadAvatar,
+              isUploadingPhoto: controller.isUploadingPhoto.value,
             ),
           ),
+          AppSpacing.gapV(AppSpacing.md),
+          AppMenuRow(
+            label: AppStrings.myHealthProfile.tr,
+            labelColor: AppColors.authInk,
+            onTap: controller.openHealthProfile,
+          ),
+          AppMenuRow(
+            label: AppStrings.myTestsAndResults.tr,
+            labelColor: AppColors.authInk,
+            onTap: controller.openTestsAndResults,
+          ),
+          AppMenuRow(
+            label: AppStrings.myWallet.tr,
+            labelColor: AppColors.authInk,
+            onTap: controller.openWallet,
+          ),
+          AppMenuRow(
+            label: AppStrings.settings.tr,
+            labelColor: AppColors.authInk,
+            onTap: controller.openSettings,
+          ),
+          AppMenuRow(
+            label: AppStrings.partnerWithBienify.tr,
+            labelColor: AppColors.authInk,
+            onTap: controller.openPartner,
+          ),
+          const Spacer(),
           // `log-out.svg` is stroked in `logoutFill` already, so the bar
           // draws it untinted and the label repeats that colour.
           DestructiveBar(

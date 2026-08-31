@@ -1,17 +1,18 @@
-import '../../../../../../core/models/delivery_address.dart';
 import '../../domain/entities/profile.dart';
 import '../../domain/repositories/account_repository.dart';
 import '../static/profile_mock_data.dart';
 
 /// The account, served from the design's sample data.
 class MockAccountRepository implements AccountRepository {
-  MockAccountRepository();
+  const MockAccountRepository();
 
   @override
   Future<PatientProfile> me() async => ProfileMockData.patient;
 
   @override
   Future<void> saveName(String name) async {}
+
+
 
   /// Accepted and forgotten: there is no account behind the offline build to
   /// close, and refusing would make the confirm dialog untestable.
@@ -39,13 +40,11 @@ class MockAccountRepository implements AccountRepository {
     required String mimeType,
   }) async => path;
 
+
   @override
-  Future<String> uploadAvatar({
-    required String path,
-    required String mimeType,
-    void Function(double progress)? onProgress,
-  }) async {
-    onProgress?.call(1);
-    return path;
-  }
+  Future<void> uploadAvatar({
+    required List<int> bytes,
+    required String fileName,
+    required String contentType,
+  }) async {}
 }

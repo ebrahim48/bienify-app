@@ -21,12 +21,17 @@ class MedicalDocumentPicker extends StatelessWidget {
     required this.onCamera,
     this.attachments = const [],
     this.onRemove,
+    this.isBusy = false,
   });
 
   final VoidCallback onAttach;
   final VoidCallback onCamera;
   final List<String> attachments;
   final ValueChanged<String>? onRemove;
+
+  /// True while a pick is uploading — both tiles disable so a second tap
+  /// cannot fire mid-upload.
+  final bool isBusy;
 
   static const double _height = 78;
 
@@ -40,28 +45,30 @@ class MedicalDocumentPicker extends StatelessWidget {
           padding: EdgeInsets.zero,
           child: SizedBox(
             height: _height.h,
-            child: Row(
-              children: [
-                Expanded(
-                  child: _Tile(
-                    icon: AppIcons.cloudUpload,
-                    label: AppStrings.attachment.tr,
-                    onTap: onAttach,
+            child: isBusy
+                ? const Center(child: CircularProgressIndicator())
+                : Row(
+                    children: [
+                      Expanded(
+                        child: _Tile(
+                          icon: AppIcons.cloudUpload,
+                          label: AppStrings.attachment.tr,
+                          onTap: onAttach,
+                        ),
+                      ),
+                      Container(
+                        width: AppSizes.borderWidth,
+                        color: AppColors.surfaceBorder,
+                      ),
+                      Expanded(
+                        child: _Tile(
+                          icon: AppIcons.camera,
+                          label: AppStrings.camera.tr,
+                          onTap: onCamera,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                Container(
-                  width: AppSizes.borderWidth,
-                  color: AppColors.surfaceBorder,
-                ),
-                Expanded(
-                  child: _Tile(
-                    icon: AppIcons.camera,
-                    label: AppStrings.camera.tr,
-                    onTap: onCamera,
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
         if (attachments.isNotEmpty) ...[

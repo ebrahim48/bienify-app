@@ -99,7 +99,12 @@ class _Uploads extends StatelessWidget {
             ),
             AppSpacing.gapV(AppSpacing.sm),
           ],
-        _UploadButton(onTap: controller.uploadPrescription),
+        Obx(
+          () => _UploadButton(
+            isLoading: controller.isUploading.value,
+            onTap: controller.uploadPrescription,
+          ),
+        ),
       ],
     );
   }
@@ -134,8 +139,9 @@ class _Vault extends StatelessWidget {
 /// Small filled action, sized to its label rather than full width — the design
 /// puts it under the list, left-aligned.
 class _UploadButton extends StatelessWidget {
-  const _UploadButton({required this.onTap});
+  const _UploadButton({required this.isLoading, required this.onTap});
 
+  final bool isLoading;
   final VoidCallback onTap;
 
   @override
@@ -147,7 +153,7 @@ class _UploadButton extends StatelessWidget {
         borderRadius: AppRadius.rLg,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: onTap,
+          onTap: isLoading ? null : onTap,
           child: Padding(
             padding: EdgeInsets.symmetric(
               horizontal: AppSpacing.sm.w,
@@ -156,11 +162,21 @@ class _UploadButton extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                AppSvgIcon(
-                  AppIcons.cloudUpload,
-                  size: AppSizes.lg,
-                  color: AppColors.actionLabel,
-                ),
+                if (isLoading)
+                  SizedBox(
+                    width: AppSizes.lg.w,
+                    height: AppSizes.lg.w,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.actionLabel,
+                    ),
+                  )
+                else
+                  AppSvgIcon(
+                    AppIcons.cloudUpload,
+                    size: AppSizes.lg,
+                    color: AppColors.actionLabel,
+                  ),
                 AppSpacing.gapH(AppSpacing.xs),
                 Text(
                   AppStrings.uploadPrescriptionAction.tr,

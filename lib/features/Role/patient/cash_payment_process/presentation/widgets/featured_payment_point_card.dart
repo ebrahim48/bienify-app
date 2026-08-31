@@ -73,9 +73,15 @@ class FeaturedPaymentPointCard extends StatelessWidget {
                 AppSpacing.gapV(AppSpacing.xs),
                 Row(
                   children: [
-                    Text(
-                      point.distanceLabel,
-                      style: AppTextStyles.titleSmall.rc(AppColors.actionFill),
+                    Flexible(
+                      child: Text(
+                        point.distanceLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.titleSmall.rc(
+                          AppColors.actionFill,
+                        ),
+                      ),
                     ),
                     AppSpacing.gapH(AppSpacing.xs),
                     OpenBadge(

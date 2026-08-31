@@ -72,20 +72,22 @@ class SelectMedicinesScreen extends GetView<PharmacyCartController> {
             ),
             AppSpacing.gapV(AppSpacing.xs),
             Expanded(
-              child: ListView.separated(
-                physics: const ClampingScrollPhysics(),
-                padding: EdgeInsets.only(bottom: AppSpacing.sm.h),
-                itemCount: controller.prescribed.length,
-                separatorBuilder: (_, _) => AppSpacing.gapV(AppSpacing.xs),
-                itemBuilder: (context, index) {
-                  final medicine = controller.prescribed[index];
-                  return _MedicineRow(
-                    medicine: medicine,
-                    isSelected: controller.isSelected(medicine),
-                    onToggle: () => controller.toggle(medicine),
-                  );
-                },
-              ),
+              child: controller.isLoadingMedicines.value
+                  ? const Center(child: CircularProgressIndicator())
+                  : ListView.separated(
+                      physics: const ClampingScrollPhysics(),
+                      padding: EdgeInsets.only(bottom: AppSpacing.sm.h),
+                      itemCount: controller.prescribed.length,
+                      separatorBuilder: (_, _) => AppSpacing.gapV(AppSpacing.xs),
+                      itemBuilder: (context, index) {
+                        final medicine = controller.prescribed[index];
+                        return _MedicineRow(
+                          medicine: medicine,
+                          isSelected: controller.isSelected(medicine),
+                          onToggle: () => controller.toggle(medicine),
+                        );
+                      },
+                    ),
             ),
           ],
         ),

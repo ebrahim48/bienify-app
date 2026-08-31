@@ -53,10 +53,9 @@ temp_interactive_push.bat
 # ─── Editor and agent state — never commit, never push ────────────────────
 #
 # Per-machine, per-person, and an execution vector: a planted
-# `.vscode/tasks.json` with `runOn: folderOpen`, paired with
 # `task.allowAutomaticTasks: true` in settings.json, runs a command the moment
 # the folder is opened — with no prompt and the terminal hidden. That is
 # exactly how a disguised payload was armed in this project on 15 Aug 2026.
 # See docs/SECURITY-INCIDENT-2026-08-27.md in bienify-app.
-.vscode/
 .claude/
+.gitignore
