@@ -50,6 +50,20 @@ class PharmacyScreen extends GetView<PharmacyController> {
               onSelected: controller.selectChip,
             ),
           ),
+          // Says whose shelf this is, and how to get back to all of them.
+          // Without it, a shop's stock is indistinguishable from a catalogue
+          // that has mysteriously shrunk.
+          Obx(() {
+            final store = controller.viewingStore.value;
+            if (store == null) return const SizedBox.shrink();
+            return Padding(
+              padding: EdgeInsets.only(top: AppSpacing.sm.h),
+              child: _ViewingStoreBar(
+                name: store.name,
+                onClear: controller.clearStore,
+              ),
+            );
+          }),
           AppSpacing.gapV(AppSpacing.base),
           PharmacySectionHeader(
             title: AppStrings.commonMedicines.tr,
@@ -314,6 +328,45 @@ class _Stores extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// The "showing one shop" strip, with the way out of it.
+class _ViewingStoreBar extends StatelessWidget {
+  const _ViewingStoreBar({required this.name, required this.onClear});
+
+  final String name;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(
+          Icons.storefront_outlined,
+          size: AppSizes.lg.w,
+          color: AppColors.primary600,
+        ),
+        AppSpacing.gapH(AppSpacing.xs2),
+        Expanded(
+          child: Text(
+            AppStrings.showingStore.trParams({'store': name}),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.bodyLarge.rc(AppColors.gray900),
+          ),
+        ),
+        AppSpacing.gapH(AppSpacing.xs),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onClear,
+          child: Text(
+            AppStrings.showAllShops.tr,
+            style: AppTextStyles.titleSmall.rc(AppColors.primary600),
+          ),
+        ),
+      ],
     );
   }
 }

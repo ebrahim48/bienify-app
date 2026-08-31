@@ -1,4 +1,6 @@
 import '../services/avatar_service.dart';
+import '../services/device_location_service.dart';
+import '../services/push_registration_service.dart';
 import 'package:get/get.dart';
 import '../widgets/app_snackbar.dart';
 import '../utils/app_navigator.dart';
@@ -21,6 +23,9 @@ import '../../features/Role/patient/pharmacy/domain/repositories/pharmacy_reposi
 import '../../features/Role/patient/profile/data/repositories/api_account_repository.dart';
 import '../../features/Role/patient/profile/data/repositories/mock_account_repository.dart';
 import '../../features/Role/patient/profile/domain/repositories/account_repository.dart';
+import '../../features/Role/patient/profile/domain/repositories/partner_repository.dart';
+import '../../features/Role/patient/profile/data/repositories/api_partner_repository.dart';
+import '../../features/Role/patient/profile/data/repositories/mock_partner_repository.dart';
 import '../../features/Role/patient/wallet/data/repositories/api_wallet_repository.dart';
 import '../../features/Role/patient/wallet/data/repositories/mock_wallet_repository.dart';
 import '../../features/Role/patient/wallet/domain/repositories/wallet_repository.dart';
@@ -129,6 +134,12 @@ class DependencyInjection {
     // connected here — that waits until there is a session to authenticate
     // with, since the handshake carries the access token.
     Get.put<SocketService>(SocketService(tokens: tokens), permanent: true);
+    // Registered before the auth repository below, whose session callbacks
+    // reach for it.
+    Get.put<PushRegistrationService>(
+      PushRegistrationService(),
+      permanent: true,
+    );
 
     // Attachments: one picker and one uploader for the whole app, so every
     // attach button behaves the same and the plugins are referenced once.
@@ -167,8 +178,18 @@ class DependencyInjection {
         tokens: Get.find<TokenStore>(),
         // The socket follows the session: open once there is a token to
         // authenticate the handshake with, closed the moment there is not.
-        onSessionStarted: () => Get.find<SocketService>().connect(),
-        onSessionEnded: () => Get.find<SocketService>().disconnect(),
+        // Both follow the session. The socket carries live updates while the
+        // app is open; the push registration is what reaches the phone when it
+        // is not, and withdrawing it on sign-out is what stops the next person
+        // holding the device receiving this patient's reminders.
+        onSessionStarted: () {
+          Get.find<SocketService>().connect();
+          Get.find<PushRegistrationService>().register();
+        },
+        onSessionEnded: () {
+          Get.find<SocketService>().disconnect();
+          Get.find<PushRegistrationService>().unregister();
+        },
       ),
       permanent: true,
     );
@@ -242,6 +263,13 @@ class DependencyInjection {
       permanent: true,
     );
     Get.put<AvatarService>(AvatarService(), permanent: true);
+    Get.put<DeviceLocationService>(DeviceLocationService(), permanent: true);
+    Get.put<PartnerRepository>(
+      mock
+          ? MockPartnerRepository()
+          : ApiPartnerRepository(Get.find<ApiClient>()),
+      permanent: true,
+    );
   }
 
   static void _registerRiderRole(bool mock) {
@@ -283,7 +311,7 @@ class DependencyInjection {
   static void _registerAppointments(bool mock, DateTime Function() clock) {
     Get.put<WalletRepository>(
       mock
-          ? const MockWalletRepository()
+          ? MockWalletRepository()
           : ApiWalletRepository(Get.find<ApiClient>()),
       permanent: true,
     );
@@ -369,7 +397,8 @@ class DependencyInjection {
         VerifyPasswordResetOtp(repository),
         permanent: true,
       )
-      ..put<ResetPassword>(ResetPassword(repository), permanent: true);
+      ..put<ResetPassword>(ResetPassword(repository), permanent: true)
+      ..put<ChangePassword>(ChangePassword(repository), permanent: true);
   }
 
   static void clear() => Get.deleteAll(force: true);

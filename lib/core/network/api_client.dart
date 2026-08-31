@@ -5,6 +5,7 @@ import 'package:logger/logger.dart';
 import '../constants/api_constants.dart';
 import '../exceptions/app_exceptions.dart';
 import 'auth_interceptor.dart';
+import 'request_log_interceptor.dart';
 import 'token_store.dart';
 
 /// Every request and response Dio makes, printed as `[API] ...` in debug
@@ -51,6 +52,7 @@ class ApiClient {
         onSessionExpired: onSessionExpired,
       ),
     );
+
     if (kDebugMode) {
       _dio.interceptors.add(
         LogInterceptor(
@@ -62,6 +64,11 @@ class ApiClient {
         ),
       );
     }
+
+    // After the auth interceptor, so a 401 that the refresh recovers from is
+    // not logged as a failure — only what actually reached the caller is.
+    _dio.interceptors.add(RequestLogInterceptor());
+
   }
 
   final Dio _dio;
@@ -208,6 +215,18 @@ class ApiClient {
     return out.isEmpty ? null : out;
   }
 
+  /// Scheme, host and port the request was aimed at, without the path.
+  ///
+  /// The path would name one endpoint and invite the reader to suspect it; the
+  /// origin is what is actually unreachable, and every call shares it. Falls
+  /// back to the configured base URL for a failure raised before a URI was
+  /// resolved.
+  static String _originOf(DioException e) {
+    final uri = e.requestOptions.uri;
+    if (uri.host.isEmpty) return ApiConstants.baseUrl;
+    return uri.hasPort ? '${uri.scheme}://${uri.host}:${uri.port}' : uri.origin;
+  }
+
   static AppException _fromDio(DioException e) {
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
@@ -217,9 +236,11 @@ class ApiClient {
           'The server took too long to respond. Please try again.',
         );
       case DioExceptionType.connectionError:
-        return NoInternetException(
-          'Cannot reach the server. Check your connection.',
-        );
+        // Named rather than generic: the connection never opened, and which
+        // address it failed to open to is the difference between a phone with
+        // no signal and a backend that is not running. See
+        // ServerUnreachableException.
+        return ServerUnreachableException(_originOf(e), e.message);
       case DioExceptionType.cancel:
         return RequestCancelledException('The request was cancelled.');
       default:

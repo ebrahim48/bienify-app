@@ -1,3 +1,4 @@
+import '../../../doctor_role/domain/entities/doctor_practice.dart' show PayoutAccount;
 import '../../../patient/pharmacy/domain/entities/pharmacy.dart';
 import '../entities/rider.dart';
 
@@ -63,4 +64,40 @@ abstract class RiderRepository {
   /// their own delivery. Their map drew two constants before, so every job
   /// showed the same road whatever they were actually carrying.
   Future<DeliveryRoute> route(String deliveryId);
+
+  /// Reports where the courier is — `PATCH /deliveries/:id/location`.
+  ///
+  /// The other half of [route], and the one that was missing: the endpoint has
+  /// always existed and no rider code called it, so `lastLocation` was never
+  /// written and the customer's live map had no courier pin to draw. The
+  /// server pushes each ping on to the patient and the shop over the socket.
+  Future<void> reportLocation(String deliveryId, double lat, double lng);
+
+  // ─── Payout ──────────────────────────────────────────────────────────────
+  //
+  // The courier is paid into the same wallet a doctor is, through the same
+  // endpoints. None of it was reachable from the rider's screens.
+
+  /// Where the courier can be paid — `GET /wallet/payout-accounts`.
+  Future<List<PayoutAccount>> payoutAccounts();
+
+  /// Files a new destination. The server keeps only the last four digits.
+  Future<void> addPayoutAccount({
+    required String kind,
+    required String displayName,
+    required String accountNumber,
+    String? bankName,
+  });
+
+  Future<void> makePayoutAccountDefault(String accountId);
+
+  /// Asks for a payout — `POST /wallet/withdrawals`.
+  ///
+  /// [payoutAccountId] is required rather than optional: the server's schema
+  /// insists on it, so a request without one is a 400 the courier cannot act
+  /// on.
+  Future<void> requestWithdrawal({
+    required double amount,
+    required String payoutAccountId,
+  });
 }

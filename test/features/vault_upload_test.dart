@@ -227,6 +227,12 @@ Widget _host(Widget child) => ScreenUtilInit(
 
 /// A vault that records what it was asked to store.
 class _RecordingVault implements VaultRepository {
+  // Uploading does not download; present so the fake satisfies the interface.
+  @override
+  Future<({String url, String fileName})> recordDownloadUrl(
+    String recordId,
+  ) async => (url: '', fileName: '');
+
   final List<({String fileName, String? notes, VaultRecordType type})> uploads =
       [];
 
@@ -319,7 +325,10 @@ class _StubPicker implements AttachmentPickerService {
 /// only about the file that reaches the vault, so it ranks nothing.
 class _StubPharmacy extends Fake implements PharmacyRepository {
   @override
-  Future<List<PharmacyStore>> stores({String query = ''}) async => const [];
+  Future<List<PharmacyStore>> stores({
+    String query = '',
+    String city = '',
+  }) async => const [];
 
   @override
   Future<List<PharmacyStore>> bestMatches(String prescriptionId) async =>

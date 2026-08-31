@@ -67,6 +67,24 @@ class DoctorListCard extends StatelessWidget {
                 ),
                 AppSpacing.gapV(AppSpacing.xs2),
                 _SpecialtyRating(doctor: doctor),
+                // How many people that rating stands on. The card showed a
+                // score and nothing behind it, so a 5.0 from one consultation
+                // and a 4.3 from forty read identically on the one screen a
+                // patient actually chooses from. On its own line rather than
+                // appended to the row above, which already flexes the
+                // specialty against the rating and would overflow on a narrow
+                // phone.
+                if (doctor.patientsSeen > 0) ...[
+                  AppSpacing.gapV(AppSpacing.xxs),
+                  Text(
+                    AppStrings.patientsSeen.trParams({
+                      'count': '${doctor.patientsSeen}',
+                    }),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.bodySmall.rc(AppColors.textSecondary),
+                  ),
+                ],
               ],
             ),
           ),

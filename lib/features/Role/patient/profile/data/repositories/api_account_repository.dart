@@ -28,10 +28,37 @@ class ApiAccountRepository implements AccountRepository {
   }
 
   @override
+
   Future<void> uploadAvatar({
     required List<int> bytes,
     required String fileName,
     required String contentType,
+
+  Future<void> deleteAccount() async {
+    await _api.delete(ApiConstants.deleteUsersMe);
+  }
+
+  @override
+  Future<DeliveryAddress?> savedAddress() async {
+    final data = await _api.getMap(ApiConstants.usersMe);
+    return addressFrom(Api.map(data['profile'])['address']);
+  }
+
+  @override
+  Future<void> saveAddress(DeliveryAddress? address) async {
+    // Explicit null clears it. Omitting the key would leave the old address
+    // in place, which is not what clearing means.
+    await _api.patch(
+      ApiConstants.updateUsersMe,
+      body: {'address': address?.toJson()},
+    );
+  }
+
+  @override
+  Future<String> uploadDoorImage({
+    required String path,
+    required String mimeType,
+
   }) async {
     final uploadUrl = await _api.postMap(
       ApiConstants.postUsersMeAvatarUploadUrl,

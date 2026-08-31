@@ -36,6 +36,7 @@ class WalletScreen extends GetView<AccountController> {
               amount: controller.balanceLabel,
               isHidden: controller.isBalanceHidden.value,
               onToggle: controller.toggleBalanceVisibility,
+              onAddMoney: controller.openTopUp,
             ),
           ),
           AppSpacing.gapV(AppSpacing.sm),
@@ -157,11 +158,17 @@ class _BalanceCard extends StatelessWidget {
     required this.amount,
     required this.isHidden,
     required this.onToggle,
+    required this.onAddMoney,
   });
 
   final String amount;
   final bool isHidden;
   final VoidCallback onToggle;
+
+  /// Adding money belongs next to the number it changes. The masthead pill
+  /// stays "Add Account", which files a *card* — a different thing, and one
+  /// this app has confused before.
+  final VoidCallback onAddMoney;
 
   static const double _height = 178;
   static const double _bigDisc = 180;
@@ -230,10 +237,57 @@ class _BalanceCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  const Spacer(),
+                  _AddMoneyButton(onTap: onAddMoney),
                 ],
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The way money gets into the wallet, on the card that shows how much is in
+/// it. Until this existed the only inflows were the seed script, a refund and
+/// a cash payment an admin confirmed.
+class _AddMoneyButton extends StatelessWidget {
+  const _AddMoneyButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Material(
+        color: AppColors.white,
+        borderRadius: AppRadius.rFull,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.base.w,
+              vertical: AppSpacing.xs.h,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.add_rounded,
+                  size: AppSizes.xl.w,
+                  color: AppColors.walletSurface,
+                ),
+                AppSpacing.gapH(AppSpacing.xs2),
+                Text(
+                  AppStrings.addMoney.tr,
+                  style: AppTextStyles.titleSmall.rc(AppColors.walletSurface),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

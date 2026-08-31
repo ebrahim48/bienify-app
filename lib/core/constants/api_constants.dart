@@ -101,6 +101,7 @@ class ApiConstants {
   static const String postAuthPasswordReset = '$_v1/auth/password/reset';
   static const String postAuthRefresh = '$_v1/auth/refresh';
   static const String postAuthRegister = '$_v1/auth/register';
+  static const String postAuthCredentials = '$_v1/auth/credentials';
   static const String postAuthSocialApple = '$_v1/auth/social/apple';
   static const String postAuthSocialGoogle = '$_v1/auth/social/google';
 
@@ -205,6 +206,9 @@ class ApiConstants {
       '$_v1/notifications/$id/read';
   static const String postNotificationsReadAll = '$_v1/notifications/read-all';
   static const String postNotificationsSend = '$_v1/notifications/send';
+  static const String postNotificationsDevices = '$_v1/notifications/devices';
+  static String deleteNotificationsDevices(String token) =>
+      '$_v1/notifications/devices/$token';
 
   // ─── partner-applications ────────────────────────────────────────
   static const String postPartnerApplications = '$_v1/partner-applications';
@@ -257,6 +261,7 @@ class ApiConstants {
   // ─── users ───────────────────────────────────────────────────────
   static const String usersMe = '$_v1/users/me';
   static const String updateUsersMe = '$_v1/users/me';
+  static const String deleteUsersMe = '$_v1/users/me';
   static const String postUsersMeAvatarConfirm = '$_v1/users/me/avatar/confirm';
   static const String postUsersMeAvatarUploadUrl =
       '$_v1/users/me/avatar/upload-url';
@@ -269,6 +274,8 @@ class ApiConstants {
   static const String vaultRecords = '$_v1/vault/records';
   static const String postVaultRecords = '$_v1/vault/records';
   static String vaultRecords2(String id) => '$_v1/vault/records/$id';
+  static String vaultRecordsDownloadUrl(String id) =>
+      '$_v1/vault/records/$id/download-url';
   static String postVaultRecordsShare(String id) =>
       '$_v1/vault/records/$id/share';
   static String deleteVaultRecordsShareDoctoruserid(

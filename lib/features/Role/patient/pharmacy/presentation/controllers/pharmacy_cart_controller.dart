@@ -240,10 +240,20 @@ class PharmacyCartController extends GetxController {
     try {
       orderId = await _pharmacy.placeOrder(
         pharmacyId: pharmacyId,
+
         quantitiesByMedicineId: {
           for (final line in lines) line.medicine.id: line.quantity,
         },
         deliveryAddress: '${address.value.line1}, ${address.value.line2}',
+
+        quantitiesByMedicineId: quantitiesByMedicineId,
+        deliveryAddress: address.value.singleLine,
+        // Null unless the patient pinned it, in which case the server keeps
+        // the pin instead of geocoding the address line — a guess that
+        // returns nothing at all without a Maps key configured.
+        deliveryLat: address.value.lat,
+        deliveryLng: address.value.lng,
+
       );
     } on AppException catch (e) {
       AppSnackbar.error(e.message);

@@ -55,11 +55,58 @@ class PrescriptionController extends GetxController {
     isLoading.value = true;
     error.value = null;
     try {
+
       matches.value = await _pharmacy.stores();
       // The best match starts selected, as the design shows.
       selectedStoreId.value = matches.isEmpty ? null : matches.first.id;
     } on AppException catch (e) {
       error.value = e.message;
+
+      final scripts = await _vault.prescriptions();
+      // All of them, not just the newest. A patient holding two live scripts
+      // had no way to say which one they were filling — the screen matched
+      // shops against `scripts.first` and ranked them for a prescription the
+      // patient may not have meant.
+      prescriptions.value = scripts;
+      prescription.value = scripts.isEmpty ? null : scripts.first;
+
+      await _loadMatches();
+    } on AppException {
+      matches.clear();
+    } finally {
+      isLoadingMatches.value = false;
+    }
+  }
+
+  /// Ranks shops against whichever prescription is currently chosen.
+  Future<void> _loadMatches() async {
+    final script = prescription.value;
+    matches.value = script == null
+        ? await _pharmacy.stores()
+        : await _pharmacy.bestMatches(script.id);
+
+    selectedStoreId.value = matches.isEmpty ? null : matches.first.id;
+    searchArea.value = matches.isEmpty ? '' : matches.first.address;
+  }
+
+  /// Every prescription the server has issued this patient.
+  final RxList<DigitalPrescription> prescriptions = <DigitalPrescription>[].obs;
+
+  /// Whether the patient has more than one to choose between. With one script
+  /// there is nothing to pick, and a picker offering a single option is noise.
+  bool get hasPrescriptionChoice => prescriptions.length > 1;
+
+  /// Switches which script the shops are ranked against.
+  Future<void> selectPrescription(DigitalPrescription script) async {
+    if (prescription.value?.id == script.id) return;
+    prescription.value = script;
+
+    isLoadingMatches.value = true;
+    try {
+      await _loadMatches();
+    } on AppException {
+      matches.clear();
+
     } finally {
       isLoading.value = false;
     }

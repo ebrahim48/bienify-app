@@ -32,6 +32,12 @@ class VaultApi {
     Map<String, dynamic>? query,
   }) => _c.get(ApiConstants.vaultRecords2(id), query: query);
 
+  /// `GET /api/v1/vault/records/:id/download-url`
+  Future<dynamic> getRecordsdownloadurl({
+    required String id,
+    Map<String, dynamic>? query,
+  }) => _c.get(ApiConstants.vaultRecordsDownloadUrl(id), query: query);
+
   /// `POST /api/v1/vault/records/:id/share`
   Future<dynamic> createRecordsshare({required String id, Object? body}) =>
       _c.post(ApiConstants.postVaultRecordsShare(id), body: body);

@@ -263,6 +263,9 @@ class AppStrings {
   static const String openingFile = 'opening_file';
   static const String cannotOpenFile = 'cannot_open_file';
   static const String noAppForFile = 'no_app_for_file';
+  static const String supportUnavailable = 'support_unavailable';
+  static const String supportEmailSubject = 'support_email_subject';
+  static const String accountDeleted = 'account_deleted';
 
   // ─── Reactions ───────────────────────────────────────────────────────────
   static const String reactToMessage = 'react_to_message';
@@ -453,10 +456,15 @@ class AppStrings {
   static const String reEnterNewPasswordLabel = 're_enter_new_password_label';
   static const String reEnterNewPasswordHint = 're_enter_new_password_hint';
   static const String passwordChanged = 'password_changed';
+  static const String passwordChangedSignInAgain =
+      'password_changed_sign_in_again';
+  static const String errorCurrentPassword = 'error_current_password';
 
   static const String joinAsPharmacyOwner = 'join_as_pharmacy_owner';
   static const String joinAsRider = 'join_as_rider';
   static const String partnerApplicationSent = 'partner_application_sent';
+  static const String partnerApplicationPending =
+      'partner_application_pending';
 
   static const String noOrdersYet = 'no_orders_yet';
   static const String noOrdersYetBody = 'no_orders_yet_body';
@@ -464,6 +472,10 @@ class AppStrings {
 
   static const String noPaymentMethod = 'no_payment_method';
   static const String noPaymentMethodBody = 'no_payment_method_body';
+  static const String cardsPayNotReceive = 'cards_pay_not_receive';
+  static const String payoutAccountPurpose = 'payout_account_purpose';
+  static const String payoutAccountsHeading = 'payout_accounts_heading';
+  static const String cardsHeading = 'cards_heading';
   static const String addPaymentMethod = 'add_payment_method';
   static const String availableBalance = 'available_balance';
 
@@ -506,6 +518,38 @@ class AppStrings {
   static const String debitCreditCard = 'debit_credit_card';
   static const String walletTitle = 'wallet_title';
   static const String addAccount = 'add_account';
+  static const String addMoney = 'add_money';
+  static const String walletShort = 'wallet_short';
+  static const String cancelOrder = 'cancel_order';
+  static const String keepOrder = 'keep_order';
+  static const String useCurrentLocation = 'use_current_location';
+  static const String locationPinned = 'location_pinned';
+  static const String locating = 'locating';
+  static const String locationServiceOff = 'location_service_off';
+  static const String locationDenied = 'location_denied';
+  static const String locationBlocked = 'location_blocked';
+  static const String locationNoFix = 'location_no_fix';
+  static const String showingStore = 'showing_store';
+  static const String showAllShops = 'show_all_shops';
+  static const String reorderNothingToAdd = 'reorder_nothing_to_add';
+  static const String reorderPartial = 'reorder_partial';
+  static const String consultationTypeLabel = 'consultation_type_label';
+  static const String consultationVideo = 'consultation_video';
+  static const String consultationChat = 'consultation_chat';
+  static const String consultationInPerson = 'consultation_in_person';
+  static const String inPersonVisitNote = 'in_person_visit_note';
+  static const String cancelOrderQuestion = 'cancel_order_question';
+  static const String orderCancelled = 'order_cancelled';
+  static const String topUpAmount = 'top_up_amount';
+  static const String topUpPayWith = 'top_up_pay_with';
+  static const String topUpNewBalance = 'top_up_new_balance';
+  static const String topUpAdded = 'top_up_added';
+  static const String topUpNeedsCard = 'top_up_needs_card';
+  static const String topUpAddCard = 'top_up_add_card';
+  static const String topUpAction = 'top_up_action';
+  static const String errorAmountInvalid = 'error_amount_invalid';
+  static const String errorAmountTooSmall = 'error_amount_too_small';
+  static const String errorAmountTooLarge = 'error_amount_too_large';
   static const String availableBalanceCaps = 'available_balance_caps';
   static const String totalSpent = 'total_spent';
   static const String orderCount = 'order_count';
@@ -626,6 +670,9 @@ class AppStrings {
   static const String amountToWithdraw = 'amount_to_withdraw';
   static const String enterAValidAmount = 'enter_a_valid_amount';
   static const String noPayoutAccount = 'no_payout_account';
+  static const String payoutAccountsUnreadable =
+      'payout_accounts_unreadable';
+  static const String payoutHeldNotDeducted = 'payout_held_not_deducted';
   static const String prescriptionNeedsAppointment =
       'prescription_needs_appointment';
   static const String testNeedsPatient = 'test_needs_patient';
@@ -639,6 +686,7 @@ class AppStrings {
   static const String payoutAccountName = 'payout_account_name';
   static const String payoutAccountNumber = 'payout_account_number';
   static const String payoutBankName = 'payout_bank_name';
+  static const String payoutNotCards = 'payout_not_cards';
   static const String completed = 'completed';
   static const String editProfile = 'edit_profile';
   static const String fullName = 'full_name';
@@ -821,6 +869,8 @@ class AppStrings {
   static const String radiologyReviewUnavailable =
       'radiology_review_unavailable';
   static const String resultNotReadyToReview = 'result_not_ready_to_review';
+  static const String resultNotReadyToDownload =
+      'result_not_ready_to_download';
 
   // ─── Pharmacy owner ──────────────────────────────────────────────────────
   static const String navOrders = 'nav_orders';
@@ -1051,6 +1101,11 @@ class AppStrings {
   static const String nextPayout = 'next_payout';
   static const String accumulated = 'accumulated';
   static const String minimumPayout = 'minimum_payout';
+  static const String availableToWithdraw = 'available_to_withdraw';
+  static const String payoutPending = 'payout_pending';
+  static const String payoutTo = 'payout_to';
+  static const String payoutHistory = 'payout_history';
+  static const String belowMinimumPayout = 'below_minimum_payout';
   static const String history = 'history';
   // ─── Feedback ────────────────────────────────────────────────────────────
   static const String otpResent = 'otp_resent';

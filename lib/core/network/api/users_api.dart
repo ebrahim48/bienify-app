@@ -18,6 +18,10 @@ class UsersApi {
   Future<dynamic> updateMe({Object? body}) =>
       _c.patch(ApiConstants.updateUsersMe, body: body);
 
+  /// `DELETE /api/v1/users/me`
+  Future<dynamic> removeMe({Object? body}) =>
+      _c.delete(ApiConstants.deleteUsersMe, body: body);
+
   /// `POST /api/v1/users/me/avatar/confirm`
   Future<dynamic> createMeavatarconfirm({Object? body}) =>
       _c.post(ApiConstants.postUsersMeAvatarConfirm, body: body);

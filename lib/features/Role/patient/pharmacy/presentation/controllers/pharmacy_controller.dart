@@ -7,14 +7,20 @@ import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../domain/entities/pharmacy.dart';
 import 'pharmacy_cart_controller.dart';
 import '../../domain/repositories/pharmacy_repository.dart';
+import '../../../profile/domain/repositories/account_repository.dart';
 
 /// Backs the Pharmacy tab: the catalogue, its filter chips, and the cart
 /// badge in the header.
 class PharmacyController extends GetxController {
-  PharmacyController({PharmacyRepository? repository})
-    : _repository = repository ?? Get.find<PharmacyRepository>();
+  PharmacyController({PharmacyRepository? repository, AccountRepository? account})
+    : _repository = repository ?? Get.find<PharmacyRepository>(),
+      _account = account ?? Get.find<AccountRepository>();
 
   final PharmacyRepository _repository;
+
+  /// The saved address, which is the only city the app knows the patient is
+  /// in. The shop list is headed "near you" and was the whole national list.
+  final AccountRepository _account;
 
   final RxBool isLoading = true.obs;
 
@@ -31,6 +37,12 @@ class PharmacyController extends GetxController {
   final RxList<Medicine> commonMedicines = <Medicine>[].obs;
   final RxList<Medicine> dermatologyMedicines = <Medicine>[].obs;
   final RxList<PharmacyStore> stores = <PharmacyStore>[].obs;
+
+  /// The shop whose shelf is being shown, when the patient tapped one.
+  ///
+  /// Null means the whole catalogue. Tapping a shop card used to open the
+  /// prescription upload — so the one thing it could not do was show the shop.
+  final Rxn<PharmacyStore> viewingStore = Rxn<PharmacyStore>();
 
   /// Badge on the cart icon: what is actually in the basket.
   ///
@@ -59,17 +71,35 @@ class PharmacyController extends GetxController {
     isLoading.value = true;
     error.value = null;
     try {
-      final medicines = await _repository.searchMedicines(query: query.value);
+      final medicines = await _repository.searchMedicines(
+        query: query.value,
+        // Null for the whole catalogue; a shop id narrows the shelf to what
+        // that shop actually stocks.
+        pharmacyId: viewingStore.value?.id,
+      );
       commonMedicines.value = medicines;
       // The catalogue carries no department, so the design's second shelf
       // shows the same stock rather than a section invented client-side.
       dermatologyMedicines.value = medicines;
-      stores.value = await _repository.stores();
+      // The server has filtered pharmacies by city since the endpoint was
+      // written; nothing ever sent one. An account with no saved address sends
+      // nothing and still sees every shop, which is the honest fallback.
+      stores.value = await _repository.stores(city: await _city());
       _rebuildChips(medicines);
     } on AppException catch (e) {
       error.value = e.message;
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  /// The patient's city, or empty when they have not saved an address.
+  Future<String> _city() async {
+    try {
+      return (await _account.savedAddress())?.city ?? '';
+    } on AppException {
+      // A shop list narrowed to nowhere is worse than one that is too wide.
+      return '';
     }
   }
 
@@ -122,5 +152,27 @@ class PharmacyController extends GetxController {
   /// the same directory for now.
   void seeAll() => Get.toNamed<void>(AppRoutes.uploadPrescription);
 
-  void openStore(PharmacyStore store) => openUpload();
+  /// Shows what this shop stocks.
+  ///
+  /// It opened the prescription upload instead, for every shop — so the store
+  /// row was decorative and the one screen that could have answered "what does
+  /// this pharmacy have?" was never reachable.
+  Future<void> openStore(PharmacyStore store) async {
+    viewingStore.value = store;
+    // A query typed against the whole catalogue does not carry meaningfully
+    // into one shop's shelf, and leaving it makes an empty result look like an
+    // empty shop.
+    query.value = '';
+    selectedChip.value = '';
+    await load();
+  }
+
+  /// Back to the whole catalogue.
+  Future<void> clearStore() async {
+    if (viewingStore.value == null) return;
+    viewingStore.value = null;
+    query.value = '';
+    selectedChip.value = '';
+    await load();
+  }
 }

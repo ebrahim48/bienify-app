@@ -34,10 +34,16 @@ void main() {
   });
 
   test('the backend serves the number of routes we think it does', () {
-    // 161 with the courier thread: `GET`/`POST /deliveries/:id/messages` and
-    // its attachment presign join the door photo, chat attachments, the two
-    // lapse remedies, the doctor's refund and the lab-order review.
-    expect(routes, hasLength(161));
+    // 166. Phase 1 added `GET /vault/records/:id/download-url` (the signed
+    // read behind the result Download button) and `DELETE /users/me` (the soft
+    // delete behind Delete account); Phase 2 added `POST /auth/credentials`,
+    // which attaches an email and password to the account the phone step
+    // already created; Phase 6 added `POST` and `DELETE
+    // /notifications/devices`, which is how the platform learns a phone's
+    // address and forgets it on sign-out. They join the courier thread, the
+    // door photo, chat attachments, the two lapse remedies, the doctor's
+    // refund and the lab-order review.
+    expect(routes, hasLength(166));
   });
 
   test('every backend route has a constant holding its exact path', () {

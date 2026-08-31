@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 
 import '../services/storage_service.dart';
 
@@ -10,11 +13,51 @@ abstract class TokenStore {
   String? get accessToken;
   String? get refreshToken;
 
+  final StreamController<void> _changes = StreamController<void>.broadcast();
+
+  /// Fires whenever the tokens change — a sign-in, a refresh, a sign-out.
+  ///
+  /// Added for the socket, which authenticates once in its handshake with
+  /// whatever access token was current when it connected, and never re-reads
+  /// it. socket.io replays the same auth payload on every reconnect, so once
+  /// the 15-minute access token expired, the first drop — a screen lock, a
+  /// change of network, both routine for a courier — reconnected with a dead
+  /// token, was refused with "Invalid or expired access token", and then
+  /// retried that same dead token for the rest of the session. Live tracking
+  /// and chat stayed down while HTTP carried on working, because the auth
+  /// interceptor refreshes and nothing told the socket.
+  Stream<void> get changes => _changes.stream;
+
+  /// Stores a new pair and announces it.
+  ///
+  /// Not overridable: an implementation that forgot to announce would bring
+  /// back exactly the silence above. Subclasses implement [persistTokens].
   Future<void> save({
     required String accessToken,
     required String refreshToken,
+  }) async {
+    await persistTokens(accessToken: accessToken, refreshToken: refreshToken);
+    if (!_changes.isClosed) _changes.add(null);
+  }
+
+  /// Drops the pair and announces it. Subclasses implement [eraseTokens].
+  Future<void> clear() async {
+    await eraseTokens();
+    if (!_changes.isClosed) _changes.add(null);
+  }
+
+  @protected
+  Future<void> persistTokens({
+    required String accessToken,
+    required String refreshToken,
   });
-  Future<void> clear();
+
+  @protected
+  Future<void> eraseTokens();
+
+  /// Releases the change stream. Only the app's own disposal calls this; the
+  /// store outlives every screen.
+  Future<void> dispose() => _changes.close();
 
   /// The signed-in user's id, read from the access token's `sub` claim.
   ///
@@ -68,7 +111,7 @@ class PrefsTokenStore extends TokenStore {
   String? get refreshToken => _refresh;
 
   @override
-  Future<void> save({
+  Future<void> persistTokens({
     required String accessToken,
     required String refreshToken,
   }) async {
@@ -80,7 +123,7 @@ class PrefsTokenStore extends TokenStore {
   }
 
   @override
-  Future<void> clear() async {
+  Future<void> eraseTokens() async {
     _access = null;
     _refresh = null;
     await _storage.remove(StorageKeys.authToken);
@@ -105,7 +148,7 @@ class MemoryTokenStore extends TokenStore {
   String? get refreshToken => _refresh;
 
   @override
-  Future<void> save({
+  Future<void> persistTokens({
     required String accessToken,
     required String refreshToken,
   }) async {
@@ -114,7 +157,7 @@ class MemoryTokenStore extends TokenStore {
   }
 
   @override
-  Future<void> clear() async {
+  Future<void> eraseTokens() async {
     _access = null;
     _refresh = null;
   }

@@ -134,6 +134,7 @@ class DeliveryRequest {
     required this.customerName,
     required this.customerAddress,
     this.customerId = '',
+    this.customerPhotoUrl,
     required this.minutes,
     required this.distanceKm,
     required this.items,
@@ -157,6 +158,11 @@ class DeliveryRequest {
   /// The customer's account, which the courier's thread needs for presence.
   /// Empty on a job board row where the delivery is not yet theirs.
   final String customerId;
+
+  /// The customer's own picture, when the account has one. Null falls through
+  /// to their initials rather than to a stock face — a courier handing a parcel
+  /// to a stranger should not be shown someone who is not them.
+  final String? customerPhotoUrl;
 
   /// `12` — minutes to complete.
   final int minutes;
@@ -191,6 +197,13 @@ class DeliveryRequest {
   /// `12 min`.
   String get minutesLabel => '$minutes min';
 
+  /// Every field carried through explicitly.
+  ///
+  /// This dropped `customerId`, and accepting a job goes through it: the card
+  /// moved to Accepted with the customer's account blanked, so Message on the
+  /// tracking sheet opened a thread with nobody and fell through to the chat
+  /// binding's sample conversation. The same omission would blank the
+  /// customer's photo the moment a job was accepted.
   DeliveryRequest copyWith({RequestTab? tab, String? status}) =>
       DeliveryRequest(
     id: id,
@@ -199,6 +212,8 @@ class DeliveryRequest {
     pickupName: pickupName,
     customerName: customerName,
     customerAddress: customerAddress,
+    customerId: customerId,
+    customerPhotoUrl: customerPhotoUrl,
     minutes: minutes,
     distanceKm: distanceKm,
     items: items,
@@ -244,12 +259,50 @@ class RiderEarnings {
     required this.payoutDay,
     required this.payoutMinimum,
     required this.history,
+    this.available = 0,
+    this.pendingWithdrawal = 0,
+    this.withdrawals = const [],
   });
 
   final double today;
   final int todayCount;
   final double thisWeek;
   final int weekCount;
+
+  /// The wallet balance a payout is actually drawn from.
+  ///
+  /// Not the same as the week's earnings, which is what the payout bar reads:
+  /// a courier who withdrew on Monday has a full week's earnings and an empty
+  /// wallet, and offering them a payout against the former would be refused by
+  /// the server for insufficient funds.
+  final double available;
+
+  /// Already promised to a withdrawal that has not been paid yet. The server
+  /// subtracts this before allowing another, so the screen has to show it or
+  /// a courier reads their balance as spendable twice.
+  final double pendingWithdrawal;
+
+  /// What the courier has asked for, newest first.
+  final List<WithdrawalRequest> withdrawals;
+
+  /// What can be withdrawn right now, which is the balance less anything
+  /// already in flight. Never negative.
+  double get withdrawable {
+    final left = available - pendingWithdrawal;
+    return left < 0 ? 0 : left;
+  }
+
+  String get availableLabel => '\$${available.toStringAsFixed(2)}';
+
+  String get pendingWithdrawalLabel =>
+      '\$${pendingWithdrawal.toStringAsFixed(2)}';
+
+  String get withdrawableLabel => '\$${withdrawable.toStringAsFixed(2)}';
+
+  /// Whether a payout can be asked for at all: enough in the wallet to clear
+  /// the platform minimum, once money already in flight is set aside.
+  bool get canWithdraw =>
+      withdrawable >= payoutMinimum && payoutMinimum > 0;
 
   /// `Friday`.
   final String payoutDay;
@@ -271,6 +324,42 @@ class RiderEarnings {
       payoutMinimum == 0 ? 1 : (thisWeek / payoutMinimum).clamp(0.0, 1.0);
 
   bool get hasClearedMinimum => thisWeek >= payoutMinimum;
+}
+
+/// A payout the courier has asked for.
+///
+/// The rider's Earnings tab drew a bar toward the platform minimum and then
+/// offered nothing to do about it: `POST /wallet/withdrawals` has always
+/// existed and the doctor's screens already used it, so a courier could watch
+/// money accumulate and never ask for any of it.
+class WithdrawalRequest {
+  const WithdrawalRequest({
+    required this.id,
+    required this.amount,
+    required this.status,
+    required this.requestedOn,
+    this.note = '',
+  });
+
+  final String id;
+  final double amount;
+
+  /// The server's own word: `pending`, `approved`, `paid` or `rejected`.
+  final String status;
+
+  final DateTime requestedOn;
+
+  /// The admin's reason, on a rejection. Empty when they gave none.
+  final String note;
+
+  String get amountLabel => '\$${amount.toStringAsFixed(2)}';
+
+  /// Whether the money has actually left. Only `paid` has moved it — an
+  /// approval is a decision, not a transfer.
+  bool get isPaid => status == 'paid';
+
+  /// Still in flight, so the balance behind it is not spendable.
+  bool get isOpen => status == 'pending' || status == 'approved';
 }
 
 /// The live job the courier is on.

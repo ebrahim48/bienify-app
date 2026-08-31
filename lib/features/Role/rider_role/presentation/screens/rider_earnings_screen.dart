@@ -9,10 +9,12 @@ import '../../../../../core/theme/app_sizes.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/utils/responsive.dart';
+import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/widgets/app_card.dart';
 import '../../../../../core/widgets/app_scaffold.dart';
 import '../../domain/entities/rider.dart';
 import '../controllers/rider_profile_controller.dart';
+import '../widgets/rider_payout_dialog.dart';
 import '../widgets/rider_widgets.dart';
 
 /// What the courier has made: today against the week, the next payout, and
@@ -161,23 +163,27 @@ class _PayoutCard extends StatelessWidget {
                   style: AppTextStyles.titleMedium.rc(AppColors.gray900),
                 ),
               ),
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppSpacing.xs.w,
-                  vertical: AppSpacing.xxs.h,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.shopStateSurface,
-                  borderRadius: AppRadius.rMd,
-                ),
-                child: Text(
-                  earnings.payoutDay,
-                  style: AppTextStyles.labelMedium.rw(
-                    AppColors.shopStateInk,
-                    FontWeight.w500,
+              // Omitted when the server names no payout day, which it never
+              // does: withdrawals are approved one at a time by an admin, so
+              // there is no schedule to promise.
+              if (earnings.payoutDay.isNotEmpty)
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xs.w,
+                    vertical: AppSpacing.xxs.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.shopStateSurface,
+                    borderRadius: AppRadius.rMd,
+                  ),
+                  child: Text(
+                    earnings.payoutDay,
+                    style: AppTextStyles.labelMedium.rw(
+                      AppColors.shopStateInk,
+                      FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           AppSpacing.gapV(AppSpacing.sm),
@@ -219,6 +225,39 @@ class _PayoutCard extends StatelessWidget {
               ],
             ],
           ),
+          // The bar used to be the whole card: a courier watched a figure
+          // climb toward the minimum with nothing to do when it got there.
+          AppSpacing.gapV(AppSpacing.sm),
+          AppButton(
+            label: AppStrings.withdraw.tr,
+            radius: AppRadius.lg,
+            // Disabled rather than hidden, so the reason above it — the bar,
+            // the minimum, what is already requested — still explains why. A
+            // button that vanishes reads as a feature that does not exist.
+            isEnabled: earnings.canWithdraw,
+            onPressed: () => RiderPayoutDialog.show(context),
+          ),
+          if (earnings.pendingWithdrawal > 0) ...[
+            AppSpacing.gapV(AppSpacing.xs2),
+            Text(
+              AppStrings.payoutPending.trParams({
+                'amount': earnings.pendingWithdrawalLabel,
+              }),
+              style: AppTextStyles.bodyMedium.rc(AppColors.gray500),
+              textAlign: TextAlign.center,
+            ),
+            // A requested payout reserves money; it does not spend it. The
+            // wallet is debited only when an admin settles the withdrawal, so
+            // the courier is told their balance is intact rather than left to
+            // infer it from a number that went down.
+            Text(
+              AppStrings.payoutHeldNotDeducted.trParams({
+                'amount': earnings.availableLabel,
+              }),
+              style: AppTextStyles.bodyMedium.rc(AppColors.gray500),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ],
       ),
     );

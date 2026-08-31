@@ -265,6 +265,10 @@ class AppTranslations extends Translations {
     AppStrings.openWith: 'Open',
     AppStrings.openingFile: 'Opening…',
     AppStrings.cannotOpenFile: 'That file could not be opened',
+    AppStrings.supportUnavailable:
+        'Support is not reachable from this device right now',
+    AppStrings.supportEmailSubject: 'Help with my Bienify account',
+    AppStrings.accountDeleted: 'Your account has been deleted',
     AppStrings.noAppForFile: 'No app on this device can open this file',
 
     // Reactions
@@ -452,10 +456,15 @@ class AppTranslations extends Translations {
     AppStrings.reEnterNewPasswordLabel: 'Re-Enter New Password',
     AppStrings.reEnterNewPasswordHint: 'Re-type  your New Password',
     AppStrings.passwordChanged: 'Password changed',
+    AppStrings.passwordChangedSignInAgain:
+        'Password changed. Please sign in again.',
+    AppStrings.errorCurrentPassword: 'Current password is incorrect',
 
     AppStrings.joinAsPharmacyOwner: 'Join as a Pharmacy Owner',
     AppStrings.joinAsRider: 'Join as a Rider',
     AppStrings.partnerApplicationSent: 'We will be in touch about @role',
+    AppStrings.partnerApplicationPending:
+        'Your application is with our team. We will let you know once it is reviewed.',
 
     AppStrings.noOrdersYet: 'No orders yet',
     AppStrings.noOrdersYetBody:
@@ -465,6 +474,12 @@ class AppTranslations extends Translations {
     AppStrings.noPaymentMethod: 'No payment method',
     AppStrings.noPaymentMethodBody:
         'Add a card and your next order checks out in one tap.',
+    AppStrings.cardsPayNotReceive:
+        'Cards pay for orders. Payout accounts are where you get paid.',
+    AppStrings.payoutAccountPurpose:
+        'This is where your payouts are sent. It is not used to pay for orders.',
+    AppStrings.payoutAccountsHeading: 'Paid out to',
+    AppStrings.cardsHeading: 'Pay with',
     AppStrings.addPaymentMethod: 'Add Payment Method',
     AppStrings.availableBalance: 'Available balance',
 
@@ -506,6 +521,39 @@ class AppTranslations extends Translations {
     AppStrings.debitCreditCard: 'Debit/Credit Card',
     AppStrings.walletTitle: 'Wallet',
     AppStrings.addAccount: 'Add Account',
+    AppStrings.addMoney: 'Add Money',
+    AppStrings.walletShort: 'Your wallet does not cover this yet',
+    AppStrings.cancelOrder: 'Cancel order',
+    AppStrings.keepOrder: 'Keep order',
+    AppStrings.useCurrentLocation: 'Use my current location',
+    AppStrings.locationPinned: 'Location pinned',
+    AppStrings.locating: 'Finding you…',
+    AppStrings.locationServiceOff: 'Turn on location to pin this address',
+    AppStrings.locationDenied: 'Location permission is needed to pin an address',
+    AppStrings.locationBlocked: 'Location is blocked for this app in Settings',
+    AppStrings.locationNoFix: 'No location fix yet — try again outdoors',
+    AppStrings.showingStore: 'Showing @store',
+    AppStrings.showAllShops: 'All shops',
+    AppStrings.reorderNothingToAdd:
+        'That shop no longer stocks anything from this order',
+    AppStrings.reorderPartial: 'Some items are no longer stocked and were left out',
+    AppStrings.consultationTypeLabel: 'How would you like to be seen?',
+    AppStrings.consultationVideo: 'Video',
+    AppStrings.consultationChat: 'Chat',
+    AppStrings.consultationInPerson: 'In person',
+    AppStrings.inPersonVisitNote: 'This is an in-person visit at the clinic',
+    AppStrings.cancelOrderQuestion: 'Cancel this order?',
+    AppStrings.orderCancelled: 'Your order has been cancelled',
+    AppStrings.topUpAmount: 'Amount',
+    AppStrings.topUpPayWith: 'Pay with',
+    AppStrings.topUpNewBalance: 'New balance',
+    AppStrings.topUpAdded: 'Money added to your wallet',
+    AppStrings.topUpNeedsCard: 'Add a card before topping up',
+    AppStrings.topUpAddCard: 'Add a card',
+    AppStrings.topUpAction: 'Add @amount',
+    AppStrings.errorAmountInvalid: 'Enter an amount',
+    AppStrings.errorAmountTooSmall: 'The smallest top-up is \$1.00',
+    AppStrings.errorAmountTooLarge: 'That amount is too large',
     AppStrings.availableBalanceCaps: 'AVAILABLE BALANCE',
     AppStrings.totalSpent: 'Total Spent',
     AppStrings.orderCount: '@count orders',
@@ -640,6 +688,10 @@ class AppTranslations extends Translations {
     AppStrings.amountToWithdraw: 'Amount to withdraw',
     AppStrings.enterAValidAmount: 'Enter a valid amount',
     AppStrings.noPayoutAccount: 'Add a payout account first',
+    AppStrings.payoutAccountsUnreadable:
+        'Could not load your payout accounts',
+    AppStrings.payoutHeldNotDeducted:
+        'Nothing leaves your wallet until an admin approves it. Your balance is still @amount.',
     AppStrings.prescriptionNeedsAppointment:
         'Open a consultation before writing a prescription',
     AppStrings.testNeedsPatient: 'Pick a patient before ordering a test',
@@ -654,6 +706,8 @@ class AppTranslations extends Translations {
     AppStrings.payoutAccountName: 'Account name',
     AppStrings.payoutAccountNumber: 'Account number',
     AppStrings.payoutBankName: 'Bank name (optional)',
+    AppStrings.payoutNotCards:
+        'A saved card pays for orders. Getting paid needs a bank or mobile money account.',
     AppStrings.completed: 'Completed',
     AppStrings.editProfile: 'Edit Profile',
     AppStrings.fullName: 'Full Name',
@@ -836,6 +890,8 @@ class AppTranslations extends Translations {
         'Radiology results cannot be reviewed yet',
     AppStrings.resultNotReadyToReview:
         'This result is not ready to review yet',
+    AppStrings.resultNotReadyToDownload:
+        'The report has not arrived yet, so there is nothing to download',
 
     // Pharmacy owner
     AppStrings.navOrders: 'Orders',
@@ -1079,6 +1135,11 @@ class AppTranslations extends Translations {
     AppStrings.nextPayout: 'Next Payout',
     AppStrings.accumulated: '@amount accumulated',
     AppStrings.minimumPayout: 'Min. @amount',
+    AppStrings.availableToWithdraw: 'Available to withdraw',
+    AppStrings.payoutPending: '@amount already requested',
+    AppStrings.payoutTo: 'Paid into',
+    AppStrings.payoutHistory: 'PAYOUTS',
+    AppStrings.belowMinimumPayout: 'You need at least @amount to withdraw.',
     AppStrings.history: 'HISTORY',
 
     // Feedback
@@ -1339,6 +1400,10 @@ class AppTranslations extends Translations {
     AppStrings.openWith: 'Abrir',
     AppStrings.openingFile: 'Abriendo…',
     AppStrings.cannotOpenFile: 'No se pudo abrir el archivo',
+    AppStrings.supportUnavailable:
+        'No se puede contactar con soporte desde este dispositivo ahora mismo',
+    AppStrings.supportEmailSubject: 'Ayuda con mi cuenta de Bienify',
+    AppStrings.accountDeleted: 'Tu cuenta ha sido eliminada',
     AppStrings.noAppForFile:
         'Ningún programa de este dispositivo puede abrir este archivo',
     AppStrings.reactToMessage: 'Reaccionar',
@@ -1523,10 +1588,15 @@ class AppTranslations extends Translations {
     AppStrings.reEnterNewPasswordLabel: 'Repite la nueva contraseña',
     AppStrings.reEnterNewPasswordHint: 'Vuelve a escribir tu nueva contraseña',
     AppStrings.passwordChanged: 'Contraseña actualizada',
+    AppStrings.passwordChangedSignInAgain:
+        'Contraseña actualizada. Vuelve a iniciar sesión.',
+    AppStrings.errorCurrentPassword: 'La contraseña actual no es correcta',
 
     AppStrings.joinAsPharmacyOwner: 'Únete como farmacia',
     AppStrings.joinAsRider: 'Únete como repartidor',
     AppStrings.partnerApplicationSent: 'Te contactaremos sobre @role',
+    AppStrings.partnerApplicationPending:
+        'Tu solicitud está en revisión. Te avisaremos cuando haya respuesta.',
 
     AppStrings.noOrdersYet: 'Aún no hay pedidos',
     AppStrings.noOrdersYetBody:
@@ -1536,6 +1606,12 @@ class AppTranslations extends Translations {
     AppStrings.noPaymentMethod: 'Sin método de pago',
     AppStrings.noPaymentMethodBody:
         'Agrega una tarjeta y tu próximo pedido se paga con un toque.',
+    AppStrings.cardsPayNotReceive:
+        'Las tarjetas pagan pedidos. Las cuentas de pago son donde cobras.',
+    AppStrings.payoutAccountPurpose:
+        'Aquí se envían tus pagos. No se usa para pagar pedidos.',
+    AppStrings.payoutAccountsHeading: 'Se te paga en',
+    AppStrings.cardsHeading: 'Pagas con',
     AppStrings.addPaymentMethod: 'Agregar método de pago',
     AppStrings.availableBalance: 'Saldo disponible',
 
@@ -1577,6 +1653,40 @@ class AppTranslations extends Translations {
     AppStrings.debitCreditCard: 'Tarjeta de débito/crédito',
     AppStrings.walletTitle: 'Cartera',
     AppStrings.addAccount: 'Agregar cuenta',
+    AppStrings.addMoney: 'Agregar dinero',
+    AppStrings.walletShort: 'Tu cartera aún no cubre este importe',
+    AppStrings.cancelOrder: 'Cancelar pedido',
+    AppStrings.keepOrder: 'Mantener pedido',
+    AppStrings.useCurrentLocation: 'Usar mi ubicación actual',
+    AppStrings.locationPinned: 'Ubicación fijada',
+    AppStrings.locating: 'Buscándote…',
+    AppStrings.locationServiceOff: 'Activa la ubicación para fijar esta dirección',
+    AppStrings.locationDenied: 'Se necesita permiso de ubicación para fijar una dirección',
+    AppStrings.locationBlocked: 'La ubicación está bloqueada para esta app en Ajustes',
+    AppStrings.locationNoFix: 'Aún no hay señal — inténtalo al aire libre',
+    AppStrings.showingStore: 'Mostrando @store',
+    AppStrings.showAllShops: 'Todas las tiendas',
+    AppStrings.reorderNothingToAdd:
+        'Esa tienda ya no tiene nada de este pedido',
+    AppStrings.reorderPartial:
+        'Algunos artículos ya no están disponibles y se omitieron',
+    AppStrings.consultationTypeLabel: '¿Cómo quieres ser atendido?',
+    AppStrings.consultationVideo: 'Video',
+    AppStrings.consultationChat: 'Chat',
+    AppStrings.consultationInPerson: 'Presencial',
+    AppStrings.inPersonVisitNote: 'Esta es una visita presencial en la clínica',
+    AppStrings.cancelOrderQuestion: '¿Cancelar este pedido?',
+    AppStrings.orderCancelled: 'Tu pedido ha sido cancelado',
+    AppStrings.topUpAmount: 'Importe',
+    AppStrings.topUpPayWith: 'Pagar con',
+    AppStrings.topUpNewBalance: 'Nuevo saldo',
+    AppStrings.topUpAdded: 'Dinero agregado a tu cartera',
+    AppStrings.topUpNeedsCard: 'Agrega una tarjeta antes de recargar',
+    AppStrings.topUpAddCard: 'Agregar una tarjeta',
+    AppStrings.topUpAction: 'Agregar @amount',
+    AppStrings.errorAmountInvalid: 'Introduce un importe',
+    AppStrings.errorAmountTooSmall: 'La recarga mínima es \$1.00',
+    AppStrings.errorAmountTooLarge: 'Ese importe es demasiado alto',
     AppStrings.availableBalanceCaps: 'SALDO DISPONIBLE',
     AppStrings.totalSpent: 'Total gastado',
     AppStrings.orderCount: '@count pedidos',
@@ -1706,6 +1816,10 @@ class AppTranslations extends Translations {
     AppStrings.amountToWithdraw: 'Monto a retirar',
     AppStrings.enterAValidAmount: 'Ingresa un monto válido',
     AppStrings.noPayoutAccount: 'Primero añade una cuenta de pago',
+    AppStrings.payoutAccountsUnreadable:
+        'No se pudieron cargar tus cuentas de pago',
+    AppStrings.payoutHeldNotDeducted:
+        'Nada sale de tu billetera hasta que un administrador lo apruebe. Tu saldo sigue siendo @amount.',
     AppStrings.prescriptionNeedsAppointment:
         'Abre una consulta antes de escribir una receta',
     AppStrings.testNeedsPatient: 'Elige un paciente antes de pedir un examen',
@@ -1720,6 +1834,8 @@ class AppTranslations extends Translations {
     AppStrings.payoutAccountName: 'Nombre de la cuenta',
     AppStrings.payoutAccountNumber: 'Número de cuenta',
     AppStrings.payoutBankName: 'Nombre del banco (opcional)',
+    AppStrings.payoutNotCards:
+        'Una tarjeta guardada paga los pedidos. Para cobrar necesitas una cuenta bancaria o de dinero móvil.',
     AppStrings.completed: 'Completada',
     AppStrings.editProfile: 'Editar perfil',
     AppStrings.fullName: 'Nombre completo',
@@ -1903,6 +2019,8 @@ class AppTranslations extends Translations {
         'Los resultados de radiología aún no se pueden revisar',
     AppStrings.resultNotReadyToReview:
         'Este resultado aún no está listo para revisar',
+    AppStrings.resultNotReadyToDownload:
+        'El informe aún no ha llegado, así que no hay nada que descargar',
 
     // Farmacia
     AppStrings.navOrders: 'Pedidos',
@@ -2148,6 +2266,11 @@ class AppTranslations extends Translations {
     AppStrings.nextPayout: 'Próximo pago',
     AppStrings.accumulated: '@amount acumulados',
     AppStrings.minimumPayout: 'Mín. @amount',
+    AppStrings.availableToWithdraw: 'Disponible para retirar',
+    AppStrings.payoutPending: '@amount ya solicitados',
+    AppStrings.payoutTo: 'Se paga en',
+    AppStrings.payoutHistory: 'RETIROS',
+    AppStrings.belowMinimumPayout: 'Necesitas al menos @amount para retirar.',
     AppStrings.history: 'HISTORIAL',
 
     // Mensajes

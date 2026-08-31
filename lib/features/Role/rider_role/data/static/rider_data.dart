@@ -155,8 +155,14 @@ class RiderData {
     todayCount: 4,
     thisWeek: 87.5,
     weekCount: 19,
-    payoutDay: 'Friday',
+    // Empty, as the API path is: the platform has no payout schedule, so the
+    // chip is omitted rather than naming a day nothing computes. A fixture
+    // that says otherwise makes a golden documenting a screen no courier sees.
+    payoutDay: '',
     payoutMinimum: 50,
+    // Enough in the wallet to withdraw, so the golden shows the button in the
+    // state a courier who has cleared the minimum actually sees.
+    available: 87.5,
     history: [
       ...recentDeliveries,
       DeliveryRecord(

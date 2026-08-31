@@ -2,9 +2,11 @@ import 'package:get/get.dart';
 
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/exceptions/app_exceptions.dart';
+import '../../../../../../core/models/chat_thread.dart';
 import '../../../../../../core/routes/app_routes.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../../main/presentation/controllers/main_nav_controller.dart';
+import '../../../chat/domain/entities/conversation.dart';
 import '../../domain/entities/appointment.dart';
 import '../../domain/repositories/appointment_repository.dart';
 
@@ -137,8 +139,33 @@ class AppointmentsController extends GetxController {
 
   // ─── Actions ─────────────────────────────────────────────────────────────
 
-  void join(Appointment appointment) =>
-      Get.toNamed<void>(AppRoutes.videoCall, arguments: appointment);
+  /// Opens the consultation the way it was booked.
+  ///
+  /// Every appointment used to open the video screen, because every booking
+  /// was sent as `video` — there was no picker. Now a chat consultation opens
+  /// its thread, and an in-person visit opens nothing at all: it happens at
+  /// the clinic, and a "Join" that dialled a video call for it would be a
+  /// control doing something other than what it says.
+  void join(Appointment appointment) {
+    switch (appointment.type) {
+      case ConsultationType.video:
+        Get.toNamed<void>(AppRoutes.videoCall, arguments: appointment);
+      case ConsultationType.chat:
+        Get.toNamed<void>(
+          AppRoutes.chat,
+          arguments: ConversationPeer(
+            id: appointment.id,
+            thread: ChatThread.consultation(appointment.id),
+            name: appointment.doctorName,
+            specialty: appointment.specialty,
+            photoUrl: appointment.doctorPhotoUrl,
+            isOnline: true,
+          ),
+        );
+      case ConsultationType.inPerson:
+        AppSnackbar.info(AppStrings.inPersonVisitNote.tr);
+    }
+  }
 
   /// Finishes a booking that was left unpaid, at the same Payment Summary
   /// screen booking itself uses.

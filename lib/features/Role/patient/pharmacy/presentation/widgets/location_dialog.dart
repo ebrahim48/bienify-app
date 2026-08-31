@@ -16,9 +16,32 @@ import '../../../../../../core/utils/responsive.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../../../../../core/widgets/app_svg_icon.dart';
 import '../../../../../../core/widgets/blurred_dialog.dart';
+
 import '../../../medical_vault/domain/entities/medical_record.dart';
 import '../../../medical_vault/domain/repositories/vault_repository.dart';
 import '../../domain/entities/pharmacy.dart';
+
+import '../../../../../../core/exceptions/app_exceptions.dart';
+import '../../../../../../core/models/delivery_address.dart';
+import '../../../../../../core/services/attachment_picker_service.dart';
+import '../../../../../../core/services/device_location_service.dart';
+import '../../../../../../core/widgets/app_snackbar.dart';
+import '../../../chat/presentation/widgets/attachment_sheet.dart';
+import '../../../profile/domain/repositories/account_repository.dart';
+
+/// What the dialog resolves to: an address, and whether it should replace the
+/// one on the patient's profile.
+///
+/// The two are separate because a checkout change is normally for *that*
+/// delivery — sending one parcel to the office should not move the patient's
+/// home address, and every later order with it.
+class LocationEdit {
+  const LocationEdit({required this.address, required this.saveToProfile});
+
+  final DeliveryAddress address;
+  final bool saveToProfile;
+}
+
 
 /// Add or edit the delivery address, over a blurred page.
 ///
@@ -57,15 +80,35 @@ class _LocationDialogState extends State<LocationDialog> {
   String? _doorImage;
   bool _isUploadingDoorImage = false;
 
+
   final VaultRepository _vault = Get.find<VaultRepository>();
   final PhotoPickerService _photoPicker = PhotoPickerService();
+
+  String? _doorImageKey;
+  bool _uploading = false;
+
+  /// The pin, carried through the edit so saving does not drop one the patient
+  /// took on a previous visit.
+  double? _lat;
+  double? _lng;
+  bool _locating = false;
+
+  /// Off by default: a change made at checkout is for that delivery.
+  bool _saveToProfile = false;
+
 
   static const _allowedExtensions = {'jpg', 'jpeg', 'png'};
 
   @override
   void initState() {
     super.initState();
+
     _doorImage = widget.address.doorImageName;
+
+    _doorImageKey = widget.address.doorImageKey;
+    _lat = widget.address.lat;
+    _lng = widget.address.lng;
+
   }
 
   @override
@@ -105,13 +148,60 @@ class _LocationDialogState extends State<LocationDialog> {
     }
   }
 
+  /// Pins where the patient actually is.
+  ///
+  /// The server geocodes the typed line when no pin is sent, but geocoding
+  /// free text is a guess — and with no Maps key configured it returns nothing
+  /// at all, which is why most orders have had no destination and the courier
+  /// map no road to draw.
+  Future<void> _useCurrentLocation() async {
+    if (_locating) return;
+    setState(() => _locating = true);
+    try {
+      final fix = await Get.find<DeviceLocationService>().currentPosition(
+        onRefused: (reason) => AppSnackbar.info(
+          switch (reason) {
+            DeviceLocationRefusal.serviceOff =>
+              AppStrings.locationServiceOff.tr,
+            DeviceLocationRefusal.denied => AppStrings.locationDenied.tr,
+            DeviceLocationRefusal.blocked => AppStrings.locationBlocked.tr,
+            DeviceLocationRefusal.noFix => AppStrings.locationNoFix.tr,
+          },
+        ),
+      );
+      if (fix == null || !mounted) return;
+      setState(() {
+        _lat = fix.lat;
+        _lng = fix.lng;
+      });
+    } finally {
+      if (mounted) setState(() => _locating = false);
+    }
+  }
+
   void _save() {
     Navigator.of(context).pop(
+
       DeliveryAddress(
         line1: widget.address.line1,
         line2: widget.address.line2,
         note: _note.text.trim().isEmpty ? null : _note.text.trim(),
         doorImageName: _doorImage,
+
+      LocationEdit(
+        address: DeliveryAddress(
+          line1: line1,
+          line2: _line2.text.trim(),
+          city: _city.text.trim(),
+          lat: _lat,
+          lng: _lng,
+          note: _note.text.trim().isEmpty ? null : _note.text.trim(),
+          doorImageKey: _doorImageKey,
+        ),
+        // Not offered means this dialog *is* the profile editor, so the edit
+        // always lands on the profile.
+        saveToProfile: widget.offerSaveToProfile ? _saveToProfile : true,
+
       ),
     );
   }
@@ -158,6 +248,49 @@ class _LocationDialogState extends State<LocationDialog> {
                   widget.address.line2,
                   style: AppTextStyles.bodyMedium.rc(AppColors.gray400),
                 ),
+              ],
+            ),
+          ),
+          AppSpacing.gapV(AppSpacing.xs),
+          // The pin, above the door photo: both help the courier find the
+          // door, and this is the one the map needs.
+          _Field(
+            onTap: _useCurrentLocation,
+            child: Row(
+              children: [
+                Icon(
+                  _lat == null
+                      ? Icons.my_location_outlined
+                      : Icons.location_on,
+                  size: AppSizes.lg.w,
+                  color: _lat == null
+                      ? AppColors.gray400
+                      : AppColors.primary600,
+                ),
+                AppSpacing.gapH(AppSpacing.xs),
+                Expanded(
+                  child: Text(
+                    _locating
+                        ? AppStrings.locating.tr
+                        : _lat == null
+                        ? AppStrings.useCurrentLocation.tr
+                        : AppStrings.locationPinned.tr,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.bodyLarge.rc(
+                      _lat == null ? AppColors.gray400 : AppColors.gray900,
+                    ),
+                  ),
+                ),
+                if (_locating)
+                  SizedBox(
+                    width: AppSizes.lg.w,
+                    height: AppSizes.lg.w,
+                    child: CircularProgressIndicator(
+                      strokeWidth: AppSizes.borderWidth * 2,
+                      color: AppColors.primary600,
+                    ),
+                  ),
               ],
             ),
           ),

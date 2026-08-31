@@ -29,10 +29,11 @@ class WalletAccountsScreen extends GetView<AccountController> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AppSpacing.gapV(AppSpacing.base),
-          // Cards are read here so the list repaints when one is removed.
+          // Both lists are read here so either repaints when it changes.
           Obx(() {
             final cards = controller.cards.toList();
-            if (cards.isEmpty) {
+            final payouts = controller.payoutAccounts.toList();
+            if (cards.isEmpty && payouts.isEmpty) {
               return AppEmptyState(
                 icon: Icons.credit_card_off_outlined,
                 title: AppStrings.noPaymentMethod.tr,
@@ -42,6 +43,57 @@ class WalletAccountsScreen extends GetView<AccountController> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // The distinction, said once at the top. A courier who saved
+                // two debit cards here and then read "Add a payout account
+                // first" on the payout sheet reasonably concluded the app had
+                // lost them: cards are how money comes *in*, and a payout goes
+                // *out* to a bank or mobile-money account the server keeps in
+                // an entirely separate list. Both now appear on this screen,
+                // under headings that say which is which.
+                Text(
+                  AppStrings.cardsPayNotReceive.tr,
+                  style: AppTextStyles.bodyMedium.rc(AppColors.gray500),
+                ),
+                AppSpacing.gapV(AppSpacing.xs),
+                // Payout accounts first: this screen is reached from Earnings
+                // as often as from checkout, and the courier asking "where did
+                // my account go" is looking for this list.
+                if (payouts.isNotEmpty) ...[
+                  _SectionHeading(AppStrings.payoutAccountsHeading.tr),
+                  for (final account in payouts) ...[
+                    AppCard(
+                      hasShadow: false,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppSpacing.base.w,
+                        vertical: AppSpacing.sm.h,
+                      ),
+                      child: Row(
+                        children: [
+                          AppSvgIcon(
+                            AppIcons.wallet,
+                            size: AppSizes.xl2,
+                            color: AppColors.actionFill,
+                          ),
+                          AppSpacing.gapH(AppSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              account.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.titleMedium.rw(
+                                AppColors.gray900,
+                                FontWeight.w400,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    AppSpacing.gapV(AppSpacing.sm),
+                  ],
+                ],
+                if (cards.isNotEmpty)
+                  _SectionHeading(AppStrings.cardsHeading.tr),
                 for (final card in cards) ...[
                   AppCard(
                     hasShadow: false,
@@ -88,6 +140,27 @@ class WalletAccountsScreen extends GetView<AccountController> {
           _AddAccountButton(onTap: controller.openPaymentOptions),
           AppSpacing.gapV(AppSpacing.md),
         ],
+      ),
+    );
+  }
+}
+
+/// Names which of the two lists follows.
+///
+/// Shown only when there is something under it, so a wallet with cards and no
+/// payout account does not print an empty "Paid out to".
+class _SectionHeading extends StatelessWidget {
+  const _SectionHeading(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: AppSpacing.xs2.h),
+      child: Text(
+        label,
+        style: AppTextStyles.bodyLarge.rw(AppColors.gray900, FontWeight.w500),
       ),
     );
   }

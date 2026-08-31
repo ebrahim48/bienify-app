@@ -296,7 +296,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(r'$87.50'), findsOneWidget);
-    expect(find.text('Friday'), findsOneWidget);
+    // No payout day. This asserted "Friday", which came from a constant — the
+    // platform has no payout schedule, so the chip is gone rather than naming
+    // a day nothing computes.
+    expect(find.text('Friday'), findsNothing);
+    // What replaced it: a courier who has cleared the minimum can now ask to
+    // be paid. The bar used to be the whole card.
+    expect(find.text('Withdraw'), findsOneWidget);
 
     await settleImages(tester);
     await expectLater(

@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 
+import '../controllers/delivery_feedback_controller.dart';
 import '../controllers/order_tracking_controller.dart';
 import '../controllers/pharmacy_cart_controller.dart';
 import '../controllers/prescription_controller.dart';
@@ -39,6 +40,17 @@ class SelectMedicinesBinding extends Bindings {
 class PharmacyCartBinding extends Bindings {
   @override
   void dependencies() => _ensureFlowControllers();
+}
+
+class DeliveryFeedbackBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.put(
+      DeliveryFeedbackController(
+        deliveryId: Get.arguments is String ? Get.arguments as String : null,
+      ),
+    );
+  }
 }
 
 class OrderTrackingBinding extends Bindings {

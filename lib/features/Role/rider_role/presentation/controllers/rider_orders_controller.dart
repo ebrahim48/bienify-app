@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import '../../../patient/pharmacy/domain/entities/pharmacy.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 
 import '../../../../../core/constants/app_strings.dart';
@@ -8,15 +11,24 @@ import '../../../../../core/network/mappers.dart';
 import '../../../../../core/routes/app_routes.dart';
 import '../../../../../core/widgets/app_snackbar.dart';
 import '../../../patient/chat/domain/entities/conversation.dart';
+import '../../data/services/rider_location_reporter.dart';
 import '../../domain/entities/rider.dart';
 import '../../domain/repositories/rider_repository.dart';
 
 /// Backs Order Requests and the live job behind it.
 class RiderOrdersController extends GetxController {
-  RiderOrdersController({RiderRepository? repository})
-    : _repository = repository ?? Get.find<RiderRepository>();
+  RiderOrdersController({
+    RiderRepository? repository,
+    RiderLocationReporter? reporter,
+  }) : _repository = repository ?? Get.find<RiderRepository>(),
+       _reporter =
+           reporter ??
+           RiderLocationReporter(repository ?? Get.find<RiderRepository>());
 
   final RiderRepository _repository;
+
+  /// Sends the courier's position while a parcel is in motion.
+  final RiderLocationReporter _reporter;
 
   final RxList<DeliveryRequest> requests = <DeliveryRequest>[].obs;
 
@@ -39,6 +51,7 @@ class RiderOrdersController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _followOwnPosition();
     load();
   }
 
@@ -96,7 +109,19 @@ class RiderOrdersController extends GetxController {
     } finally {
       isSettling.value = false;
     }
-    _move(request, RequestTab.accepted, AppStrings.requestAccepted);
+    // `assigned` as well as the chip. The card kept the board's `unassigned`
+    // after a successful claim, and everything downstream reads that status:
+    // the tracking sheet showed nought of four steps done, and its button —
+    // which looks up the next state from the current one — found no transition
+    // out of `unassigned` and answered "this delivery is already finished".
+    // A courier could accept a job and then not move it, which is why holding
+    // several at once looked broken: only a job that survived a reload worked.
+    _move(
+      request,
+      RequestTab.accepted,
+      AppStrings.requestAccepted,
+      status: 'assigned',
+    );
   }
 
   /// Declining a job the courier has not claimed is theirs alone to know —
@@ -104,10 +129,15 @@ class RiderOrdersController extends GetxController {
   void decline(DeliveryRequest request) =>
       _move(request, RequestTab.cancelled, AppStrings.requestDeclined);
 
-  void _move(DeliveryRequest request, RequestTab to, String message) {
+  void _move(
+    DeliveryRequest request,
+    RequestTab to,
+    String message, {
+    String? status,
+  }) {
     final index = requests.indexWhere((r) => r.id == request.id);
     if (index == -1) return;
-    requests[index] = request.copyWith(tab: to);
+    requests[index] = request.copyWith(tab: to, status: status);
     AppSnackbar.success(message.tr);
   }
 
@@ -123,8 +153,53 @@ class RiderOrdersController extends GetxController {
   void track(DeliveryRequest request) {
     active.value = ActiveDelivery(request: request, status: request.status);
     _loadRoute(request.id);
+    _reportPosition(request);
     isNoteVisible.value = false;
     Get.toNamed<void>(AppRoutes.riderTracking);
+  }
+
+  /// The statuses a parcel is actually moving in. The server refuses a
+  /// position on anything else, so reporting outside them is a guaranteed
+  /// rejection rather than a stale pin.
+  static const Set<String> _inMotion = {'assigned', 'picked_up', 'in_transit'};
+
+  /// Starts or stops position reporting to match the job's state.
+  ///
+  /// Tied to the parcel rather than to the tracking screen: a courier who
+  /// backs out to check the next address is still carrying it, and the
+  /// customer's map should not freeze because they changed tabs.
+  Future<void> _reportPosition(DeliveryRequest request) async {
+    if (!_inMotion.contains(request.status)) {
+      await _reporter.stop();
+      return;
+    }
+    final refused = await _reporter.start(request.id);
+    if (refused != null) AppSnackbar.info(refused);
+  }
+
+  /// The courier's own pin, moved by their own pings rather than by re-reading
+  /// the delivery. Without this their map only caught up with them when the
+  /// screen was reopened.
+  void _followOwnPosition() {
+    _ownPosition = _reporter.reported.listen((position) {
+      final current = route.value;
+      if (current == null) return;
+      // Through `movedTo`, which carries every other field. Rebuilding the
+      // route by hand here dropped the road and the arrival time on every
+      // ping — the courier's own map lost its route seconds after drawing it.
+      route.value = current.movedTo(
+        MapPoint(lat: position.latitude, lng: position.longitude),
+      );
+    });
+  }
+
+  StreamSubscription<Position>? _ownPosition;
+
+  @override
+  void onClose() {
+    _ownPosition?.cancel();
+    _reporter.dispose();
+    super.onClose();
   }
 
   /// Where the parcel is coming from and going to.
@@ -165,6 +240,10 @@ class RiderOrdersController extends GetxController {
         id: job.request.customerId,
         thread: ChatThread.delivery(job.request.id),
         name: job.request.customerName,
+        // The customer's own picture in the thread header. Without it the
+        // courier's side of the conversation showed initials while the
+        // customer's side has shown the courier's photo all along.
+        photoUrl: job.request.customerPhotoUrl,
         // Where the parcel is going, which is what a courier needs under the
         // name. `specialty` is the field's name from the doctor thread this
         // screen shares a widget with.
@@ -223,6 +302,12 @@ class RiderOrdersController extends GetxController {
 
     final moved = job.copyWith(status: next);
     active.value = ActiveDelivery(request: moved, status: next);
+
+    // Follows the parcel into its new state: reporting starts at `assigned` if
+    // the courier reached the map before granting location, and stops the
+    // moment the parcel is handed over — a delivered job is not moving, and
+    // the server rejects positions on one.
+    await _reportPosition(moved);
 
     final index = requests.indexWhere((r) => r.id == job.id);
     if (index != -1) requests[index] = requests[index].copyWith(status: next);

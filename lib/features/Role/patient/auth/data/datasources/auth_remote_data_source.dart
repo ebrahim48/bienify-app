@@ -53,6 +53,11 @@ abstract class AuthRemoteDataSource {
     required String newPassword,
   });
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
+
   Future<void> logout(String token);
 }
 
@@ -146,8 +151,24 @@ class ApiAuthRemoteDataSource implements AuthRemoteDataSource {
   Future<AuthSessionModel> saveCredentials({
     required Map<String, dynamic> body,
   }) async {
+
     final data = await _api.postMap(ApiConstants.postAuthRegister, body: body);
     return AuthSessionModel.fromJson(data);
+
+    // `/auth/credentials`, not `/auth/register`. The phone step has already
+    // created the account and issued this session; `register` builds a *new*
+    // user, so sending profile-setup step 2 there left the patient with two
+    // accounts and signed into the empty one. This attaches the email and
+    // password to the account they are already holding.
+    final data = await _api.postMap(
+      ApiConstants.postAuthCredentials,
+      body: body,
+    );
+    final user = data['user'];
+    return UserModel.fromJson(
+      user is Map ? user.cast<String, dynamic>() : data,
+    );
+
   }
 
   /// Texts a recovery code to [phoneNumber].
@@ -198,6 +219,19 @@ class ApiAuthRemoteDataSource implements AuthRemoteDataSource {
       body: {'phone': phone, 'code': resetToken, 'newPassword': newPassword},
     );
     _pendingResetPhone = null;
+  }
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    // Authenticated by the bearer token the interceptor attaches; the current
+    // password is proof of possession, not identification.
+    await _api.post(
+      ApiConstants.postAuthPasswordChange,
+      body: {'currentPassword': currentPassword, 'newPassword': newPassword},
+    );
   }
 
   @override

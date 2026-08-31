@@ -73,7 +73,9 @@ abstract class AppRoutes {
   static const String wallet = '/wallet';
   static const String paymentOptions = '/payment-options';
   static const String addDebitCard = '/add-debit-card';
+  static const String addPayoutAccount = '/add-payout-account';
   static const String walletAccounts = '/wallet-accounts';
+  static const String walletTopUp = '/wallet-top-up';
   static const String reviewShop = '/review-shop';
   static const String becomePartner = '/become-partner';
   static const String settings = '/settings';

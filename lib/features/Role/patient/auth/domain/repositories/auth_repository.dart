@@ -72,6 +72,21 @@ abstract class AuthRepository {
     required String newPassword,
   });
 
+  /// Changes the password of the account that is already signed in.
+  ///
+  /// Distinct from [resetPassword], which recovers an account nobody is
+  /// holding: this one proves possession with [currentPassword] instead of a
+  /// texted code.
+  ///
+  /// The server revokes every refresh session on success (`logoutAll`, called
+  /// from `auth.service.ts:530`), including the caller's — so a successful
+  /// change leaves this device holding a dead refresh token, and the caller is
+  /// expected to sign out rather than wait for the next refresh to fail.
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
+
   // ─── Session ─────────────────────────────────────────────────────────────
 
   /// The session restored from local storage, or `null` when signed out.

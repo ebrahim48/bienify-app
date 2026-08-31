@@ -1,6 +1,8 @@
 import '../../../../../../core/constants/api_constants.dart';
 import '../../../../../../core/network/api_client.dart';
 import '../../../../../../core/network/mappers.dart';
+import '../../../../doctor_role/domain/entities/doctor_practice.dart'
+    show PayoutAccount;
 import '../../../profile/domain/entities/profile.dart';
 import '../../domain/repositories/wallet_repository.dart';
 
@@ -61,6 +63,28 @@ class ApiWalletRepository implements WalletRepository {
   }
 
   @override
+  Future<WalletTopUp> topUp({
+    required int amountMinor,
+    required String savedCardId,
+    required String idempotencyKey,
+  }) async {
+    final data = await _api.postMap(
+      ApiConstants.postWalletTopup,
+      body: {
+        'amountMinor': amountMinor,
+        'savedCardId': savedCardId,
+        'idempotencyKey': idempotencyKey,
+      },
+    );
+    return WalletTopUp(
+      transaction: walletTransactionFrom(data),
+      // The response carries the balance the ledger row left behind, so the
+      // screen shows the server's figure rather than one it worked out.
+      balanceAfter: Api.majorUnits(data['balanceAfterMinor']),
+    );
+  }
+
+  @override
   Future<WalletCard> addCard({
     required String gatewayToken,
     required String brand,
@@ -101,5 +125,32 @@ class ApiWalletRepository implements WalletRepository {
       query: {'limit': _pageSize},
     );
     return rows.map(orderHistoryEntryFrom).toList();
+  }
+
+  @override
+  Future<List<PayoutAccount>> payoutAccounts() async {
+    final rows = await _api.getList(ApiConstants.walletPayoutAccounts);
+    return rows.map(payoutAccountFrom).toList();
+  }
+
+  @override
+  Future<PayoutAccount> addPayoutAccount({
+    required String kind,
+    required String displayName,
+    required String accountNumber,
+    String? bankName,
+  }) async {
+    final data = await _api.postMap(
+      ApiConstants.postWalletPayoutAccounts,
+      body: {
+        'kind': kind,
+        'displayName': displayName,
+        'accountNumber': accountNumber,
+        // Only a bank account has one, and the server rejects an empty string
+        // where it expects a name or nothing at all.
+        if (bankName != null && bankName.isNotEmpty) 'bankName': bankName,
+      },
+    );
+    return payoutAccountFrom(data);
   }
 }

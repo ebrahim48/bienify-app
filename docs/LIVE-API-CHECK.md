@@ -54,9 +54,15 @@ Ran against `https://jakuan3500.syedbipul.me` through `ApiClient`.
 | PASS | anon | GET | `/api/v1/doctors/6a7aaebd9edac194dd587765` | ok |
 | PASS | anon | GET | `/api/v1/appointments/slots` | ok |
 | PASS | anon | GET | `/api/v1/reviews/doctors/6a7aaebd9edac194dd587765` | ok |
+
 | PASS | patient | GET | `/api/v1/appointments/6a7aaebb68ba3172df92783e` | ok |
 | PASS | patient | GET | `/api/v1/medicine-orders/6a80092317b1d5bb7292b8f6` | ok |
 | PASS | patient | GET | `/api/v1/prescriptions/6a7f446bed769fc824197f0a` | ok |
+
+| PASS | patient | GET | `/api/v1/appointments/6a8faf8586601f9f6565483e` | ok |
+| PASS | patient | GET | `/api/v1/medicine-orders/6a92cb943c11a32a7c17c554` | ok |
+| PASS | patient | GET | `/api/v1/prescriptions/6a7d814bed769fc824194bc2` | ok |
+
 | PASS | - | WRITE | `patient updates their profile` | ok |
 | PASS | - | WRITE | `patient asks for an avatar upload URL` | ok |
 | PASS | - | WRITE | `patient searches for free slots` | ok |

@@ -32,6 +32,17 @@ class BestMatchesScreen extends GetView<PrescriptionController> {
           children: [
             AppSpacing.gapV(AppSpacing.base),
             _PrescriptionBanner(prescription: controller.prescription.value),
+            // Only when there is a real choice. A picker offering one option
+            // is noise; two live scripts with no way to say which is being
+            // filled is a wrong answer presented confidently.
+            if (controller.hasPrescriptionChoice) ...[
+              AppSpacing.gapV(AppSpacing.sm),
+              _PrescriptionPicker(
+                prescriptions: controller.prescriptions.toList(),
+                selectedId: controller.prescription.value?.id,
+                onSelected: controller.selectPrescription,
+              ),
+            ],
             AppSpacing.gapV(AppSpacing.base),
             _SearchArea(area: controller.searchArea.value),
             AppSpacing.gapV(AppSpacing.base),
@@ -350,6 +361,62 @@ class _Meta extends StatelessWidget {
         AppSpacing.gapH(AppSpacing.xxs),
         Text(label, style: AppTextStyles.bodyMedium.rc(AppColors.gray400)),
       ],
+    );
+  }
+}
+
+/// Which script the shops are ranked against.
+///
+/// The screen used `scripts.first` — the newest — for everybody, so a patient
+/// holding two live prescriptions was shown shops matched to whichever the
+/// server happened to return first.
+class _PrescriptionPicker extends StatelessWidget {
+  const _PrescriptionPicker({
+    required this.prescriptions,
+    required this.selectedId,
+    required this.onSelected,
+  });
+
+  final List<DigitalPrescription> prescriptions;
+  final String? selectedId;
+  final ValueChanged<DigitalPrescription> onSelected;
+
+  static const double _height = 34;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: _height.h,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: prescriptions.length,
+        separatorBuilder: (_, _) => AppSpacing.gapH(AppSpacing.xs),
+        itemBuilder: (_, index) {
+          final script = prescriptions[index];
+          final isSelected = script.id == selectedId;
+          return Material(
+            color: isSelected ? AppColors.actionFill : AppColors.cardFieldFill,
+            borderRadius: AppRadius.rFull,
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () => onSelected(script),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm.w),
+                child: Center(
+                  // The reference, not the doctor's name: a patient with two
+                  // scripts from the same doctor could not tell them apart.
+                  child: Text(
+                    script.reference,
+                    style: AppTextStyles.bodyLarge.rc(
+                      isSelected ? AppColors.actionLabel : AppColors.gray900,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

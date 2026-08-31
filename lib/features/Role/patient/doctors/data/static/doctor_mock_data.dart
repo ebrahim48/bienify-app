@@ -6,6 +6,12 @@ import '../models/doctor_model.dart';
 class DoctorMockData {
   DoctorMockData._();
 
+  /// Sample practitioners.
+  ///
+  /// `patientsSeen` is carried because the live app shows it — the Doctor
+  /// Details stat tile and the list card both read it — and a fixture without
+  /// one would render a screen no real doctor produces. The values descend
+  /// with the review counts, the way a real directory's would.
   static const List<DoctorModel> doctors = [
     DoctorModel(
       id: 'doc-1',
@@ -13,6 +19,7 @@ class DoctorMockData {
       specialty: 'Phychologist',
       rating: 4.8,
       reviewCount: 220,
+      patientsSeen: 2700,
       consultationFee: 400,
     ),
     DoctorModel(
@@ -21,6 +28,7 @@ class DoctorMockData {
       specialty: 'Cardiologist',
       rating: 4.6,
       reviewCount: 180,
+      patientsSeen: 1400,
       consultationFee: 350,
     ),
     DoctorModel(
@@ -29,6 +37,7 @@ class DoctorMockData {
       specialty: 'Dentists',
       rating: 4.9,
       reviewCount: 150,
+      patientsSeen: 860,
       consultationFee: 300,
     ),
     DoctorModel(
@@ -37,6 +46,7 @@ class DoctorMockData {
       specialty: 'Orthodontists',
       rating: 4.7,
       reviewCount: 120,
+      patientsSeen: 430,
       consultationFee: 320,
     ),
     DoctorModel(
@@ -45,6 +55,7 @@ class DoctorMockData {
       specialty: 'Pediatric Dentists',
       rating: 4.8,
       reviewCount: 95,
+      patientsSeen: 95,
       consultationFee: 280,
     ),
   ];
@@ -86,7 +97,6 @@ class DoctorMockData {
   static DoctorDetails detailsFor(DoctorModel doctor) => DoctorDetails(
     doctor: doctor,
     experienceYears: 8,
-    patientCount: '2.7k+',
     workingTime: 'Sun-Sat, 9AM - 5PM',
     languages: const ['English'],
     biography:

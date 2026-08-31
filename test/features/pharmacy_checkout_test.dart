@@ -169,16 +169,81 @@ void main() {
     expect(pharmacy.placed.single.quantities, {realId: 1});
     expect(controller.isPlacingOrder.value, isFalse);
   });
+
+  testWidgets('carries the pin when the address has one', (tester) async {
+    // The server geocodes the typed address line when no pin is sent, which is
+    // a guess and returns nothing at all without a Maps key — so most orders
+    // reached the courier with no destination to draw a road to.
+    final pharmacy = _FakePharmacy();
+    final controller = await open(tester, pharmacy);
+
+    await controller.saveAddress(
+      const DeliveryAddress(
+        line1: '12 Oak Street',
+        city: 'Santo Domingo',
+        lat: 18.4861,
+        lng: -69.9312,
+      ),
+    );
+    await controller.placeOrder();
+    await settleSnackbar(tester);
+
+    expect(pharmacy.placed.single.lat, 18.4861);
+    expect(pharmacy.placed.single.lng, -69.9312);
+  });
+
+  testWidgets('sends no coordinates when the address was never pinned', (
+    tester,
+  ) async {
+    final pharmacy = _FakePharmacy();
+    final controller = await open(tester, pharmacy);
+
+    await controller.saveAddress(
+      const DeliveryAddress(line1: '12 Oak Street', city: 'Santo Domingo'),
+    );
+    await controller.placeOrder();
+    await settleSnackbar(tester);
+
+    // Null, not (0, 0) — which is a real place off the coast of Africa, and
+    // would send a courier there rather than letting the server geocode.
+    expect(pharmacy.placed.single.lat, isNull);
+    expect(pharmacy.placed.single.lng, isNull);
+  });
 }
 
 class _FakePharmacy implements PharmacyRepository {
   _FakePharmacy({this.failSearch = false});
 
+  // Checkout neither reviews nor cancels; these exist so the fake still
+  // satisfies the interface.
+  @override
+  Future<void> cancelOrder(String orderId) async {}
+
+  @override
+  Future<void> reviewPharmacy({
+    required String orderId,
+    required int rating,
+  }) async {}
+
+  @override
+  Future<void> reviewRider({
+    required String deliveryId,
+    required int rating,
+  }) async {}
+
   final bool failSearch;
   final List<String> searches = [];
   /// Named `placed`, not `orders`: the repository already has an `orders()`
   /// member and a field would collide with it.
-  final List<({String pharmacyId, Map<String, int> quantities})> placed = [];
+  final List<
+    ({
+      String pharmacyId,
+      Map<String, int> quantities,
+      double? lat,
+      double? lng,
+    })
+  >
+  placed = [];
 
   @override
   Future<List<Medicine>> searchMedicines({
@@ -204,8 +269,15 @@ class _FakePharmacy implements PharmacyRepository {
     required Map<String, int> quantitiesByMedicineId,
     required String deliveryAddress,
     String? prescriptionId,
+    double? deliveryLat,
+    double? deliveryLng,
   }) async {
-    placed.add((pharmacyId: pharmacyId, quantities: quantitiesByMedicineId));
+    placed.add((
+      pharmacyId: pharmacyId,
+      quantities: quantitiesByMedicineId,
+      lat: deliveryLat,
+      lng: deliveryLng,
+    ));
     return 'order-1';
   }
 
@@ -213,7 +285,10 @@ class _FakePharmacy implements PharmacyRepository {
   Future<void> payOrder(String orderId) async {}
 
   @override
-  Future<List<PharmacyStore>> stores({String query = ''}) async => const [];
+  Future<List<PharmacyStore>> stores({
+    String query = '',
+    String city = '',
+  }) async => const [];
 
   @override
   Future<List<PharmacyOrder>> orders() async => const [];

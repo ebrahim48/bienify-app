@@ -2,8 +2,26 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+
+	<!-- Selfie, ID card, licence and vehicle photos on the rider application. -->
+	<key>NSCameraUsageDescription</key>
+	<string>Bienify needs the camera to take your verification photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Bienify needs your photo library to attach verification photos.</string>
+	<!-- Live delivery tracking. The courier's position is streamed to the
+	     customer while a parcel is in hand; `RiderLocationReporter` asks only
+	     for when-in-use, and the `location` background mode below is what keeps
+	     the stream alive with the screen off, with the blue bar showing. -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Bienify shares your location with the customer while you are delivering their order.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
+
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

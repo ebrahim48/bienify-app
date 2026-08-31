@@ -139,6 +139,19 @@ class ApiVaultRepository implements VaultRepository {
   }
 
   @override
+  Future<({String url, String fileName})> recordDownloadUrl(
+    String recordId,
+  ) async {
+    final data = await _api.getMap(
+      ApiConstants.vaultRecordsDownloadUrl(recordId),
+    );
+    return (
+      url: Api.str(data['url']),
+      fileName: Api.str(data['fileName'], 'document'),
+    );
+  }
+
+  @override
   Future<void> shareRecord({
     required String recordId,
     required String doctorUserId,

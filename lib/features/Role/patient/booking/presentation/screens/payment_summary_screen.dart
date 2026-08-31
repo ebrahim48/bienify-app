@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/theme/app_colors.dart';
+import '../../../../../../core/theme/app_sizes.dart';
 import '../../../../../../core/theme/app_spacing.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/utils/responsive.dart';
@@ -61,6 +63,13 @@ class PaymentSummaryScreen extends GetView<PaymentController> {
               isEnabled: controller.useWallet.value,
               onChanged: controller.toggleWallet,
             ),
+            // Shown only when the wallet cannot cover the bill, which is the
+            // one moment a patient needs the top-up screen and the only place
+            // they would think to look for it.
+            if (controller.isWalletShort) ...[
+              AppSpacing.gapV(AppSpacing.xs),
+              _WalletShortNote(onTopUp: controller.topUp),
+            ],
             AppSpacing.gapV(AppSpacing.base),
             Text(
               AppStrings.choosePaymentMethod.tr,
@@ -87,6 +96,45 @@ class PaymentSummaryScreen extends GetView<PaymentController> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Says the wallet is short and offers the one action that fixes it.
+///
+/// Without this the payment simply failed with "Insufficient wallet balance"
+/// and the patient had nowhere to go — the wallet had no way to be filled.
+class _WalletShortNote extends StatelessWidget {
+  const _WalletShortNote({required this.onTopUp});
+
+  final VoidCallback onTopUp;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(
+          Icons.info_outline_rounded,
+          size: AppSizes.lg.w,
+          color: AppColors.gray400,
+        ),
+        AppSpacing.gapH(AppSpacing.xs2),
+        Expanded(
+          child: Text(
+            AppStrings.walletShort.tr,
+            style: AppTextStyles.bodyMedium.rc(AppColors.gray400),
+          ),
+        ),
+        AppSpacing.gapH(AppSpacing.xs),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTopUp,
+          child: Text(
+            AppStrings.addMoney.tr,
+            style: AppTextStyles.titleSmall.rc(AppColors.primary600),
+          ),
+        ),
+      ],
     );
   }
 }

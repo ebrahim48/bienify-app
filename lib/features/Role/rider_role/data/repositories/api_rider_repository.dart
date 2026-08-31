@@ -1,3 +1,5 @@
+import '../../../doctor_role/domain/entities/doctor_practice.dart'
+    show PayoutAccount;
 import '../../../patient/pharmacy/domain/entities/pharmacy.dart';
 import 'dart:io';
 
@@ -127,6 +129,7 @@ class ApiRiderRepository implements RiderRepository {
       _api.getMap(ApiConstants.walletEarnings),
       _api.get(ApiConstants.walletTransactions, query: {'limit': _pageSize}),
       _api.get(ApiConstants.ridersMeDeliveries, query: {'limit': _pageSize}),
+      _api.get(ApiConstants.walletWithdrawals, query: {'limit': _pageSize}),
     ]);
 
     final summary = Api.map(results[0]);
@@ -148,9 +151,68 @@ class ApiRiderRepository implements RiderRepository {
       weekCount: Api.integer(summary['weekCount']),
       // The payout day is a platform policy, not a per-rider field, so it
       // stays the one the design names.
-      payoutDay: 'Friday',
+      // Empty, so the chip is omitted. This read `'Friday'` from a constant:
+      // there is no payout schedule on the platform — an admin approves each
+      // withdrawal by hand — so a courier was being told money arrived on a
+      // day nothing computed and nobody guaranteed.
+      payoutDay: '',
       payoutMinimum: Api.majorUnits(summary['minimumWithdrawalMinor']),
       history: history,
+      // What a payout is actually drawn from, and what is already spoken for.
+      available: Api.majorUnits(summary['availableMinor']),
+      pendingWithdrawal: Api.majorUnits(summary['pendingWithdrawalMinor']),
+      withdrawals: ApiClient.listFrom(results[3])
+          .map(withdrawalRequestFrom)
+          .toList(),
+    );
+  }
+
+  // ─── Payout ──────────────────────────────────────────────────────────────
+
+  @override
+  Future<List<PayoutAccount>> payoutAccounts() async {
+    final rows = await _api.getList(ApiConstants.walletPayoutAccounts);
+    return rows.map(payoutAccountFrom).toList();
+  }
+
+  @override
+  Future<void> addPayoutAccount({
+    required String kind,
+    required String displayName,
+    required String accountNumber,
+    String? bankName,
+  }) async {
+    await _api.post(
+      ApiConstants.postWalletPayoutAccounts,
+      body: {
+        'kind': kind,
+        'displayName': displayName,
+        'accountNumber': accountNumber,
+        if (bankName != null && bankName.isNotEmpty) 'bankName': bankName,
+      },
+    );
+  }
+
+  @override
+  Future<void> makePayoutAccountDefault(String accountId) async {
+    await _api.patch(
+      ApiConstants.updateWalletPayoutAccountsDefault(accountId),
+    );
+  }
+
+  @override
+  Future<void> requestWithdrawal({
+    required double amount,
+    required String payoutAccountId,
+  }) async {
+    await _api.post(
+      ApiConstants.postWalletWithdrawals,
+      body: {
+        // Money crosses the wire in minor units so no arithmetic happens in
+        // floating point on the way.
+        'amountMinor': (amount * 100).round(),
+        'payoutAccountId': payoutAccountId,
+      },
     );
   }
 
@@ -243,5 +305,13 @@ class ApiRiderRepository implements RiderRepository {
   Future<DeliveryRoute> route(String deliveryId) async {
     final json = await _api.getMap(ApiConstants.deliveriesLocation(deliveryId));
     return deliveryRouteFrom(json);
+  }
+
+  @override
+  Future<void> reportLocation(String deliveryId, double lat, double lng) async {
+    await _api.patch(
+      ApiConstants.updateDeliveriesLocation(deliveryId),
+      body: {'lat': lat, 'lng': lng},
+    );
   }
 }

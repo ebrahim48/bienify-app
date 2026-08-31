@@ -12,6 +12,35 @@ class MockAccountRepository implements AccountRepository {
   @override
   Future<void> saveName(String name) async {}
 
+
+
+  /// Accepted and forgotten: there is no account behind the offline build to
+  /// close, and refusing would make the confirm dialog untestable.
+  @override
+  Future<void> deleteAccount() async {}
+
+  /// Held in memory so the mock behaves like the real thing across a
+  /// checkout: save an address, reopen the dialog, and it is still there.
+  ///
+  /// Per instance, not static — two mock repositories are two accounts, and a
+  /// static field would carry one test's address into the next.
+  DeliveryAddress? _address;
+
+  @override
+  Future<DeliveryAddress?> savedAddress() async => _address;
+
+  @override
+  Future<void> saveAddress(DeliveryAddress? address) async {
+    _address = address;
+  }
+
+  @override
+  Future<String> uploadDoorImage({
+    required String path,
+    required String mimeType,
+  }) async => path;
+
+
   @override
   Future<void> uploadAvatar({
     required List<int> bytes,

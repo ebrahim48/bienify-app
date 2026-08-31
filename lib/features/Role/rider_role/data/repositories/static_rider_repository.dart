@@ -1,3 +1,4 @@
+import '../../../doctor_role/domain/entities/doctor_practice.dart' show PayoutAccount;
 import '../../../patient/pharmacy/domain/entities/pharmacy.dart';
 import '../../domain/entities/rider.dart';
 import '../../domain/repositories/rider_repository.dart';
@@ -70,4 +71,35 @@ class StaticRiderRepository implements RiderRepository {
     dropoff: const MapPoint(lat: 18.4712, lng: -69.9089, label: '12 Oak Avenue'),
     reportedAt: DateTime.now(),
   );
+
+  @override
+  Future<void> reportLocation(String deliveryId, double lat, double lng) async {
+    // Nowhere to report to without a server. Accepted silently so a courier
+    // walking the app offline is not told their position failed to send.
+  }
+
+  /// No payout destinations without a server.
+  ///
+  /// Empty rather than a sample bank account: the payout sheet reads this to
+  /// decide whether it can offer a withdrawal at all, and inventing an account
+  /// would draw a live-looking button that pays into nothing.
+  @override
+  Future<List<PayoutAccount>> payoutAccounts() async => const [];
+
+  @override
+  Future<void> addPayoutAccount({
+    required String kind,
+    required String displayName,
+    required String accountNumber,
+    String? bankName,
+  }) async {}
+
+  @override
+  Future<void> makePayoutAccountDefault(String accountId) async {}
+
+  @override
+  Future<void> requestWithdrawal({
+    required double amount,
+    required String payoutAccountId,
+  }) async {}
 }

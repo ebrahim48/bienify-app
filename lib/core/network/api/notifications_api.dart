@@ -18,6 +18,14 @@ class NotificationsApi {
   Future<dynamic> createRead({required String id, Object? body}) =>
       _c.post(ApiConstants.postNotificationsRead(id), body: body);
 
+  /// `POST /api/v1/notifications/devices`
+  Future<dynamic> createDevices({Object? body}) =>
+      _c.post(ApiConstants.postNotificationsDevices, body: body);
+
+  /// `DELETE /api/v1/notifications/devices/:token`
+  Future<dynamic> removeDevices({required String token, Object? body}) =>
+      _c.delete(ApiConstants.deleteNotificationsDevices(token), body: body);
+
   /// `POST /api/v1/notifications/read-all`
   Future<dynamic> createReadall({Object? body}) =>
       _c.post(ApiConstants.postNotificationsReadAll, body: body);

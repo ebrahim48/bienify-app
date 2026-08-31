@@ -196,6 +196,7 @@ Appointment appointmentFrom(Map<String, dynamic> json) {
         : Api.str(json['lapseChoice']),
     isRefunded: json['refundedAt'] != null,
     isRescheduled: json['rescheduledToId'] != null,
+    type: ConsultationType.fromWire(Api.str(json['type'])),
   );
 }
 
@@ -359,6 +360,10 @@ DeliveryAddress? addressFrom(Object? value) {
     line1: line1,
     line2: Api.str(json['line2']),
     city: Api.str(json['city']),
+    // Null when the address was never pinned, which is different from being
+    // pinned at (0, 0) — an actual place off the coast of Africa.
+    lat: json['lat'] == null ? null : Api.decimal(json['lat']),
+    lng: json['lng'] == null ? null : Api.decimal(json['lng']),
     note: _orNull(Api.str(json['note'])),
     doorImageKey: _orNull(Api.str(json['doorImageKey'])),
   );
@@ -535,6 +540,11 @@ TestOrder testOrderFrom(
           patientName ?? Api.nameOf(json['patientId'], AppStrings.you.tr),
       patientDob: patientDob,
     ),
+    // Set once the lab's report has been filed into the vault. `Api.id` reads
+    // either a populated document or a bare id, so both shapes work.
+    resultRecordId: json['resultRecordId'] == null
+        ? null
+        : Api.id(json['resultRecordId']),
   );
 }
 
@@ -623,6 +633,9 @@ DeliveryRoute deliveryRouteFrom(Map<String, dynamic> json) {
   }
 
   final last = json['lastLocation'];
+  final road = Api.map(json['route']);
+  final polyline = Api.str(road['polyline']);
+
   return DeliveryRoute(
     status: Api.str(json['status'], 'unassigned'),
     courier: point(last),
@@ -631,7 +644,52 @@ DeliveryRoute deliveryRouteFrom(Map<String, dynamic> json) {
     reportedAt: last is Map<String, dynamic> && last['at'] != null
         ? Api.date(last['at'])
         : null,
+    // The road the courier actually drives, worked out server-side so the key
+    // stays off the phone and both people watching see the same line.
+    path: polyline.isEmpty ? const [] : decodePolyline(polyline),
+    // Absent rather than zero when nothing routed the journey: a `0 km` chip
+    // reads as "you have arrived".
+    distanceMeters: road['distanceMeters'] == null
+        ? null
+        : Api.integer(road['distanceMeters']),
+    etaSeconds:
+        road['durationSeconds'] == null
+        ? null
+        : Api.integer(road['durationSeconds']),
   );
+}
+
+/// Google's encoded polyline, back into points.
+///
+/// The format packs each coordinate as a delta from the one before it, in
+/// five-bit chunks with a continuation bit, sign encoded by inverting the bits
+/// of a negative value. Decoded here rather than pulled in as a dependency:
+/// it is twenty lines, and the alternative was a package for one function.
+List<MapPoint> decodePolyline(String encoded) {
+  final points = <MapPoint>[];
+  var index = 0;
+  var lat = 0;
+  var lng = 0;
+
+  int nextDelta() {
+    var shift = 0;
+    var result = 0;
+    while (index < encoded.length) {
+      final byte = encoded.codeUnitAt(index++) - 63;
+      result |= (byte & 0x1f) << shift;
+      shift += 5;
+      if (byte < 0x20) break;
+    }
+    // Odd values are negative, stored as the inverted positive.
+    return (result & 1) != 0 ? ~(result >> 1) : result >> 1;
+  }
+
+  while (index < encoded.length) {
+    lat += nextDelta();
+    lng += nextDelta();
+    points.add(MapPoint(lat: lat / 1e5, lng: lng / 1e5));
+  }
+  return points;
 }
 
 /// `GET /pharmacies/best-matches` — one shop, ranked against a prescription.
@@ -844,6 +902,7 @@ DeliveryRequest deliveryRequestFrom(Map<String, dynamic> json) {
     customerName: Api.nameOf(json['patientId']),
     customerAddress: Api.str(json['dropoffAddress']),
     customerId: Api.id(json['patientId']),
+    customerPhotoUrl: Api.avatarOf(json['patientId']),
     minutes: 0,
     distanceKm: 0,
     items: orderItemsLabel(json['orderId']),
@@ -995,6 +1054,11 @@ OrderHistoryEntry orderHistoryEntryFrom(Map<String, dynamic> json) {
     placedOn: Api.date(json['createdAt']),
     // Units ordered, not lines: two boxes of one medicine is two items.
     itemCount: items.fold(0, (n, i) => n + Api.integer(i['quantity'], 1)),
+    quantitiesByMedicineId: {
+      for (final item in items)
+        if (Api.id(item['medicineId']).isNotEmpty)
+          Api.id(item['medicineId']): Api.integer(item['quantity'], 1),
+    },
     total: Api.majorUnits(json['totalMinor']),
     state: orderStateFrom(Api.str(json['status'])),
   );
@@ -1127,3 +1191,36 @@ String _recordTypeLabel(String type) => switch (type) {
   'vaccination' => 'Vaccination',
   _ => 'Document',
 };
+
+/// `GET /wallet/payout-accounts` — a destination the user can be paid into.
+///
+/// Shared by every role that gets paid: the doctor's screens read the same
+/// rows, and this is the read they were doing inline.
+PayoutAccount payoutAccountFrom(Map<String, dynamic> json) {
+  // The server stores `displayName` and `maskedNumber`; it has never sent a
+  // `last4`, so reading one listed every account as a bare "bank".
+  final name = Api.str(json['displayName']);
+  final masked = Api.str(json['maskedNumber']);
+  final kind = Api.str(json['kind'], 'Account').replaceAll('_', ' ');
+  final title = name.isEmpty ? kind : name;
+  // `maskedNumber` arrives already masked (`••••5678`), so prefixing dots here
+  // would print two sets of them.
+  return PayoutAccount(
+    id: Api.id(json),
+    label: masked.isEmpty ? title : '$title $masked',
+    isDefault: json['isDefault'] == true,
+  );
+}
+
+/// `GET /wallet/withdrawals` — one payout the user has asked for.
+WithdrawalRequest withdrawalRequestFrom(Map<String, dynamic> json) =>
+    WithdrawalRequest(
+      id: Api.id(json),
+      amount: Api.majorUnits(json['amountMinor']),
+      // The server's own word, carried through rather than collapsed: an
+      // approval and a payment are different things to a courier waiting for
+      // money.
+      status: Api.str(json['status'], 'pending'),
+      requestedOn: Api.date(json['createdAt']),
+      note: Api.str(json['note']),
+    );
