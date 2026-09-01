@@ -51,7 +51,20 @@ class UploadedAttachment {
 /// request makes the signature invalid.
 class AttachmentUploader {
   AttachmentUploader(this._api, {Dio? storage})
-    : _storage = storage ?? Dio();
+    : _storage = storage ?? Dio(_storageOptions);
+
+  /// A bare [Dio] has no timeouts at all, so a bucket that accepts the
+  /// connection and then stalls left the PUT below waiting for ever — and
+  /// with it every caller's progress indicator, which is how the booking
+  /// screen came to sit on a spinner that never cleared. Generous rather than
+  /// short: 25MB over a weak connection is slow, not broken.
+  static final BaseOptions _storageOptions = BaseOptions(
+    connectTimeout: const Duration(seconds: 30),
+    // Between writes, not for the whole transfer, so a large upload that is
+    // still making progress is never cut off.
+    sendTimeout: const Duration(seconds: 60),
+    receiveTimeout: const Duration(seconds: 60),
+  );
 
   final ApiClient _api;
   final Dio _storage;

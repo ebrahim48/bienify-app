@@ -89,7 +89,13 @@ void main() {
     test('reads the doctor name and slot time', () {
       final a = appointmentFrom(json_(appointmentJson));
       expect(a.doctorName, 'Dr Dana Okafor');
-      expect(a.scheduledAt, DateTime.parse('2026-08-13T09:00:00.000Z'));
+      // Local, not the UTC value the server sent: every label reads `.hour`
+      // and `.day` straight off this, so a slot at 09:00Z has to arrive as
+      // 3pm to a patient in Dhaka rather than as 9am. Same instant either
+      // way — `DateTime ==` also compares the UTC flag, which is what makes
+      // this assertion say something.
+      expect(a.scheduledAt, DateTime.parse('2026-08-13T09:00:00.000Z').toLocal());
+      expect(a.scheduledAt.isUtc, isFalse);
     });
 
     // The server has more states than the three tabs the UI offers, so each

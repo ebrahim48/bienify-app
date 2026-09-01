@@ -15,10 +15,14 @@ import '../utils/responsive.dart';
 /// Medical vault") and a smaller filter row ("all · Active Orders · …",
 /// "All · Delivered · Pending · Cancelled").
 ///
-/// Wraps rather than scrolls. The designs keep every option on one line and on
-/// a wide phone this still does — but the widest sets do not fit at 320pt, and
-/// scrolling put "Completed Appointment" half off the screen edge with nothing
-/// to say it was there. A wrapped row is readable at every width.
+/// Wraps by default. The designs keep every option on one line and on a wide
+/// phone this still does — but the widest sets do not fit at 320pt, and a
+/// wrapped row is readable at every width.
+///
+/// Pass [isScrollable] where the design calls for one line whatever the width:
+/// the pills then sit in a single horizontally scrolling row. The trade is the
+/// one wrapping avoids — an option past the right edge with nothing to say it
+/// is there — so this is opt-in rather than the default.
 ///
 /// ```dart
 /// Obx(() => AppPillSelector(
@@ -35,6 +39,7 @@ class AppPillSelector extends StatelessWidget {
     required this.selectedIndex,
     required this.onSelected,
     this.isLarge = false,
+    this.isScrollable = false,
     this.horizontalPadding = AppSpacing.base,
     this.unselectedFill = AppColors.surface,
     this.unselectedInk = AppColors.gray900,
@@ -47,6 +52,9 @@ class AppPillSelector extends StatelessWidget {
 
   /// Segmented controls sit a size up from filter chips.
   final bool isLarge;
+
+  /// Keeps every pill on one line, scrolling sideways instead of wrapping.
+  final bool isScrollable;
 
   /// Inset each side of a label. Results to Review's three segments only fit
   /// a 390pt frame at the design's tighter 12pt; everywhere else keeps 16.
@@ -61,22 +69,39 @@ class AppPillSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: AppSpacing.xs.w,
-      runSpacing: AppSpacing.xs.h,
-      children: [
-        for (var index = 0; index < labels.length; index++)
-          _Pill(
-            label: labels[index],
-            isSelected: index == selectedIndex,
-            isLarge: isLarge,
-            horizontalPadding: horizontalPadding,
-            fill: unselectedFill,
-            ink: unselectedInk,
-            border: unselectedBorder,
-            onTap: () => onSelected(index),
-          ),
-      ],
+    final pills = [
+      for (var index = 0; index < labels.length; index++)
+        _Pill(
+          label: labels[index],
+          isSelected: index == selectedIndex,
+          isLarge: isLarge,
+          horizontalPadding: horizontalPadding,
+          fill: unselectedFill,
+          ink: unselectedInk,
+          border: unselectedBorder,
+          onTap: () => onSelected(index),
+        ),
+    ];
+
+    if (!isScrollable) {
+      return Wrap(
+        spacing: AppSpacing.xs.w,
+        runSpacing: AppSpacing.xs.h,
+        children: pills,
+      );
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var index = 0; index < pills.length; index++) ...[
+            if (index > 0) AppSpacing.gapH(AppSpacing.xs),
+            pills[index],
+          ],
+        ],
+      ),
     );
   }
 }

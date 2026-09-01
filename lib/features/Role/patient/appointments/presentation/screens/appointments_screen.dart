@@ -73,11 +73,12 @@ class AppointmentsScreen extends GetView<AppointmentsController> {
   }
 }
 
-/// The three filter pills.
+/// The three filter pills, on one horizontally scrolling line.
 ///
-/// `AppPillSelector` rather than a private row: it wraps, so "Cancelled
-/// Appointments" cannot end up past the screen edge the way it did when this
-/// scrolled. Every other chip row in the app is the same widget.
+/// `AppPillSelector` rather than a private row, so these are the same pills
+/// every other chip row in the app draws. Scrolling rather than wrapping: the
+/// three labels are long enough that wrapping stacked them one per line and
+/// pushed the history itself off the first screen.
 class _TabChips extends StatelessWidget {
   const _TabChips({required this.selected, required this.onSelected});
 
@@ -99,6 +100,7 @@ class _TabChips extends StatelessWidget {
       selectedIndex: tabs.indexOf(selected),
       onSelected: (index) => onSelected(tabs[index]),
       isLarge: true,
+      isScrollable: true,
     );
   }
 }

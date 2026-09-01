@@ -61,6 +61,11 @@ dependencies:
   socket_io_client: ^3.1.6
   video_player: ^2.11.1
   open_filex: ^4.7.0
+
+  # Renders a digital prescription — which is rows on the server, not a stored
+  # file — into a PDF on the device, so "Download prescription" hands over a
+  # real document instead of a snackbar.
+  pdf: ^3.11.3
   emoji_picker_flutter: ^4.4.0
   url_launcher: ^6.3.2
 

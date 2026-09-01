@@ -242,6 +242,8 @@ class AppStrings {
   static const String typingNow = 'typing_now';
   static const String attachmentsNeedConsultation =
       'attachments_need_consultation';
+  static const String messageNeedsConsultation =
+      'message_needs_consultation';
   static const String fileTooLarge = 'file_too_large';
   static const String attachPhoto = 'attach_photo';
   static const String attachCamera = 'attach_camera';

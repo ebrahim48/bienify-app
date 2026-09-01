@@ -95,10 +95,16 @@ class PrescriptionDetailsScreen extends GetView<DocumentsController> {
               ],
             ),
           ),
-          // No download card. A digital prescription is rows on the server,
-          // not a stored file — there is no PDF anywhere to fetch, and the
-          // card printed a snackbar and saved nothing. It comes back when the
-          // API can render one.
+          AppSpacing.gapV(AppSpacing.base),
+          // A digital prescription is rows on the server, not a stored file,
+          // so this renders the PDF on the device and hands it to the OS.
+          // The card used to print a snackbar and save nothing.
+          Obx(
+            () => _DownloadCard(
+              isBusy: controller.isDownloading.value,
+              onTap: () => controller.downloadPrescription(prescription),
+            ),
+          ),
           AppSpacing.gapV(AppSpacing.md),
         ],
       ),
@@ -333,3 +339,48 @@ class _Detail extends StatelessWidget {
   }
 }
 
+class _DownloadCard extends StatelessWidget {
+  const _DownloadCard({required this.onTap, required this.isBusy});
+
+  final VoidCallback onTap;
+
+  /// While a PDF is being written the card must not read as idle, or a second
+  /// tap starts a render the first one is still doing.
+  final bool isBusy;
+
+  static const double _spinner = 20;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      hasShadow: false,
+      onTap: isBusy ? null : onTap,
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.base.h),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isBusy)
+            SizedBox(
+              width: _spinner.w,
+              height: _spinner.w,
+              child: const CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.link,
+              ),
+            )
+          else
+            Icon(
+              Icons.download_rounded,
+              size: AppSizes.xl.w,
+              color: AppColors.link,
+            ),
+          AppSpacing.gapV(AppSpacing.xs2),
+          Text(
+            AppStrings.downloadPrescription.tr,
+            style: AppTextStyles.bodyLarge.rc(AppColors.gray900),
+          ),
+        ],
+      ),
+    );
+  }
+}

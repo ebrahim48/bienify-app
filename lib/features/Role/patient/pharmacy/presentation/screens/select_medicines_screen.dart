@@ -81,10 +81,22 @@ class SelectMedicinesScreen extends GetView<PharmacyCartController> {
                       separatorBuilder: (_, _) => AppSpacing.gapV(AppSpacing.xs),
                       itemBuilder: (context, index) {
                         final medicine = controller.prescribed[index];
-                        return _MedicineRow(
-                          medicine: medicine,
-                          isSelected: controller.isSelected(medicine),
-                          onToggle: () => controller.toggle(medicine),
+                        // A second `Obx`, inside the builder: `itemBuilder`
+                        // runs during the list's layout, not inside the
+                        // enclosing `Obx`, so a quantity read here is invisible
+                        // to it. That is why the stepper's number never moved
+                        // even once the callbacks were real.
+                        return Obx(
+                          () => _MedicineRow(
+                            medicine: medicine,
+                            isSelected: controller.isSelected(medicine),
+                            quantity: controller.quantityOf(medicine),
+                            onToggle: () => controller.toggle(medicine),
+                            onIncrement: () =>
+                                controller.incrementSelection(medicine),
+                            onDecrement: () =>
+                                controller.decrementSelection(medicine),
+                          ),
                         );
                       },
                     ),
@@ -165,12 +177,18 @@ class _MedicineRow extends StatelessWidget {
   const _MedicineRow({
     required this.medicine,
     required this.isSelected,
+    required this.quantity,
     required this.onToggle,
+    required this.onIncrement,
+    required this.onDecrement,
   });
 
   final Medicine medicine;
   final bool isSelected;
+  final int quantity;
   final VoidCallback onToggle;
+  final VoidCallback onIncrement;
+  final VoidCallback onDecrement;
 
   static const double _box = 26;
 
@@ -273,9 +291,9 @@ class _MedicineRow extends StatelessWidget {
               if (available) ...[
                 AppSpacing.gapV(AppSpacing.xs2),
                 QuantityStepper(
-                  quantity: 1,
-                  onIncrement: () {},
-                  onDecrement: () {},
+                  quantity: quantity,
+                  onIncrement: onIncrement,
+                  onDecrement: onDecrement,
                 ),
               ],
             ],

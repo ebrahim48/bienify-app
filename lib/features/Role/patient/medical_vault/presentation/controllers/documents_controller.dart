@@ -5,12 +5,14 @@ import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/routes/app_routes.dart';
 
 import '../../../../../../core/services/document_picker_service.dart';
+import '../../../../../../core/services/file_download_service.dart';
 import '../../../../../../core/utils/mime_type.dart';
 
 import '../../../../../../core/services/account_deletion_service.dart';
 import '../../../../../../core/services/support_service.dart';
 
 import '../../../../../../core/widgets/app_snackbar.dart';
+import '../../data/services/prescription_pdf.dart';
 import '../../domain/entities/medical_record.dart';
 import '../../domain/repositories/vault_repository.dart';
 
@@ -21,21 +23,31 @@ class DocumentsController extends GetxController {
     DocumentPickerService? documentPicker,
     SupportService? support,
     AccountDeletionService? deletion,
+    FileDownloadService? downloads,
+    PrescriptionPdf? prescriptionPdf,
   }) : _repository = repository ?? Get.find<VaultRepository>(),
        _documentPicker = documentPicker ?? DocumentPickerService(),
        _support = support ?? SupportService(),
-       _deletion = deletion ?? AccountDeletionService();
+       _deletion = deletion ?? AccountDeletionService(),
+       _downloads = downloads ?? FileDownloadService(),
+       _prescriptionPdf = prescriptionPdf ?? const PrescriptionPdf();
 
   final VaultRepository _repository;
   final DocumentPickerService _documentPicker;
   final SupportService _support;
   final AccountDeletionService _deletion;
+  final FileDownloadService _downloads;
+  final PrescriptionPdf _prescriptionPdf;
 
   final RxBool isLoading = true.obs;
 
   /// True while a picked file is uploading, so the button can say so and a
   /// second tap cannot start a parallel upload.
   final RxBool isUploading = false.obs;
+
+  /// True while a prescription PDF is being written, so the download card can
+  /// say so and a second tap cannot start a parallel render.
+  final RxBool isDownloading = false.obs;
 
   /// Set when the vault cannot be read. An empty history and an unreachable
   /// server look identical on screen unless one of them says so.
@@ -181,6 +193,29 @@ class DocumentsController extends GetxController {
       'December',
     ];
     return '${months[at.month - 1]} ${at.day}, ${at.year}';
+  }
+
+  /// Renders the prescription to a PDF on the device and opens it.
+  ///
+  /// There is no file on the server to fetch — a prescription is rows — so
+  /// the document is built from the same fields the screen shows. The button
+  /// stays disabled while one is being written so a second tap cannot start a
+  /// parallel render.
+  Future<void> downloadPrescription(DigitalPrescription prescription) async {
+    if (isDownloading.value) return;
+    isDownloading.value = true;
+    try {
+      final bytes = await _prescriptionPdf.build(
+        prescription,
+        issuedOn: issuedLabel(prescription.issuedOn),
+      );
+      await _downloads.openBytes(
+        bytes: bytes,
+        fileName: _prescriptionPdf.fileName(prescription),
+      );
+    } finally {
+      isDownloading.value = false;
+    }
   }
 
   /// `Apr 3, 2026` — the shorter form the upload card uses.

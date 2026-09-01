@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 import '../../../../../../core/base/base_controller.dart';
@@ -11,6 +12,7 @@ import '../../../appointments/domain/entities/appointment.dart';
 import '../../../appointments/domain/repositories/appointment_repository.dart';
 import '../../../appointments/presentation/controllers/appointments_controller.dart';
 import '../../../../../../core/services/attachment_picker_service.dart';
+import '../../../chat/presentation/widgets/attachment_sheet.dart';
 import '../../../medical_vault/domain/repositories/vault_repository.dart';
 import '../../../wallet/domain/repositories/wallet_repository.dart';
 import '../../domain/entities/payment_method.dart';
@@ -111,8 +113,17 @@ class PaymentController extends GetxController with SubmissionMixin {
     await _loadBalance();
   }
 
-  /// True while a document is being stored.
+  /// True while a document is being uploaded and shared.
+  ///
+  /// Deliberately not set while the native picker is open: the tiles used to
+  /// turn into a spinner the instant one was tapped, so the card sat
+  /// "loading" behind the file browser and stayed that way for as long as the
+  /// patient took to choose. Only the upload is work this screen is doing.
   final RxBool isAttaching = false.obs;
+
+  /// Guards the pick itself, which [isAttaching] no longer covers — without
+  /// it a second tap opens a second picker.
+  bool _isPicking = false;
 
   /// Vault record ids for what has been attached, so a removal can revoke the
   /// doctor's access rather than only hiding the row.
@@ -120,7 +131,21 @@ class PaymentController extends GetxController with SubmissionMixin {
 
   Future<void> addAttachment() => _attach(AttachmentSource.document);
 
-  Future<void> captureFromCamera() => _attach(AttachmentSource.camera);
+  /// Asks whether to take a photo or pick one, then attaches it.
+  ///
+  /// The tile went straight to the camera, which is a dead end wherever there
+  /// is not one: image_picker answers with a native "Camera not available."
+  /// alert and then returns nothing, so the tap read as broken on a simulator
+  /// and on any device with the camera restricted. Offering the gallery
+  /// alongside it also matches the paperclip in chat.
+  Future<void> captureFromCamera(BuildContext context) async {
+    final source = await AttachmentSheet.show(
+      context,
+      sources: const [AttachmentSource.camera, AttachmentSource.gallery],
+    );
+    if (source == null) return;
+    await _attach(source);
+  }
 
   /// Picks a document, files it in the patient's vault and shares it with the
   /// consulting doctor.
@@ -130,13 +155,19 @@ class PaymentController extends GetxController with SubmissionMixin {
   /// was stored, and the doctor received nothing. Sharing is the point of
   /// attaching a document at booking, so the upload is only half the job.
   Future<void> _attach(AttachmentSource source) async {
-    if (isAttaching.value) return;
+    if (_isPicking || isAttaching.value) return;
+
+    final PickedAttachment? picked;
+    _isPicking = true;
+    try {
+      picked = await _picker.pick(source);
+    } finally {
+      _isPicking = false;
+    }
+    if (picked == null) return;
 
     isAttaching.value = true;
     try {
-      final picked = await _picker.pick(source);
-      if (picked == null) return;
-
       final record = await _vault.uploadDocument(
         path: picked.file.path,
         fileName: picked.name,

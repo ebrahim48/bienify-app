@@ -52,9 +52,11 @@ class PresenceState {
   factory PresenceState.fromJson(Map<String, dynamic> json) => PresenceState(
     userId: '${json['userId'] ?? ''}',
     isOnline: json['isOnline'] == true,
+    // Local, like every other timestamp the app prints — the server sends
+    // UTC, and the header renders this as a wall-clock "last seen" time.
     lastSeen: json['lastSeen'] == null
         ? null
-        : DateTime.tryParse('${json['lastSeen']}'),
+        : DateTime.tryParse('${json['lastSeen']}')?.toLocal(),
   );
 
   final String userId;

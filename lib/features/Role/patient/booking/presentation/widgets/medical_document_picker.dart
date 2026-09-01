@@ -35,6 +35,9 @@ class MedicalDocumentPicker extends StatelessWidget {
 
   static const double _height = 78;
 
+  /// Faded, not hidden — an upload in flight should still read as this card.
+  static const double _busyOpacity = 0.4;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -43,32 +46,48 @@ class MedicalDocumentPicker extends StatelessWidget {
         AppCard(
           hasShadow: false,
           padding: EdgeInsets.zero,
+          // The tiles stay on screen while an upload runs rather than being
+          // replaced by a spinner: swapping the whole card out read as the
+          // screen having lost its content, and the progress bar says the
+          // same thing without taking the labels away.
           child: SizedBox(
             height: _height.h,
-            child: isBusy
-                ? const Center(child: CircularProgressIndicator())
-                : Row(
-                    children: [
-                      Expanded(
-                        child: _Tile(
-                          icon: AppIcons.cloudUpload,
-                          label: AppStrings.attachment.tr,
-                          onTap: onAttach,
+            child: Column(
+              children: [
+                Expanded(
+                  child: Opacity(
+                    opacity: isBusy ? _busyOpacity : 1,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _Tile(
+                            icon: AppIcons.cloudUpload,
+                            label: AppStrings.attachment.tr,
+                            onTap: isBusy ? null : onAttach,
+                          ),
                         ),
-                      ),
-                      Container(
-                        width: AppSizes.borderWidth,
-                        color: AppColors.surfaceBorder,
-                      ),
-                      Expanded(
-                        child: _Tile(
-                          icon: AppIcons.camera,
-                          label: AppStrings.camera.tr,
-                          onTap: onCamera,
+                        Container(
+                          width: AppSizes.borderWidth,
+                          color: AppColors.surfaceBorder,
                         ),
-                      ),
-                    ],
+                        Expanded(
+                          child: _Tile(
+                            icon: AppIcons.camera,
+                            label: AppStrings.camera.tr,
+                            onTap: isBusy ? null : onCamera,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                ),
+                if (isBusy)
+                  LinearProgressIndicator(
+                    minHeight: AppSizes.borderWidth * 2,
+                    backgroundColor: AppColors.surfaceBorder,
+                  ),
+              ],
+            ),
           ),
         ),
         if (attachments.isNotEmpty) ...[
@@ -95,7 +114,10 @@ class _Tile extends StatelessWidget {
 
   final String icon;
   final String label;
-  final VoidCallback onTap;
+
+  /// Null while an upload is running, so `InkWell` renders the tile inert
+  /// rather than the row merely ignoring the tap.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -136,7 +158,16 @@ class _AttachmentChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(name, style: AppTextStyles.bodySmall.rc(AppColors.primary700)),
+          // Flexible, because the name is whatever the patient's file was
+          // called and the picker hands back some long ones — a scan straight
+          // off a hospital portal overflowed the row by 239px.
+          Flexible(
+            child: Text(
+              name,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.bodySmall.rc(AppColors.primary700),
+            ),
+          ),
           if (onRemove != null) ...[
             AppSpacing.gapH(AppSpacing.xs2),
             GestureDetector(

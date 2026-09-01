@@ -245,6 +245,8 @@ class AppTranslations extends Translations {
     AppStrings.typingNow: 'typing…',
     AppStrings.attachmentsNeedConsultation:
         'Attachments need an active consultation',
+    AppStrings.messageNeedsConsultation:
+        'Book a consultation to message this doctor',
     AppStrings.fileTooLarge: 'That file is too large to send',
     AppStrings.attachPhoto: 'Photo',
     AppStrings.attachCamera: 'Camera',
@@ -1381,6 +1383,8 @@ class AppTranslations extends Translations {
     AppStrings.typingNow: 'escribiendo…',
     AppStrings.attachmentsNeedConsultation:
         'Los adjuntos requieren una consulta activa',
+    AppStrings.messageNeedsConsultation:
+        'Reserva una consulta para escribir a este médico',
     AppStrings.fileTooLarge: 'El archivo es demasiado grande',
     AppStrings.attachPhoto: 'Foto',
     AppStrings.attachCamera: 'Cámara',
