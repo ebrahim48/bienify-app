@@ -58,15 +58,18 @@ class Api {
     return fallback;
   }
 
-  /// Always in the device's own zone.
+  /// Always in the reader's own zone.
   ///
   /// The server writes UTC (`2026-08-31T18:31:04.000Z`), which `DateTime.parse`
-  /// faithfully returns as a *UTC* `DateTime` — and every `.hour` read off it
-  /// afterwards then prints UTC. A chat bubble showed the right time while it
-  /// was optimistic, because that one was built from `DateTime.now()`, and
-  /// jumped by the whole UTC offset the moment the stored row replaced it.
+  /// faithfully returns as a *UTC* `DateTime` — and every label in the app then
+  /// reads `.hour` and `.day` off it directly, so a message sent at 14:45 in
+  /// Dhaka printed as 8:45 AM. A chat bubble showed the right time while it was
+  /// optimistic, because that one was built from `DateTime.now()`, and jumped
+  /// by the whole offset the moment the stored row replaced it. The asymmetry
+  /// was one-sided: outgoing slot times already go out as `.toUtc()`.
+  ///
   /// Converting here rather than at each call site is the only way the two
-  /// cannot disagree.
+  /// cannot disagree. On a string that carries no zone, `toLocal` is a no-op.
   static DateTime date(dynamic v) {
     if (v is DateTime) return v.toLocal();
     final parsed = DateTime.tryParse(v?.toString() ?? '');

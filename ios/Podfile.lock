@@ -1,0 +1,100 @@
+PODS:
+  - agora_rtc_engine (6.5.1):
+    - AgoraIrisRTC_iOS (= 4.5.1-build.1)
+    - AgoraRtcEngine_iOS (= 4.5.1)
+    - Flutter
+  - AgoraInfra_iOS (1.2.13)
+  - AgoraIrisRTC_iOS (4.5.1-build.1)
+  - AgoraRtcEngine_iOS (4.5.1):
+    - AgoraRtcEngine_iOS/AIAEC (= 4.5.1)
+    - AgoraRtcEngine_iOS/AIAECLL (= 4.5.1)
+    - AgoraRtcEngine_iOS/AINS (= 4.5.1)
+    - AgoraRtcEngine_iOS/AINSLL (= 4.5.1)
+    - AgoraRtcEngine_iOS/AudioBeauty (= 4.5.1)
+    - AgoraRtcEngine_iOS/ClearVision (= 4.5.1)
+    - AgoraRtcEngine_iOS/ContentInspect (= 4.5.1)
+    - AgoraRtcEngine_iOS/FaceCapture (= 4.5.1)
+    - AgoraRtcEngine_iOS/FaceDetection (= 4.5.1)
+    - AgoraRtcEngine_iOS/LipSync (= 4.5.1)
+    - AgoraRtcEngine_iOS/ReplayKit (= 4.5.1)
+    - AgoraRtcEngine_iOS/RtcBasic (= 4.5.1)
+    - AgoraRtcEngine_iOS/SpatialAudio (= 4.5.1)
+    - AgoraRtcEngine_iOS/VideoAv1CodecDec (= 4.5.1)
+    - AgoraRtcEngine_iOS/VideoAv1CodecEnc (= 4.5.1)
+    - AgoraRtcEngine_iOS/VideoCodecDec (= 4.5.1)
+    - AgoraRtcEngine_iOS/VideoCodecEnc (= 4.5.1)
+    - AgoraRtcEngine_iOS/VirtualBackground (= 4.5.1)
+    - AgoraRtcEngine_iOS/VQA (= 4.5.1)
+  - AgoraRtcEngine_iOS/AIAEC (4.5.1)
+  - AgoraRtcEngine_iOS/AIAECLL (4.5.1)
+  - AgoraRtcEngine_iOS/AINS (4.5.1)
+  - AgoraRtcEngine_iOS/AINSLL (4.5.1)
+  - AgoraRtcEngine_iOS/AudioBeauty (4.5.1)
+  - AgoraRtcEngine_iOS/ClearVision (4.5.1)
+  - AgoraRtcEngine_iOS/ContentInspect (4.5.1)
+  - AgoraRtcEngine_iOS/FaceCapture (4.5.1)
+  - AgoraRtcEngine_iOS/FaceDetection (4.5.1)
+  - AgoraRtcEngine_iOS/LipSync (4.5.1)
+  - AgoraRtcEngine_iOS/ReplayKit (4.5.1)
+  - AgoraRtcEngine_iOS/RtcBasic (4.5.1):
+    - AgoraInfra_iOS (= 1.2.13)
+  - AgoraRtcEngine_iOS/SpatialAudio (4.5.1)
+  - AgoraRtcEngine_iOS/VideoAv1CodecDec (4.5.1)
+  - AgoraRtcEngine_iOS/VideoAv1CodecEnc (4.5.1)
+  - AgoraRtcEngine_iOS/VideoCodecDec (4.5.1)
+  - AgoraRtcEngine_iOS/VideoCodecEnc (4.5.1)
+  - AgoraRtcEngine_iOS/VirtualBackground (4.5.1)
+  - AgoraRtcEngine_iOS/VQA (4.5.1)
+  - Flutter (1.0.0)
+  - Google-Maps-iOS-Utils (5.0.0):
+    - GoogleMaps (~> 8.0)
+  - google_maps_flutter_ios (0.0.1):
+    - Flutter
+    - Google-Maps-iOS-Utils (< 7.0, >= 5.0)
+    - GoogleMaps (< 11.0, >= 8.4)
+  - GoogleMaps (8.4.0):
+    - GoogleMaps/Maps (= 8.4.0)
+  - GoogleMaps/Base (8.4.0)
+  - GoogleMaps/Maps (8.4.0):
+    - GoogleMaps/Base
+  - open_filex (0.0.2):
+    - Flutter
+
+DEPENDENCIES:
+  - agora_rtc_engine (from `.symlinks/plugins/agora_rtc_engine/ios`)
+  - Flutter (from `Flutter`)
+  - google_maps_flutter_ios (from `.symlinks/plugins/google_maps_flutter_ios/ios`)
+  - open_filex (from `.symlinks/plugins/open_filex/ios`)
+
+SPEC REPOS:
+  trunk:
+    - AgoraInfra_iOS
+    - AgoraIrisRTC_iOS
+    - AgoraRtcEngine_iOS
+    - Google-Maps-iOS-Utils
+    - GoogleMaps
+
+EXTERNAL SOURCES:
+  agora_rtc_engine:
+    :path: ".symlinks/plugins/agora_rtc_engine/ios"
+  Flutter:
+    :path: Flutter
+  google_maps_flutter_ios:
+    :path: ".symlinks/plugins/google_maps_flutter_ios/ios"
+  open_filex:
+    :path: ".symlinks/plugins/open_filex/ios"
+
+SPEC CHECKSUMS:
+  agora_rtc_engine: 7434787c0b5284d803c31c726562b8399b8c1744
+  AgoraInfra_iOS: 65e11a2183ab7836258768868d06058c22701b13
+  AgoraIrisRTC_iOS: dd3d957c25be6bd2b2a5d03fe706ebe8a46909f0
+  AgoraRtcEngine_iOS: 5092a058c7b2842db39d8ca614d451af6f84969a
+  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  Google-Maps-iOS-Utils: 66d6de12be1ce6d3742a54661e7a79cb317a9321
+  google_maps_flutter_ios: 0cf046caf50b00d95071f79e8031fcd5ef902beb
+  GoogleMaps: 8939898920281c649150e0af74aa291c60f2e77d
+  open_filex: 432f3cd11432da3e39f47fcc0df2b1603854eff1
+
+PODFILE CHECKSUM: d71a8f9d234bf288cee64b372c30c196c8075224
+
+COCOAPODS: 1.17.0

@@ -3,9 +3,16 @@ import 'package:get/get.dart';
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/routes/app_routes.dart';
+
+import '../../../../../../core/services/document_picker_service.dart';
+import '../../../../../../core/services/file_download_service.dart';
+import '../../../../../../core/utils/mime_type.dart';
+
 import '../../../../../../core/services/account_deletion_service.dart';
 import '../../../../../../core/services/support_service.dart';
+
 import '../../../../../../core/widgets/app_snackbar.dart';
+import '../../data/services/prescription_pdf.dart';
 import '../../domain/entities/medical_record.dart';
 import '../../domain/repositories/vault_repository.dart';
 
@@ -13,17 +20,34 @@ import '../../domain/repositories/vault_repository.dart';
 class DocumentsController extends GetxController {
   DocumentsController({
     VaultRepository? repository,
+    DocumentPickerService? documentPicker,
     SupportService? support,
     AccountDeletionService? deletion,
+    FileDownloadService? downloads,
+    PrescriptionPdf? prescriptionPdf,
   }) : _repository = repository ?? Get.find<VaultRepository>(),
+       _documentPicker = documentPicker ?? DocumentPickerService(),
        _support = support ?? SupportService(),
-       _deletion = deletion ?? AccountDeletionService();
+       _deletion = deletion ?? AccountDeletionService(),
+       _downloads = downloads ?? FileDownloadService(),
+       _prescriptionPdf = prescriptionPdf ?? const PrescriptionPdf();
 
   final VaultRepository _repository;
+  final DocumentPickerService _documentPicker;
   final SupportService _support;
   final AccountDeletionService _deletion;
+  final FileDownloadService _downloads;
+  final PrescriptionPdf _prescriptionPdf;
 
   final RxBool isLoading = true.obs;
+
+  /// True while a picked file is uploading, so the button can say so and a
+  /// second tap cannot start a parallel upload.
+  final RxBool isUploading = false.obs;
+
+  /// True while a prescription PDF is being written, so the download card can
+  /// say so and a second tap cannot start a parallel render.
+  final RxBool isDownloading = false.obs;
 
   /// Set when the vault cannot be read. An empty history and an unreachable
   /// server look identical on screen unless one of them says so.
@@ -101,18 +125,34 @@ class DocumentsController extends GetxController {
   void openPrescription(DigitalPrescription prescription) =>
       Get.toNamed<void>(AppRoutes.prescriptionDetails, arguments: prescription);
 
-  /// UI-only: file capture is a marked seam, so this adds a further copy of
-  /// the sample upload rather than opening a picker.
-  void uploadPrescription() {
-    final next = uploads.length + 1;
-    uploads.add(
-      UploadedDocument(
-        id: 'upload-$next',
-        fileName: 'image ($next).png',
-        kindLabel: AppStrings.labResult.tr,
-        uploadedOn: DateTime(2026, 4, 3),
-      ),
-    );
+  /// Files a document the patient picked off their phone.
+  ///
+  /// This used to append another copy of the sample upload, so the list grew
+  /// by one every tap and nothing ever reached the vault. The record the
+  /// server creates is what goes into [uploads] — not a locally invented one,
+  /// which would carry an id no later removal could match.
+  Future<void> uploadPrescription() async {
+    if (isUploading.value) return;
+
+    final file = await _documentPicker.pick();
+    if (file == null) return;
+
+    isUploading.value = true;
+    try {
+      final fileName = file.path.split('/').last;
+      final document = await _repository.uploadDocument(
+        path: file.path,
+        fileName: fileName,
+        mimeType: contentTypeForPath(fileName),
+        type: VaultRecordType.other,
+      );
+      uploads.insert(0, document);
+      AppSnackbar.success(AppStrings.documentUploaded.tr);
+    } on AppException catch (e) {
+      AppSnackbar.error(e.message);
+    } finally {
+      isUploading.value = false;
+    }
   }
 
   void removeUpload(UploadedDocument document) {
@@ -153,6 +193,29 @@ class DocumentsController extends GetxController {
       'December',
     ];
     return '${months[at.month - 1]} ${at.day}, ${at.year}';
+  }
+
+  /// Renders the prescription to a PDF on the device and opens it.
+  ///
+  /// There is no file on the server to fetch — a prescription is rows — so
+  /// the document is built from the same fields the screen shows. The button
+  /// stays disabled while one is being written so a second tap cannot start a
+  /// parallel render.
+  Future<void> downloadPrescription(DigitalPrescription prescription) async {
+    if (isDownloading.value) return;
+    isDownloading.value = true;
+    try {
+      final bytes = await _prescriptionPdf.build(
+        prescription,
+        issuedOn: issuedLabel(prescription.issuedOn),
+      );
+      await _downloads.openBytes(
+        bytes: bytes,
+        fileName: _prescriptionPdf.fileName(prescription),
+      );
+    } finally {
+      isDownloading.value = false;
+    }
   }
 
   /// `Apr 3, 2026` — the shorter form the upload card uses.

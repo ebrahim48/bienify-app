@@ -43,8 +43,14 @@ abstract class AuthRepository {
     required AgeRange ageRange,
   });
 
-  /// Profile-setup step 2 — attaches email/password to the phone account.
-  Future<UserEntity> saveCredentials({
+  /// Profile-setup step 2 — attaches email and password to the account the
+  /// phone step created.
+  ///
+  /// `POST /auth/credentials` files them against the phone-verified session
+  /// already in hand; the session itself does not change. [name] is sent
+  /// again because nothing carries step 1's value forward on its own.
+  Future<AuthSession> saveCredentials({
+    required String name,
     required String email,
     required String password,
   });

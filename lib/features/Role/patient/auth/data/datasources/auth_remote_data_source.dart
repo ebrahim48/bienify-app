@@ -36,6 +36,9 @@ abstract class AuthRemoteDataSource {
     required Map<String, dynamic> body,
   });
 
+  /// `POST /auth/credentials` — attaches the email and password to the
+  /// account the phone step already created, and answers with that user.
+  /// The session in hand is the one that stays.
   Future<UserModel> saveCredentials({
     required String token,
     required Map<String, dynamic> body,
@@ -152,6 +155,9 @@ class ApiAuthRemoteDataSource implements AuthRemoteDataSource {
     required String token,
     required Map<String, dynamic> body,
   }) async {
+    // The bearer token comes from the client's own session, so `token` is
+    // accepted only to satisfy the interface.
+    //
     // `/auth/credentials`, not `/auth/register`. The phone step has already
     // created the account and issued this session; `register` builds a *new*
     // user, so sending profile-setup step 2 there left the patient with two

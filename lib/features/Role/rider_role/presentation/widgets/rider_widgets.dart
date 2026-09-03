@@ -91,28 +91,33 @@ class RiderMasthead extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.titleMedium.rc(AppColors.authInk),
               ),
-              Row(
-                children: [
-                  Icon(
-                    Icons.location_on_outlined,
-                    size: AppSizes.lg.w,
-                    color: AppColors.gray600,
-                  ),
-                  Flexible(
-                    child: Text(
-                      location,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.bodyMedium.rc(AppColors.gray600),
+              // A pin and a chevron around nothing read as a place picker
+              // with the place missing. Someone with no courier city — an
+              // applicant, or a courier the server has not answered for yet —
+              // gets their name alone.
+              if (location.isNotEmpty)
+                Row(
+                  children: [
+                    Icon(
+                      Icons.location_on_outlined,
+                      size: AppSizes.lg.w,
+                      color: AppColors.gray600,
                     ),
-                  ),
-                  Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    size: AppSizes.lg.w,
-                    color: AppColors.gray600,
-                  ),
-                ],
-              ),
+                    Flexible(
+                      child: Text(
+                        location,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.bodyMedium.rc(AppColors.gray600),
+                      ),
+                    ),
+                    Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: AppSizes.lg.w,
+                      color: AppColors.gray600,
+                    ),
+                  ],
+                ),
             ],
             ),
           ),

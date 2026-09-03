@@ -37,11 +37,16 @@ class PharmacyCartController extends GetxController {
   /// totalled nothing.
   final RxList<Medicine> _catalogue = <Medicine>[].obs;
 
+  /// True while the catalogue is being read, so the list can say it is
+  /// waiting. Without it an unloaded script and an empty one look the same.
+  final RxBool isLoadingMedicines = false.obs;
+
   /// Reads the catalogue for whichever shop the patient picked.
   Future<void> loadStoreCatalogue() async {
     final chosen = store.value;
     _catalogue.clear();
     if (chosen == null) return;
+    isLoadingMedicines.value = true;
     try {
       _catalogue.value = await _pharmacy.searchMedicines(
         pharmacyId: chosen.id,
@@ -49,6 +54,8 @@ class PharmacyCartController extends GetxController {
     } on AppException {
       // Lines then price at zero, which the Add to Cart total makes obvious —
       // better than pricing them from somebody else's shelf.
+    } finally {
+      isLoadingMedicines.value = false;
     }
   }
 
@@ -240,6 +247,29 @@ class PharmacyCartController extends GetxController {
 
   bool get allSelected => selectedIds.length == availableCount;
 
+  /// How many packs of each medicine the patient wants, before the basket
+  /// exists. Absent means one — the quantity a prescription line implies.
+  ///
+  /// Kept apart from [lines] because Select Medicines runs before there is a
+  /// basket to hold quantities: the stepper on that screen was wired to two
+  /// empty callbacks and a literal `1`, so it read as working and did nothing.
+  final RxMap<String, int> _quantities = <String, int>{}.obs;
+
+  int quantityOf(Medicine medicine) => _quantities[medicine.id] ?? 1;
+
+  void incrementSelection(Medicine medicine) =>
+      _setSelectionQuantity(medicine, quantityOf(medicine) + 1);
+
+  void decrementSelection(Medicine medicine) =>
+      _setSelectionQuantity(medicine, quantityOf(medicine) - 1);
+
+  /// One is the floor. The tick box is what removes a line here, and a row
+  /// showing 0 that is still ticked would be counted by the total below.
+  void _setSelectionQuantity(Medicine medicine, int quantity) {
+    if (!medicine.isAvailable || quantity < 1) return;
+    _quantities[medicine.id] = quantity;
+  }
+
   void toggleSelectAll() {
     if (allSelected) {
       selectedIds.clear();
@@ -251,9 +281,12 @@ class PharmacyCartController extends GetxController {
   }
 
   /// Sum of the ticked lines, before delivery.
+  ///
+  /// Multiplied by the quantity chosen on each row, so the bar under the list
+  /// agrees with what the basket will cost.
   double get selectionTotal => prescribed
       .where((medicine) => selectedIds.contains(medicine.id))
-      .fold(0, (sum, medicine) => sum + medicine.price);
+      .fold(0, (sum, medicine) => sum + medicine.price * quantityOf(medicine));
 
   // ─── Cart ────────────────────────────────────────────────────────────────
 
@@ -295,7 +328,8 @@ class PharmacyCartController extends GetxController {
   void addSelectionToCart() {
     lines.value = [
       for (final medicine in prescribed)
-        if (selectedIds.contains(medicine.id)) CartLine(medicine: medicine),
+        if (selectedIds.contains(medicine.id))
+          CartLine(medicine: medicine, quantity: quantityOf(medicine)),
     ];
     Get.toNamed<void>(AppRoutes.pharmacyCart);
   }

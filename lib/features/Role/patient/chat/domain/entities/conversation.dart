@@ -294,6 +294,24 @@ class ChatMessage {
   /// Sentinel distinguishing "not passed" from "passed as null".
   static const Object _unset = Object();
 
+  /// `1 Apr 2026` — the day this was sent, for the separator between days.
+  ///
+  /// Absolute rather than "Today"/"Yesterday": those read the clock, and a
+  /// label that changes overnight cannot be pinned in a test.
+  String get dayLabel =>
+      '${sentAt.day} ${_months[sentAt.month - 1]} ${sentAt.year}';
+
+  /// Whether [other] was sent on the same calendar day as this.
+  bool isSameDayAs(ChatMessage other) =>
+      sentAt.year == other.sentAt.year &&
+      sentAt.month == other.sentAt.month &&
+      sentAt.day == other.sentAt.day;
+
+  static const List<String> _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
   /// `12:37 PM`, matching the design's bubble timestamps.
   String get timeLabel => TimeFormat.clock(sentAt);
 }

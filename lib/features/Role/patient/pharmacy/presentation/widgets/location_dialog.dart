@@ -12,6 +12,7 @@ import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/utils/responsive.dart';
 import '../../../../../../core/widgets/app_svg_icon.dart';
 import '../../../../../../core/widgets/blurred_dialog.dart';
+
 import '../../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../../core/models/delivery_address.dart';
 import '../../../../../../core/services/attachment_picker_service.dart';
@@ -32,6 +33,7 @@ class LocationEdit {
   final DeliveryAddress address;
   final bool saveToProfile;
 }
+
 
 /// Add or edit the delivery address, over a blurred page.
 ///
@@ -281,16 +283,6 @@ class _LocationDialogState extends State<LocationDialog> {
             ),
           ),
           AppSpacing.gapV(AppSpacing.xs),
-          _Field(
-            child: TextField(
-              controller: _city,
-              textCapitalization: TextCapitalization.words,
-              cursorColor: AppColors.primary800,
-              style: AppTextStyles.bodyLarge.rc(AppColors.gray900),
-              decoration: _plain(AppStrings.cityLabel.tr),
-            ),
-          ),
-          AppSpacing.gapV(AppSpacing.xs),
           // The pin, above the door photo: both help the courier find the
           // door, and this is the one the map needs.
           _Field(
@@ -331,6 +323,16 @@ class _LocationDialogState extends State<LocationDialog> {
                     ),
                   ),
               ],
+            ),
+          ),
+          AppSpacing.gapV(AppSpacing.xs),
+          _Field(
+            child: TextField(
+              controller: _city,
+              textCapitalization: TextCapitalization.words,
+              cursorColor: AppColors.primary800,
+              style: AppTextStyles.bodyLarge.rc(AppColors.gray900),
+              decoration: _plain(AppStrings.cityLabel.tr),
             ),
           ),
           AppSpacing.gapV(AppSpacing.xs),

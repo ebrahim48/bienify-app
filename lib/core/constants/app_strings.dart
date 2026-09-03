@@ -245,6 +245,8 @@ class AppStrings {
   static const String editingMessage = 'editing_message';
   static const String attachmentsNeedConsultation =
       'attachments_need_consultation';
+  static const String messageNeedsConsultation =
+      'message_needs_consultation';
   static const String fileTooLarge = 'file_too_large';
   static const String attachPhoto = 'attach_photo';
   static const String attachCamera = 'attach_camera';
@@ -539,6 +541,7 @@ class AppStrings {
   static const String view = 'view';
   static const String uploadPrescriptionAction = 'upload_prescription_action';
   static const String noUploadsYet = 'no_uploads_yet';
+  static const String documentUploaded = 'document_uploaded';
   static const String documentRemoved = 'document_removed';
 
   static const String labReports = 'lab_reports';

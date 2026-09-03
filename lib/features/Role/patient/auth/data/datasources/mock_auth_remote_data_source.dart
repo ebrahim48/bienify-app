@@ -138,6 +138,7 @@ class MockAuthRemoteDataSource implements AuthRemoteDataSource {
     return _delayed(() {
       _user = UserModel.fromJson({
         ..._user.toJson(),
+        'name': body['name'] ?? _user.name,
         'email': body['email'],
         'is_profile_complete': true,
       });

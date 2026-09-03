@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../constants/app_strings.dart';
 import '../exceptions/app_exceptions.dart';
 import '../widgets/app_snackbar.dart';
+import '../services/photo_picker_service.dart';
 import '../widgets/photo_upload_box.dart';
 import '../../features/Role/patient/profile/domain/repositories/account_repository.dart';
 
@@ -33,7 +34,8 @@ class AvatarService {
   Future<String?> change(BuildContext context) async {
     if (isUploading) return null;
 
-    final file = await pickPhoto(context);
+    // The one caller that is photographing a face rather than a document.
+    final file = await pickPhoto(context, facing: PhotoFacing.front);
     if (file == null) return null;
 
     progress.value = 0;

@@ -17,15 +17,24 @@ import '../../../../../../core/utils/responsive.dart';
 /// their own icons — and because the paperclip used to do exactly one thing,
 /// which meant sending a photo and sending a PDF were the same button.
 class AttachmentSheet extends StatelessWidget {
-  const AttachmentSheet({super.key});
+  const AttachmentSheet({super.key, this.sources = AttachmentSource.values});
+
+  /// Which sources to offer, in the order [_options] lists them.
+  ///
+  /// Narrowed by callers that cannot use all four: the booking screen's
+  /// camera tile offers the camera and the gallery, because a video or a PDF
+  /// belongs on its Attachment tile instead.
+  final List<AttachmentSource> sources;
 
   /// Resolves to the chosen source, or null if dismissed.
-  static Future<AttachmentSource?> show(BuildContext context) =>
-      showModalBottomSheet<AttachmentSource>(
-        context: context,
-        backgroundColor: AppColors.transparent,
-        builder: (_) => const AttachmentSheet(),
-      );
+  static Future<AttachmentSource?> show(
+    BuildContext context, {
+    List<AttachmentSource> sources = AttachmentSource.values,
+  }) => showModalBottomSheet<AttachmentSource>(
+    context: context,
+    backgroundColor: AppColors.transparent,
+    builder: (_) => AttachmentSheet(sources: sources),
+  );
 
   static const List<(AttachmentSource, IconData, String)> _options = [
     (AttachmentSource.camera, Icons.photo_camera_rounded, AppStrings.attachCamera),
@@ -53,11 +62,12 @@ class AttachmentSheet extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             for (final (source, icon, label) in _options)
-              _Option(
-                icon: icon,
-                label: label.tr,
-                onTap: () => Navigator.of(context).pop(source),
-              ),
+              if (sources.contains(source))
+                _Option(
+                  icon: icon,
+                  label: label.tr,
+                  onTap: () => Navigator.of(context).pop(source),
+                ),
           ],
         ),
       ),

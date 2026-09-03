@@ -6,6 +6,13 @@ import 'package:image_picker/image_picker.dart';
 /// Where a photo came from.
 enum PhotoSource { camera, gallery }
 
+/// Which camera to open for [PhotoSource.camera].
+///
+/// Most callers are photographing a document — a prescription, a licence, a
+/// report — held up to the phone, so the rear camera is the default. An avatar
+/// is the exception, and it is the caller that knows which it is.
+enum PhotoFacing { rear, front }
+
 /// Captures a photo from the camera or the gallery.
 ///
 /// One place owns the `ImagePicker`, so every upload box in the app behaves
@@ -23,7 +30,10 @@ class PhotoPickerService {
   static const int _maxSide = 1600;
   static const int _quality = 85;
 
-  Future<File?> pick(PhotoSource source) async {
+  Future<File?> pick(
+    PhotoSource source, {
+    PhotoFacing facing = PhotoFacing.rear,
+  }) async {
     try {
       final file = await _picker.pickImage(
         source: source == PhotoSource.camera
@@ -32,7 +42,9 @@ class PhotoPickerService {
         maxWidth: _maxSide.toDouble(),
         maxHeight: _maxSide.toDouble(),
         imageQuality: _quality,
-        preferredCameraDevice: CameraDevice.front,
+        preferredCameraDevice: facing == PhotoFacing.front
+            ? CameraDevice.front
+            : CameraDevice.rear,
       );
       return file == null ? null : File(file.path);
     } on Exception catch (error) {

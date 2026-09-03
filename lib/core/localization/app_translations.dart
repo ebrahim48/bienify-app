@@ -249,6 +249,8 @@ class AppTranslations extends Translations {
     AppStrings.editingMessage: 'Editing message',
     AppStrings.attachmentsNeedConsultation:
         'Attachments need an active consultation',
+    AppStrings.messageNeedsConsultation:
+        'Book a consultation to message this doctor',
     AppStrings.fileTooLarge: 'That file is too large to send',
     AppStrings.attachPhoto: 'Photo',
     AppStrings.attachCamera: 'Camera',
@@ -523,6 +525,7 @@ class AppTranslations extends Translations {
     AppStrings.view: 'View',
     AppStrings.uploadPrescriptionAction: 'Upload Prescription',
     AppStrings.noUploadsYet: 'Nothing uploaded yet',
+    AppStrings.documentUploaded: 'Document uploaded',
     AppStrings.documentRemoved: 'Document removed',
 
     AppStrings.labReports: 'Lab Reports',
@@ -1404,6 +1407,8 @@ class AppTranslations extends Translations {
     AppStrings.editingMessage: 'Editando mensaje',
     AppStrings.attachmentsNeedConsultation:
         'Los adjuntos requieren una consulta activa',
+    AppStrings.messageNeedsConsultation:
+        'Reserva una consulta para escribir a este médico',
     AppStrings.fileTooLarge: 'El archivo es demasiado grande',
     AppStrings.attachPhoto: 'Foto',
     AppStrings.attachCamera: 'Cámara',
@@ -1672,6 +1677,7 @@ class AppTranslations extends Translations {
     AppStrings.view: 'Ver',
     AppStrings.uploadPrescriptionAction: 'Subir receta',
     AppStrings.noUploadsYet: 'Aún no has subido nada',
+    AppStrings.documentUploaded: 'Documento subido',
     AppStrings.documentRemoved: 'Documento eliminado',
 
     AppStrings.labReports: 'Informes de laboratorio',

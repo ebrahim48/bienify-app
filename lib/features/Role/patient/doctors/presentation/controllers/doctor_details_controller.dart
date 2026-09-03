@@ -7,6 +7,7 @@ import '../../../../../../core/routes/app_routes.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../../appointments/domain/entities/appointment.dart';
 import '../../../appointments/domain/repositories/appointment_repository.dart';
+import '../../../../../../core/models/chat_thread.dart';
 import '../../../chat/domain/entities/conversation.dart';
 import '../../domain/entities/doctor.dart';
 import '../../domain/entities/doctor_details.dart';
@@ -90,15 +91,80 @@ class DoctorDetailsController extends GetxController with SubmissionMixin {
     selectedSlot.value = slot;
   }
 
-  /// Opens the chat thread with this doctor.
-  void openChat() => Get.toNamed<void>(
-    AppRoutes.chat,
-    arguments: ConversationPeer(
-      id: doctor.id,
-      name: doctor.name,
-      specialty: doctor.specialty,
-    ),
-  );
+  /// True while the consultation behind the message button is being looked up.
+  final RxBool isOpeningChat = false.obs;
+
+  /// Opens the patient's consultation with this doctor.
+  ///
+  /// This used to hand the chat screen a peer with no thread on it, which the
+  /// screen reads as "opened outside any conversation" and answers with the
+  /// bundled sample — so the button opened a fabricated exchange dated 1 April
+  /// in which this doctor quoted a fee they had never set, and anything the
+  /// patient typed into it went nowhere. The messages are only real when the
+  /// consultation naming the thread is.
+  ///
+  /// Two other things came from the same seeded peer, and are fixed here with
+  /// it: [Doctor.id] is a *profile* id, but presence and typing are addressed
+  /// per user, so the header was asking after a user that does not exist; and
+  /// `isOnline: true` made the doctor read as online whatever they were. The
+  /// socket answers both now.
+  Future<void> openChat() async {
+    if (isOpeningChat.value) return;
+
+    isOpeningChat.value = true;
+    final Appointment? consultation;
+    try {
+      consultation = await _consultationWithDoctor();
+    } on AppException catch (error) {
+      AppSnackbar.error(error.message);
+      return;
+    } finally {
+      isOpeningChat.value = false;
+    }
+
+    // Saying so beats opening a thread that cannot send: messaging hangs off
+    // a consultation, and this doctor has none with this patient yet.
+    if (consultation == null) {
+      AppSnackbar.info(AppStrings.messageNeedsConsultation.tr);
+      return;
+    }
+
+    Get.toNamed<void>(
+      AppRoutes.chat,
+      arguments: ConversationPeer(
+        // The doctor's user id, which is not [Doctor.id].
+        id: consultation.doctorUserId,
+        thread: ChatThread.consultation(consultation.id),
+        name: doctor.name,
+        specialty: doctor.specialty,
+        photoUrl: details.value?.doctor.photoUrl ?? doctor.photoUrl,
+      ),
+    );
+  }
+
+  /// The consultation whose thread the message button should open.
+  ///
+  /// A booking still to come is the one the patient means; failing that the
+  /// most recent past one, because a follow-up question after a consultation
+  /// belongs on the thread it happened in. Cancelled bookings are skipped —
+  /// nothing was consulted, and the server has no thread behind them.
+  Future<Appointment?> _consultationWithDoctor() async {
+    final mine = (await _appointments.list())
+        .where(
+          (a) =>
+              a.status != AppointmentStatus.cancelled &&
+              a.doctorUserId.isNotEmpty &&
+              (a.doctorProfileId == doctor.id || a.doctorUserId == doctor.id),
+        )
+        .toList();
+    if (mine.isEmpty) return null;
+
+    mine.sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+    return mine.firstWhere(
+      (a) => a.status == AppointmentStatus.upcoming,
+      orElse: () => mine.last,
+    );
+  }
 
   /// Reserves the chosen slot, then carries the booking into the payment
   /// summary.
