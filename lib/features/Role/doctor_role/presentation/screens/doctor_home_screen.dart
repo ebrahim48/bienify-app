@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 
 import '../../../../../core/constants/app_strings.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/services/notification_inbox_service.dart';
+import '../../../../../core/widgets/unread_badge.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_sizes.dart';
 import '../../../../../core/theme/app_spacing.dart';
@@ -13,6 +15,7 @@ import '../../../../../core/widgets/app_card.dart';
 import '../../../../../core/widgets/app_avatar.dart';
 import '../../domain/entities/doctor_practice.dart';
 import '../controllers/doctor_home_controller.dart';
+import '../controllers/doctor_shell_controller.dart';
 import '../widgets/appointments_chart.dart';
 import '../widgets/set_fees_sheet.dart';
 
@@ -108,6 +111,15 @@ class _Masthead extends StatelessWidget {
   static const double _avatar = 48;
   static const double _bell = 44;
 
+  /// The Profile tab, rather than a route pushed on top of the shell: the
+  /// practitioner's profile *is* a tab, and pushing a second copy over the
+  /// bar would leave the nav showing Home while the profile was on screen.
+  static void _openProfile() =>
+      Get.find<DoctorShellController>().selectIndex(_profileTab);
+
+  /// Its index in `DoctorShellScreen`: Home, Appointments, Message, Profile.
+  static const int _profileTab = 3;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -121,34 +133,44 @@ class _Masthead extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  // The practitioner's own picture when the server has one;
-                  // their initials on the header's own tint when it does not.
-                  if (practitioner.photoUrl != null)
-                    AppAvatar(
+                  // Their own picture and their own name both open their
+                  // profile, from here as from anywhere else: a person's
+                  // avatar is the control people already reach for, and it
+                  // used to be the one part of this header that did nothing.
+                  GestureDetector(
+                    onTap: _openProfile,
+                    child: practitioner.photoUrl != null
+                        ? AppAvatar(
                       imageUrl: practitioner.photoUrl,
                       name: practitioner.name,
                       size: _avatar,
                       fallbackAsset: null,
-                      backgroundColor: AppColors.doctorHeaderPanel,
-                      foregroundColor: AppColors.white,
-                    )
-                  else
-                    Container(
-                      width: _avatar.w,
-                      height: _avatar.w,
-                      decoration: BoxDecoration(
-                        color: AppColors.doctorHeaderPanel,
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        practitioner.initials,
-                        style: AppTextStyles.titleSmall.rc(AppColors.white),
-                      ),
-                    ),
+                            backgroundColor: AppColors.doctorHeaderPanel,
+                            foregroundColor: AppColors.white,
+                          )
+                        : Container(
+                            width: _avatar.w,
+                            height: _avatar.w,
+                            decoration: BoxDecoration(
+                              color: AppColors.doctorHeaderPanel,
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              practitioner.initials,
+                              style: AppTextStyles.titleSmall.rc(
+                                AppColors.white,
+                              ),
+                            ),
+                          ),
+                  ),
                   AppSpacing.gapH(AppSpacing.sm),
                   Expanded(
-                    child: Column(
+                    child: GestureDetector(
+                      onTap: _openProfile,
+                      // So the whole strip answers a tap, not just the glyphs.
+                      behavior: HitTestBehavior.opaque,
+                      child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -165,13 +187,26 @@ class _Masthead extends StatelessWidget {
                           style: AppTextStyles.titleLarge.rc(AppColors.white),
                         ),
                       ],
+                      ),
                     ),
                   ),
                   AppSpacing.gapH(AppSpacing.xs),
-                  _BellButton(
-                    size: _bell,
-                    hasUnread: practitioner.hasUnreadNotification,
-                    onTap: onNotifications,
+                  // The `.value` is read inside the `Obx`, not in a widget
+                  // built by it — an `Obx` wrapped around something that reads
+                  // the observable in its own `build` watches nothing, which
+                  // has silently frozen a screen in this codebase twice.
+                  Obx(
+                    () => _BellButton(
+                      size: _bell,
+                      // From the live inbox, not the practitioner payload:
+                      // that flag was whatever was true when the dashboard was
+                      // fetched, so a notification arriving a second later did
+                      // not light it.
+                      unread: Get.isRegistered<NotificationInboxService>()
+                          ? Get.find<NotificationInboxService>().unread.value
+                          : (practitioner.hasUnreadNotification ? 1 : 0),
+                      onTap: onNotifications,
+                    ),
                   ),
                 ],
               ),
@@ -191,15 +226,17 @@ class _Masthead extends StatelessWidget {
 class _BellButton extends StatelessWidget {
   const _BellButton({
     required this.size,
-    required this.hasUnread,
+    required this.unread,
     required this.onTap,
   });
 
   final double size;
-  final bool hasUnread;
-  final VoidCallback onTap;
 
-  static const double _dot = 10;
+  /// How many are waiting. A bare dot said only that some were, which is the
+  /// one thing a doctor already assumes.
+  final int unread;
+
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -223,16 +260,21 @@ class _BellButton extends StatelessWidget {
               color: AppColors.white,
             ),
           ),
-          if (hasUnread)
+          if (unread > 0)
             Positioned(
               right: 0,
               top: 0,
               child: Container(
-                width: _dot.w,
-                height: _dot.w,
-                decoration: const BoxDecoration(
+                constraints: BoxConstraints(minWidth: 18.w),
+                padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.h),
+                decoration: BoxDecoration(
                   color: AppColors.statWarnInk,
-                  shape: BoxShape.circle,
+                  borderRadius: AppRadius.rFull,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  UnreadBadge.label(unread),
+                  style: AppTextStyles.bodySmall.rc(AppColors.white),
                 ),
               ),
             ),

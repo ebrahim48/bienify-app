@@ -37,31 +37,6 @@ class AppointmentGroup {
 
 /// How a consultation is held. The three the server accepts
 /// (`appointment.model.ts:39`).
-enum ConsultationType {
-  video('video'),
-  chat('chat'),
-  inPerson('in_person');
-
-  const ConsultationType(this.wire);
-
-  /// What the API calls it. The enum doubles as the wire format so no mapping
-  /// table can drift from it.
-  final String wire;
-
-  static ConsultationType fromWire(String? value) {
-    for (final type in ConsultationType.values) {
-      if (type.wire == value) return type;
-    }
-    // An unknown type is not a reason to fail a booking that already exists;
-    // video is what the platform has always defaulted to.
-    return ConsultationType.video;
-  }
-
-  /// Only a video or chat consultation has something to open at its hour.
-  /// An in-person visit happens at the clinic.
-  bool get isRemote => this != ConsultationType.inPerson;
-}
-
 /// A scheduled consultation.
 class Appointment {
   const Appointment({
@@ -77,22 +52,23 @@ class Appointment {
     this.lapseChoice,
     this.isRefunded = false,
     this.isRescheduled = false,
-    this.type = ConsultationType.video,
   });
 
   final String id;
   final String doctorName;
   final String specialty;
   final DateTime scheduledAt;
+
+  // No `type` here. A booking used to carry `video` / `chat` / `in_person`,
+  // chosen at booking time and never changeable, which decided what the Join
+  // button would do — and refuse to do. An appointment is now simply an
+  // appointment: once it exists the two of them can message in its thread,
+  // call from that thread, and use anything else the consultation offers.
+  // The server keeps its column so rows written under the old picker still
+  // read; nothing in the app looks at it.
+
   final AppointmentStatus status;
   final String? doctorPhotoUrl;
-
-  /// How the consultation happens.
-  ///
-  /// Every booking used to be sent as `video` because there was no picker —
-  /// so a patient who wanted to be seen in person, and a doctor who only
-  /// consults that way, both got a video call neither had asked for.
-  final ConsultationType type;
 
   /// What the consultation costs, in major units.
   ///

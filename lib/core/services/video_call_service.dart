@@ -107,6 +107,68 @@ abstract class VideoCallService {
   Future<void> dispose();
 }
 
+/// What each side publishes and subscribes to for a consultation.
+///
+/// Said out loud rather than left to the SDK's defaults. These four are the
+/// whole of a consultation — being heard, being seen, hearing, and seeing —
+/// and the join used to name none of them. The defaults happen to be these
+/// values, which is exactly the problem: nothing in the code said a doctor and
+/// a patient must be able to hear each other, so nothing here contradicted an
+/// audio route that sent the sound to the earpiece.
+const ChannelMediaOptions consultationMediaOptions = ChannelMediaOptions(
+  clientRoleType: ClientRoleType.clientRoleBroadcaster,
+  channelProfile: ChannelProfileType.channelProfileCommunication,
+  publishMicrophoneTrack: true,
+  publishCameraTrack: true,
+  autoSubscribeAudio: true,
+  autoSubscribeVideo: true,
+);
+
+/// Re-applies a mute or camera-off chosen before the engine existed.
+///
+/// Its own function so it can be driven against a fake engine, because this
+/// is the one worth proving: the buttons are live from the first frame, the
+/// engine is not, and `_engine?.mute…` on a null engine did nothing and said
+/// nothing about it. Someone who muted themselves while the screen still read
+/// "Connecting…" watched a mic-off icon while being published, live, to the
+/// other party for the whole consultation.
+///
+/// Called after the join, because joining republishes both tracks.
+Future<void> applyPendingMedia(
+  RtcEngine engine, {
+  required bool muted,
+  required bool cameraOff,
+}) async {
+  if (muted) await engine.muteLocalAudioStream(true);
+  if (cameraOff) {
+    await engine.muteLocalVideoStream(true);
+    await engine.stopPreview();
+  }
+}
+
+/// The media settings a video consultation needs, before anyone joins.
+///
+/// Its own function so it can be driven against a fake engine. Left inline it
+/// was unreachable by any test, which is how it went out with audio never
+/// configured at all — the engine was told about video and left to its own
+/// devices about sound.
+///
+/// Two things here, and both read to the person holding the phone as "the
+/// call has no audio":
+///
+///   - the audio module is enabled explicitly rather than assumed;
+///   - the route is forced to the loudspeaker. The Communication profile a
+///     consultation joins with sends audio to the *earpiece* by default,
+///     which is right for a phone call held against your head and wrong for a
+///     video call held at arm's length. The sound was there all along, coming
+///     out of a speaker nobody's ear was near.
+Future<void> configureForVideoConsultation(RtcEngine engine) async {
+  await engine.enableVideo();
+  await engine.enableAudio();
+  await engine.setDefaultAudioRouteToSpeakerphone(true);
+  await engine.startPreview();
+}
+
 /// Drives one Agora call.
 ///
 /// Owns the engine and nothing else: it does not know what a consultation is,
@@ -192,59 +254,85 @@ class AgoraVideoCallService implements VideoCallService {
     _scheduleRenewal(appointmentId, credentials.expiresAt);
   }
 
+  /// The handler this service registered, so it can take it off again.
+  RtcEngineEventHandler? _handler;
+
+  /// A release still running from the call before this one.
+  static Future<void>? _releasing;
+
   Future<void> _start(RoomCredentials credentials) async {
+    // Agora hands back one engine for the whole process and quietly skips
+    // `initialize` if it already exists, so a second call opened while the
+    // first was still tearing down attached itself to an engine that was
+    // about to be destroyed. Waiting for that to finish is the difference
+    // between a working second call and a black screen until restart.
+    await _releasing;
+
     final engine = createAgoraRtcEngine();
     _engine = engine;
 
     final channel = credentials.roomId;
 
     await engine.initialize(RtcEngineContext(appId: credentials.appId));
-    engine.registerEventHandler(
-      RtcEngineEventHandler(
+    final handler = RtcEngineEventHandler(
         onJoinChannelSuccess: (_, _) => _emit(
           CallState(stage: CallStage.waiting, channelId: channel),
         ),
-        onUserJoined: (_, remoteUid, _) => _emit(
-          CallState(
-            stage: CallStage.live,
-            remoteUid: remoteUid,
-            channelId: channel,
-          ),
+        onUserJoined: (_, remoteUid, _) => _peerBack(
+          remoteUid,
+          channel,
         ),
         // Why they left decides whether the call is over. Hanging up ends it
         // for both sides, the way a phone call works; a network drop does not,
         // because they may be seconds from coming back.
-        onUserOffline: (_, _, reason) => _emit(
-          CallState(
-            stage: reason == UserOfflineReasonType.userOfflineQuit
-                ? CallStage.ended
-                : CallStage.waiting,
-            channelId: channel,
-          ),
-        ),
-        onError: (err, msg) => _emit(
-          CallState(
-            stage: CallStage.failed,
-            message: '$err: $msg',
-            channelId: channel,
-          ),
-        ),
-      ),
+        onUserOffline: (_, _, reason) {
+          if (reason == UserOfflineReasonType.userOfflineQuit) {
+            _lostPeerAt = null;
+            _emit(CallState(stage: CallStage.ended, channelId: channel));
+            return;
+          }
+          // Dropped rather than hung up: their network went, or their phone
+          // did. Worth waiting a moment — people walk into lifts — but not
+          // forever, which is what this used to do. A dead peer left the other
+          // side on "Ringing…" with the timer running and no way out but the
+          // back button, which does not hang up either.
+          _lostPeerAt = DateTime.now();
+          _emit(CallState(stage: CallStage.waiting, channelId: channel));
+          _armPeerGiveUp(channel);
+        },
+        // An error during a call that is already running is not the end of
+        // the call. Agora reports plenty of them — a codec fallback, a
+        // transient network complaint — and treating every one as fatal tore
+        // down the remote video view for good: `failed` carried no
+        // `remoteUid`, no further `onUserJoined` was coming for a peer already
+        // in the room, and the footer dropped back to "Ringing…" with no way
+        // out of a call that was, in fact, still connected.
+        onError: (err, msg) {
+          if (_state.stage == CallStage.live) return;
+          _emit(
+            CallState(
+              stage: CallStage.failed,
+              message: '$err: $msg',
+              channelId: channel,
+            ),
+          );
+        },
     );
+    _handler = handler;
+    engine.registerEventHandler(handler);
 
-    await engine.enableVideo();
-    await engine.startPreview();
+    await configureForVideoConsultation(engine);
     // By account, not by uid: the server signs these tokens for a string user
     // account, and Agora answers a numeric-uid join with errInvalidToken.
     await engine.joinChannelWithUserAccount(
       token: credentials.token,
       channelId: credentials.roomId,
       userAccount: credentials.account,
-      options: const ChannelMediaOptions(
-        clientRoleType: ClientRoleType.clientRoleBroadcaster,
-        channelProfile: ChannelProfileType.channelProfileCommunication,
-      ),
+      options: consultationMediaOptions,
     );
+
+    // After the join, because the join republishes both tracks.
+    await _applyPendingMedia(engine);
   }
 
   /// Swaps in a fresh token before the current one expires.
@@ -283,24 +371,74 @@ class AgoraVideoCallService implements VideoCallService {
     return RoomCredentials.fromJson(raw);
   }
 
+
+  /// How long the other side may be gone before the call is given up on.
+  ///
+  /// Long enough to survive a lift or a network handover, short enough that a
+  /// phone that has died does not leave somebody staring at a frozen screen.
+  static const Duration _peerGracePeriod = Duration(seconds: 30);
+
+  DateTime? _lostPeerAt;
+  Timer? _peerGiveUp;
+
+  /// The other side came back, or arrived for the first time.
+  void _peerBack(int remoteUid, String channel) {
+    _lostPeerAt = null;
+    _peerGiveUp?.cancel();
+    _peerGiveUp = null;
+    _emit(
+      CallState(stage: CallStage.live, remoteUid: remoteUid, channelId: channel),
+    );
+  }
+
+  /// Ends the call if the other side does not come back.
+  void _armPeerGiveUp(String channel) {
+    _peerGiveUp?.cancel();
+    _peerGiveUp = Timer(_peerGracePeriod, () {
+      if (_lostPeerAt == null) return;
+      _emit(CallState(stage: CallStage.ended, channelId: channel));
+    });
+  }
+
   Future<bool> _grantMediaPermissions() async {
     final results = await [Permission.camera, Permission.microphone].request();
     return results.values.every((status) => status.isGranted);
   }
 
+  /// What the user asked for before there was an engine to ask.
+  ///
+  /// The mute and camera buttons are live from the first frame, while the
+  /// engine does not exist until permissions have been granted and the room
+  /// has been fetched — a second or two later. `_engine?.mute…` on a null
+  /// engine did nothing at all and said nothing about it, so someone who
+  /// muted themselves while the screen still read "Connecting…" watched a
+  /// mic-off icon while being published, live, to the other party for the
+  /// whole consultation. Held here and applied the moment the engine exists.
+  bool _wantsMuted = false;
+  bool _wantsCameraOff = false;
+
   @override
-  Future<void> setMuted(bool value) async =>
-      _engine?.muteLocalAudioStream(value);
+  Future<void> setMuted(bool value) async {
+    _wantsMuted = value;
+    await _engine?.muteLocalAudioStream(value);
+  }
 
   @override
   Future<void> setCameraOff(bool value) async {
-    await _engine?.muteLocalVideoStream(value);
+    _wantsCameraOff = value;
+    final engine = _engine;
+    if (engine == null) return;
+    await engine.muteLocalVideoStream(value);
     if (value) {
-      await _engine?.stopPreview();
+      await engine.stopPreview();
     } else {
-      await _engine?.startPreview();
+      await engine.startPreview();
     }
   }
+
+  /// Applies anything the user chose before the engine was up.
+  Future<void> _applyPendingMedia(RtcEngine engine) =>
+      applyPendingMedia(engine, muted: _wantsMuted, cameraOff: _wantsCameraOff);
 
   @override
   Future<void> switchCamera() async => _engine?.switchCamera();
@@ -311,16 +449,38 @@ class AgoraVideoCallService implements VideoCallService {
   RtcEngine? get engine => _engine;
 
   @override
-  Future<void> dispose() async {
+  Future<void> dispose() {
+    // Published so the next call can await it. `dispose` is fired and
+    // forgotten by the screen that is closing, which is fine — as long as
+    // whoever starts the next call knows there is a teardown in flight.
+    final done = _dispose();
+    _releasing = done;
+    return done;
+  }
+
+  Future<void> _dispose() async {
+    _peerGiveUp?.cancel();
+    _peerGiveUp = null;
     _renewal?.cancel();
     _renewal = null;
 
     final engine = _engine;
+    final handler = _handler;
     _engine = null;
+    _handler = null;
     if (engine != null) {
+      // Unregistered explicitly. `registerEventHandler` adds rather than
+      // replaces, so a handler left behind by a finished call goes on
+      // receiving events from the shared engine and delivering them into a
+      // service nobody is listening to any more.
+      if (handler != null) engine.unregisterEventHandler(handler);
       await engine.leaveChannel();
       await engine.release();
     }
+
+    // `_releasing` is deliberately left pointing at this future rather than
+    // cleared: awaiting one that has already completed costs nothing, and
+    // clearing it could wipe out a newer teardown that started meanwhile.
 
     await _states.close();
   }

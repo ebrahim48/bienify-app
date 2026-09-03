@@ -90,6 +90,22 @@ class AuthInterceptor extends Interceptor {
     }
   }
 
+  /// Renews the access token on demand, for a caller that is not an HTTP
+  /// request.
+  ///
+  /// The socket needs this. It authenticates once in its handshake and
+  /// socket.io replays that same payload on every reconnect, so when the
+  /// 15-minute access token expires the next drop is refused and every retry
+  /// after it replays the same dead token. Nothing recovered that on its own:
+  /// the refresh here only ever ran off a 401, and a client sitting in a chat
+  /// makes no HTTP requests at all — so messages, typing, presence and read
+  /// receipts stayed down while the app looked perfectly connected.
+  ///
+  /// Shares the single-flight guard with the 401 path deliberately: two
+  /// refreshes in flight look to the server exactly like a stolen refresh
+  /// token being replayed, and it revokes every session for that user.
+  Future<String?> refreshTokens() => _refreshOnce();
+
   Future<String?> _refreshOnce() {
     // Whoever gets here first owns the refresh; everyone else awaits it.
     return _inFlight ??= _performRefresh().whenComplete(() => _inFlight = null);

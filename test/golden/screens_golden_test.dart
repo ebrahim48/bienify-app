@@ -1,6 +1,7 @@
 import 'package:bienify_app/features/Role/patient/chat/domain/entities/conversation.dart';
 import 'package:bienify_app/features/Role/patient/pharmacy/domain/entities/pharmacy.dart';
 import 'package:bienify_app/app.dart';
+import 'package:bienify_app/core/models/chat_thread.dart';
 import 'package:bienify_app/core/di/dependency_injection.dart';
 import 'package:bienify_app/core/localization/app_translations.dart';
 import 'package:bienify_app/core/theme/app_theme.dart';
@@ -166,9 +167,12 @@ void main() {
       binding: ChatBinding(),
       arguments: const ConversationPeer(
         id: 'doctor-1',
+        // The consultation this thread hangs off. Without it the screen is the
+        // no-conversation case — no room to send to and none to call into — so
+        // the golden documented a header with its call button missing.
+        thread: ChatThread.consultation('appointment-1'),
         name: 'Dr Reed',
         specialty: 'Cardiology',
-        isOnline: true,
       ),
     );
     await settleImages(tester);

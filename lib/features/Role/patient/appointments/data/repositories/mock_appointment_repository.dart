@@ -26,14 +26,13 @@ class MockAppointmentRepository implements AppointmentRepository {
   Future<Appointment> book({
     required String doctorProfileId,
     required DateTime slotStart,
-    required String type,
     String? reason,
   }) async {
     await Future<void>.delayed(_latency);
     final booked = Appointment(
       id: 'mock-${_store.length + 1}',
       doctorName: 'Dr Demo',
-      specialty: type,
+      specialty: 'General',
       scheduledAt: slotStart,
     );
     _store.add(booked);

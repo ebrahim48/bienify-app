@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../../../core/constants/app_strings.dart';
+import '../controllers/rider_shell_controller.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_sizes.dart';
@@ -36,37 +37,51 @@ class RiderMasthead extends StatelessWidget {
 
   static const double _avatar = 40;
 
+  /// The Profile tab, rather than a route pushed over the shell.
+  static void _openProfile() =>
+      Get.find<RiderShellController>().selectIndex(_profileTab);
+
+  /// Its index in `RiderShellScreen`: Home, Orders, Earnings, Profile.
+  static const int _profileTab = 3;
+
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        if (photoUrl != null)
-          AppAvatar(
-            imageUrl: photoUrl,
-            name: name,
-            size: _avatar,
-            fallbackAsset: null,
-            backgroundColor: AppColors.authInk,
-            foregroundColor: AppColors.white,
-          )
-        else
-          Container(
-            width: _avatar.w,
-            height: _avatar.w,
-            decoration: const BoxDecoration(
-              color: AppColors.authInk,
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              Icons.person_rounded,
-              size: AppSizes.xl2.w,
-              color: AppColors.white,
-            ),
-          ),
+        // Their own picture and their own name both open their profile, from
+        // here as from anywhere else.
+        GestureDetector(
+          onTap: _openProfile,
+          child: photoUrl != null
+              ? AppAvatar(
+                  imageUrl: photoUrl,
+                  name: name,
+                  size: _avatar,
+                  fallbackAsset: null,
+                  backgroundColor: AppColors.authInk,
+                  foregroundColor: AppColors.white,
+                )
+              : Container(
+                  width: _avatar.w,
+                  height: _avatar.w,
+                  decoration: const BoxDecoration(
+                    color: AppColors.authInk,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.person_rounded,
+                    size: AppSizes.xl2.w,
+                    color: AppColors.white,
+                  ),
+                ),
+        ),
         AppSpacing.gapH(AppSpacing.xs),
         Expanded(
-          child: Column(
+          child: GestureDetector(
+            onTap: _openProfile,
+            behavior: HitTestBehavior.opaque,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -99,6 +114,7 @@ class RiderMasthead extends StatelessWidget {
                 ],
               ),
             ],
+            ),
           ),
         ),
         InkResponse(

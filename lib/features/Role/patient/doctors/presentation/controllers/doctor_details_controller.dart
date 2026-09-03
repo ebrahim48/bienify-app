@@ -97,7 +97,6 @@ class DoctorDetailsController extends GetxController with SubmissionMixin {
       id: doctor.id,
       name: doctor.name,
       specialty: doctor.specialty,
-      isOnline: true,
     ),
   );
 
@@ -145,7 +144,6 @@ class DoctorDetailsController extends GetxController with SubmissionMixin {
       booked = await _appointments.book(
         doctorProfileId: doctor.id,
         slotStart: slotStart,
-        type: consultationType.value.wire,
       );
     });
 
@@ -153,19 +151,6 @@ class DoctorDetailsController extends GetxController with SubmissionMixin {
 
     Get.toNamed<void>(AppRoutes.paymentSummary, arguments: booked);
   }
-
-  /// How this consultation will be held.
-  ///
-  /// Every booking used to be sent as `video` with no way to choose, though
-  /// the server has always accepted `chat` and `in_person` — so a patient who
-  /// wanted to be seen in person got a video call instead.
-  final Rx<ConsultationType> consultationType = ConsultationType.video.obs;
-
-  void selectConsultationType(ConsultationType value) =>
-      consultationType.value = value;
-
-  bool isConsultationType(ConsultationType value) =>
-      consultationType.value == value;
 
   /// Merges a selected day with a slot label such as `02:30 AM`.
   DateTime _combine(DateTime day, String label) {

@@ -1,4 +1,5 @@
 import '../../../../../../core/models/chat_thread.dart';
+import '../../../../../../core/utils/time_format.dart';
 
 /// Who the patient is talking to, shown in the chat header.
 class ConversationPeer {
@@ -9,7 +10,6 @@ class ConversationPeer {
     this.thread,
     this.photoUrl,
     this.photoAsset,
-    this.isOnline = false,
   });
 
   final String id;
@@ -28,7 +28,9 @@ class ConversationPeer {
   /// The rider thread sets it so the courier is not shown a doctor's photo.
   final String? photoAsset;
 
-  final bool isOnline;
+  // No `isOnline` here. It was a seeded flag every caller passed as `true`,
+  // which is presence asserted on no evidence — the header now draws the dot
+  // from the socket alone, and nothing at all until the socket has answered.
 }
 
 /// One row of the message list.
@@ -53,14 +55,32 @@ class ConversationThread {
 
   final int unreadCount;
 
+  /// The same row with a newer last message.
+  ///
+  /// Every field is carried across deliberately: an omitted one silently
+  /// reverts to its default, which is how a courier's masthead once reset
+  /// itself to zero.
+  ConversationThread withLastMessage({
+    required String preview,
+    required DateTime at,
+    int? unreadCount,
+  }) => ConversationThread(
+    peer: peer,
+    preview: preview,
+    lastMessageAt: at,
+    unreadCount: unreadCount ?? this.unreadCount,
+  );
+
   String get appointmentId => peer.thread?.id ?? '';
 
   bool get hasUnread => unreadCount > 0;
 
-  /// `18:31` — the list prints a 24-hour clock, unlike the bubbles.
-  String get timeLabel =>
-      '${lastMessageAt.hour.toString().padLeft(2, '0')}:'
-      '${lastMessageAt.minute.toString().padLeft(2, '0')}';
+  /// `2:32 PM` today, `Yesterday`, the weekday within the week, then a date.
+  ///
+  /// It used to print a bare 24-hour clock for every row, so a thread last
+  /// answered a fortnight ago read as though it had been answered this
+  /// morning.
+  String get timeLabel => TimeFormat.threadStamp(lastMessageAt);
 }
 
 /// Which side of the thread a message sits on.
@@ -179,6 +199,7 @@ class ChatMessage {
     this.attachment,
     this.uploadProgress,
     this.reactions = const [],
+    this.editedAt,
   });
 
   final String id;
@@ -202,12 +223,31 @@ class ChatMessage {
   /// At most one per person, so this doubles as the row shown under a bubble.
   final List<MessageReaction> reactions;
 
+  /// When the sender last rewrote this, or null if they never did. A reader
+  /// who saw the first version is owed the word `Edited` under the new one.
+  final DateTime? editedAt;
+
   /// 0–1 while this device is still uploading, null once the server has it.
   /// Kept on the message so the progress bar lives on the bubble it belongs
   /// to rather than in a banner that cannot say which file it means.
   final double? uploadProgress;
 
   bool get isMine => author == MessageAuthor.me;
+
+  bool get wasEdited => editedAt != null;
+
+  /// Messenger's window, which is the rule people already know. Only your own
+  /// words, only text — an attachment's body is a caption for a file that
+  /// would no longer match — and only while it is fresh.
+  static const Duration editWindow = Duration(minutes: 15);
+
+  /// Whether this can still be rewritten, as of [now].
+  bool canEditAt(DateTime now) =>
+      isMine &&
+      !isPending &&
+      kind == MessageKind.text &&
+      !hasAttachment &&
+      now.difference(sentAt) <= editWindow;
 
   bool get hasAttachment => attachment != null;
 
@@ -228,12 +268,14 @@ class ChatMessage {
     bool? isPending,
     MessageAttachment? attachment,
     List<MessageReaction>? reactions,
+    String? text,
+    DateTime? editedAt,
     // Nullable-and-meaningful: passing null must be able to *clear* progress
     // once the upload finishes, which `?? this.uploadProgress` cannot express.
     Object? uploadProgress = _unset,
   }) => ChatMessage(
     id: id ?? this.id,
-    text: text,
+    text: text ?? this.text,
     sentAt: sentAt,
     author: author,
     deliveredAt: deliveredAt ?? this.deliveredAt,
@@ -243,6 +285,7 @@ class ChatMessage {
     kind: kind,
     attachment: attachment ?? this.attachment,
     reactions: reactions ?? this.reactions,
+    editedAt: editedAt ?? this.editedAt,
     uploadProgress: uploadProgress == _unset
         ? this.uploadProgress
         : uploadProgress as double?,
@@ -252,9 +295,5 @@ class ChatMessage {
   static const Object _unset = Object();
 
   /// `12:37 PM`, matching the design's bubble timestamps.
-  String get timeLabel {
-    final hour12 = sentAt.hour % 12 == 0 ? 12 : sentAt.hour % 12;
-    final minute = sentAt.minute.toString().padLeft(2, '0');
-    return '$hour12:$minute ${sentAt.hour < 12 ? 'AM' : 'PM'}';
-  }
+  String get timeLabel => TimeFormat.clock(sentAt);
 }

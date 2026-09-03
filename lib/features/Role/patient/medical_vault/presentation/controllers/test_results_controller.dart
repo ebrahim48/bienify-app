@@ -376,8 +376,11 @@ class TestResultsController extends GetxController {
     _ => null,
   };
 
-  /// Whatever the patient types into that section.
-  final RxString replyNote = ''.obs;
+  // No `replyNote` here. The screen used to offer the patient a box to write
+  // back in and this held what they typed; nothing ever read it. A lab order
+  // has no patient-reply endpoint and carries no consultation to send into, so
+  // the box was a control that looked live and did nothing. The section now
+  // shows the doctor's own message instead.
 
   /// Whether the doctor's review asked for another test.
   ///

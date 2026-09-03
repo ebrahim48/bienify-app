@@ -31,15 +31,17 @@ class ApiAppointmentRepository implements AppointmentRepository {
   Future<Appointment> book({
     required String doctorProfileId,
     required DateTime slotStart,
-    required String type,
     String? reason,
   }) async {
+    // No `type`: a booking no longer picks a channel. The server defaults the
+    // column so rows written before this still read, and the consultation is
+    // reached the same way whatever it holds — a thread the two of them can
+    // message in and call from.
     final data = await _api.postMap(
       ApiConstants.postAppointments,
       body: {
         'doctorProfileId': doctorProfileId,
         'slotStart': slotStart.toUtc().toIso8601String(),
-        'type': type,
         if (reason != null && reason.isNotEmpty) 'reason': reason,
       },
     );

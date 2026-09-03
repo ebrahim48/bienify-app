@@ -245,12 +245,18 @@ class DoctorPracticeData {
   // ─── Messaging ───────────────────────────────────────────────────────────
 
   /// Photos rather than monograms, as every other people list in the app.
-  static const List<PatientThread> threads = [
+  static final List<PatientThread> threads = [
     PatientThread(
       id: 'thread-1',
       patientName: 'Darlene Steward',
       preview: 'Pls take a look at the images....',
       timeLabel: '18:31',
+
+      // Pinned rather than `DateTime.now()`: a sample built from a moving
+
+      // clock changes meaning tomorrow.
+
+      lastMessageAt: DateTime(2026, 4, 1, 18, 31),
       unreadCount: 5,
       photoAsset: AppAssets.doctorPlaceholder,
     ),
@@ -259,6 +265,12 @@ class DoctorPracticeData {
       patientName: 'Darlene Steward',
       preview: 'Pls take a look at the images....',
       timeLabel: '18:31',
+
+      // Pinned rather than `DateTime.now()`: a sample built from a moving
+
+      // clock changes meaning tomorrow.
+
+      lastMessageAt: DateTime(2026, 4, 1, 18, 31),
       unreadCount: 5,
       photoAsset: AppAssets.doctorPlaceholder,
     ),
@@ -267,6 +279,12 @@ class DoctorPracticeData {
       patientName: 'Marcus Lee',
       preview: 'The new design is fantastic!',
       timeLabel: '14:05',
+
+      // Pinned rather than `DateTime.now()`: a sample built from a moving
+
+      // clock changes meaning tomorrow.
+
+      lastMessageAt: DateTime(2026, 4, 1, 14, 5),
       unreadCount: 3,
       photoAsset: AppAssets.doctorPlaceholder,
     ),
@@ -275,6 +293,12 @@ class DoctorPracticeData {
       patientName: 'Sophie Chen',
       preview: 'Can we discuss the color scheme?',
       timeLabel: '09:47',
+
+      // Pinned rather than `DateTime.now()`: a sample built from a moving
+
+      // clock changes meaning tomorrow.
+
+      lastMessageAt: DateTime(2026, 4, 1, 9, 47),
       unreadCount: 4,
       photoAsset: AppAssets.doctorPlaceholder,
     ),
@@ -283,6 +307,12 @@ class DoctorPracticeData {
       patientName: 'James Johnson',
       preview: 'I have some feedback on the layout.',
       timeLabel: '11:22',
+
+      // Pinned rather than `DateTime.now()`: a sample built from a moving
+
+      // clock changes meaning tomorrow.
+
+      lastMessageAt: DateTime(2026, 4, 1, 11, 22),
       unreadCount: 2,
       photoAsset: AppAssets.doctorPlaceholder,
     ),

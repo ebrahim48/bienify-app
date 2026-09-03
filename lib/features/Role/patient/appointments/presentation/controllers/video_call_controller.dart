@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../../../../../../core/network/api_client.dart';
 import '../../../../../../core/routes/app_routes.dart';
+import '../../../../../../core/services/call_service.dart';
 import '../../../../../../core/services/video_call_service.dart';
 import '../../../chat/domain/entities/conversation.dart';
 import '../../domain/entities/appointment.dart';
@@ -46,6 +47,7 @@ class VideoCallController extends GetxController {
 
   Timer? _timer;
   StreamSubscription<CallState>? _subscription;
+  Worker? _phaseWatch;
 
   /// `00:03`.
   String get durationLabel {
@@ -79,17 +81,47 @@ class VideoCallController extends GetxController {
       if (state.stage == CallStage.ended) endCall();
     });
 
+    // The signalling channel already knows when a call is over, and this
+    // screen used to ignore it entirely — leaving depended on Agora noticing
+    // the other uid go. When that does not arrive, because their process died
+    // the instant after hanging up or because the media path is degraded while
+    // the socket is fine, this side sat in the call UI on a dead channel. Two
+    // independent ways out, for the same reason phones have both.
+    if (Get.isRegistered<CallService>()) {
+      final calls = Get.find<CallService>();
+      _phaseWatch = ever<CallPhase>(calls.phase, (phase) {
+        if (phase == CallPhase.idle) endCall();
+      });
+    }
+
     unawaited(_service.join(appointment.id));
   }
 
   void _startClock() {
     if (_timer != null) return;
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) => seconds.value++);
+
+    // Counted from the instant the server recorded the answer, not from the
+    // number of times a timer has fired. Ticks are lost whenever the app is
+    // backgrounded or the frame budget is blown, so a counting timer drifts by
+    // exactly that much and the two sides never agree again — one screen read
+    // 02:40 while the other read 03:38. Re-deriving the elapsed time from a
+    // shared origin cannot drift: a device that misses ticks simply jumps to
+    // the right number on the next one.
+    final start = _answeredAt ?? DateTime.now();
+    void update() => seconds.value = DateTime.now().difference(start).inSeconds;
+
+    update();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => update());
   }
+
+  /// When the server says this call was answered, if this device rang for it.
+  DateTime? get _answeredAt =>
+      Get.isRegistered<CallService>() ? Get.find<CallService>().answeredAt : null;
 
   @override
   void onClose() {
     _timer?.cancel();
+    _phaseWatch?.dispose();
     unawaited(_subscription?.cancel());
     unawaited(_service.dispose());
     super.onClose();
@@ -130,7 +162,6 @@ class VideoCallController extends GetxController {
       name: appointment.doctorName,
       specialty: appointment.specialty,
       photoUrl: appointment.doctorPhotoUrl,
-      isOnline: true,
     ),
   );
 
@@ -148,6 +179,13 @@ class VideoCallController extends GetxController {
   void endCall() {
     if (_hasLeft) return;
     _hasLeft = true;
+
+    // Tell the other side. Leaving the Agora channel is invisible to them
+    // until their own client notices the remote uid go, which is seconds of
+    // staring at a frozen frame; the signalling hang-up is immediate.
+    // Guarded because the call screen is also reachable without having rung —
+    // a scheduled consultation joined from the appointment list.
+    if (Get.isRegistered<CallService>()) Get.find<CallService>().hangUp();
 
     // Hanging up on a call nobody answered is not a finished consultation, so
     // it does not land on the summary that congratulates the doctor and

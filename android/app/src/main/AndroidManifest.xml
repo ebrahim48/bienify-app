@@ -12,6 +12,14 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <!-- The incoming-call ringtone buzzes as well as sounding, so a call
+         arrives on a phone that is face down or on a silenced ringer. -->
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <!-- Raises the incoming-call screen over the lock screen, the way a
+         phone call does. Without it a call arriving while the app is in a
+         pocket reached a route push nobody could see. -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <!-- Selfie, ID card, licence and vehicle photos. The camera is optional
          hardware: a tablet without one still installs, and the picker falls

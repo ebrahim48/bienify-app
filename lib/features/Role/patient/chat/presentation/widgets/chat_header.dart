@@ -4,16 +4,16 @@ import 'package:get/get.dart';
 
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/theme/app_colors.dart';
-import '../../../../../../core/theme/app_radius.dart';
 import '../../../../../../core/theme/app_sizes.dart';
 import '../../../../../../core/theme/app_spacing.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/utils/responsive.dart';
-import '../../../../../../core/widgets/app_avatar.dart';
+import '../../../../../../core/utils/time_format.dart';
+import '../../../../../../core/widgets/presence_avatar.dart';
 import '../../domain/entities/conversation.dart';
 
-/// The `primary500` bar at the top of a thread: back, photo, name over
-/// specialty, and the online pill.
+/// The `primary500` bar at the top of a thread: back, photo with its presence
+/// dot, name over `online` / `last seen …`, and the call button.
 class ChatHeader extends StatelessWidget {
   const ChatHeader({
     super.key,
@@ -22,6 +22,7 @@ class ChatHeader extends StatelessWidget {
     this.isOnline,
     this.lastSeen,
     this.isTyping = false,
+    this.onVideoCall,
   });
 
   final ConversationPeer peer;
@@ -36,17 +37,24 @@ class ChatHeader extends StatelessWidget {
   /// Replaces the subtitle while it is true, as a chat header does.
   final bool isTyping;
 
-  /// `Online`, `typing…`, `last seen 14:32`, or the specialty when nothing is
-  /// known yet.
+  /// Rings the other party. Null on a thread with no consultation behind it
+  /// — support, or a doctor who has not been booked — where there is no room
+  /// to call into and a dialler would be a control that does nothing.
+  final VoidCallback? onVideoCall;
+
+  /// Identifies the call button for tests.
+  static const Key callButtonKey = ValueKey('chat-header-call');
+
+  /// `Online`, `typing…`, `last seen today at 2:32 PM`, or the specialty when
+  /// nothing is known yet.
+  ///
+  /// The clock used to be read straight off the `DateTime` the socket parsed,
+  /// which is UTC — so "last seen 14:32" was someone else's afternoon.
   String get _subtitle {
     if (isTyping) return AppStrings.typingNow.tr;
     if (isOnline == true) return AppStrings.online.tr;
     final seen = lastSeen;
-    if (isOnline == false && seen != null) {
-      final hh = seen.hour.toString().padLeft(2, '0');
-      final mm = seen.minute.toString().padLeft(2, '0');
-      return AppStrings.lastSeenAt.trParams({'time': '$hh:$mm'});
-    }
+    if (isOnline == false && seen != null) return TimeFormat.lastSeen(seen);
     return peer.specialty;
   }
 
@@ -77,7 +85,11 @@ class ChatHeader extends StatelessWidget {
                 ),
               ),
               AppSpacing.gapH(AppSpacing.xs),
-              AppAvatar(
+              // The same dot the message list draws, for the same fact —
+              // the header used to state presence only in words, so the row
+              // and the thread it opened disagreed about how to show it.
+              PresenceAvatar(
+                isOnline: isOnline,
                 imageUrl: peer.photoUrl,
                 name: peer.name,
                 size: _avatar,
@@ -104,38 +116,26 @@ class ChatHeader extends StatelessWidget {
                   ],
                 ),
               ),
-              // Driven by live presence when the socket has told us, and by
-              // the seeded flag only until then.
-              if (isOnline ?? peer.isOnline) ...[
+              if (onVideoCall != null) ...[
                 AppSpacing.gapH(AppSpacing.xs),
-                const _OnlinePill(),
+                InkResponse(
+                  key: callButtonKey,
+                  onTap: onVideoCall,
+                  radius: AppSizes.xl2.r,
+                  child: Padding(
+                    padding: EdgeInsets.all(AppSpacing.xs.w),
+                    child: Icon(
+                      Icons.videocam_rounded,
+                      size: AppSizes.xl2.w,
+                      color: AppColors.white,
+                    ),
+                  ),
+                ),
               ],
               AppSpacing.gapH(AppSpacing.base),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _OnlinePill extends StatelessWidget {
-  const _OnlinePill();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm.w,
-        vertical: AppSpacing.xs2.h + 1,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.online,
-        borderRadius: AppRadius.rFull,
-      ),
-      child: Text(
-        AppStrings.online.tr,
-        style: AppTextStyles.bodyMedium.rc(AppColors.white),
       ),
     );
   }

@@ -5,6 +5,7 @@ import '../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../core/network/api_client.dart';
 import '../../../../../core/network/attachment_uploader.dart';
 import '../../../../../core/network/mappers.dart';
+import '../../../../../core/utils/time_format.dart';
 import '../../../patient/medical_vault/domain/entities/medical_record.dart';
 import '../../domain/entities/doctor_practice.dart';
 import '../../domain/entities/test_request.dart';
@@ -537,17 +538,13 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
         patientUserId: Api.id(booking['patientId']),
         patientName: name,
         preview: Api.str(last['body']),
-        timeLabel: _threadTimeLabel(Api.date(last['createdAt'])),
+        timeLabel: TimeFormat.threadStamp(Api.date(last['createdAt'])),
+        lastMessageAt: Api.date(last['createdAt']),
         unreadCount: Api.integer(thread['unread']),
         photoUrl: Api.avatarOf(booking['patientId']),
       );
     }).toList();
   }
-
-  /// `18:31` — the thread list prints a 24-hour clock, unlike the bubbles.
-  String _threadTimeLabel(DateTime at) =>
-      '${at.hour.toString().padLeft(2, '0')}:'
-      '${at.minute.toString().padLeft(2, '0')}';
 
   /// Built from the appointment list, because a doctor's patients are exactly
   /// the people they have consulted and the server has no separate roster
@@ -635,6 +632,22 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
   /// `GET /lab-orders` answers "orders I am the subject of" by default;
   /// `role: doctor` is what turns that into "orders I requested" — the same
   /// switch `_asDoctor` already makes for `GET /appointments`.
+  @override
+  Future<String?> resultDocumentUrl(String recordId) async {
+    if (recordId.isEmpty) return null;
+    try {
+      final data = await _api.getMap(
+        ApiConstants.vaultRecordsDownloadUrl(recordId),
+      );
+      final url = Api.str(data['url']);
+      return url.isEmpty ? null : url;
+    } catch (_) {
+      // A report that will not sign is not a reason to refuse to open the
+      // order — the doctor still has the centre, the notes and the review.
+      return null;
+    }
+  }
+
   @override
   Future<List<TestRequest>> labRequests({bool imaging = false}) async {
     final rows = await _api.getList(

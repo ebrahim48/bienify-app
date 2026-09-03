@@ -23,6 +23,18 @@ class ApiNotificationRepository implements NotificationRepository {
   }
 
   @override
+  Future<int> unreadCount() async {
+    // `GET /notifications` answers with `{ items, total, unread, … }`, so the
+    // count comes back with the rows and needs no endpoint of its own. One row
+    // is asked for rather than none: the count is the point, not the page.
+    final data = await _api.getMap(
+      ApiConstants.notifications,
+      query: {'limit': 1},
+    );
+    return Api.integer(data['unread']);
+  }
+
+  @override
   Future<void> markRead(String id) async {
     await _api.post(ApiConstants.postNotificationsRead(id));
   }

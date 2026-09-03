@@ -244,7 +244,6 @@ void main() {
         final booked = await appointments.book(
           doctorProfileId: doctor.id,
           slotStart: slot,
-          type: 'video',
           reason: 'Live check',
         );
         expect(booked.id, isNotEmpty);

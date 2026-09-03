@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+
+import '../../../../../../core/constants/app_strings.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_radius.dart';
@@ -22,6 +25,7 @@ class ChatBubble extends StatelessWidget {
     this.peerPhotoUrl,
     this.myUserId,
     this.onReact,
+    this.onEdit,
     this.onCancelUpload,
     this.onOpenMedia,
   });
@@ -40,6 +44,10 @@ class ChatBubble extends StatelessWidget {
 
   /// Called with the chosen emoji, or with an empty string to clear.
   final void Function(String emoji)? onReact;
+
+  /// Offered only while the message is still inside the edit window, so the
+  /// menu never shows a choice the server would refuse.
+  final VoidCallback? onEdit;
   final VoidCallback? onCancelUpload;
 
   /// Opens this bubble's attachment full screen. Null on a text message, and
@@ -66,7 +74,7 @@ class ChatBubble extends StatelessWidget {
             // Long press rather than a visible button: a reaction control on every
             // bubble would crowd the thread, and long-press is the gesture people
             // already reach for.
-            onLongPress: onReact == null ? null : () => _pickReaction(context),
+            onLongPress: _hasActions ? () => _openActions(context) : null,
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.sizeOf(context).width * _maxWidthFactor,
@@ -119,7 +127,12 @@ class ChatBubble extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          message.timeLabel,
+                          // Marked beside the clock, as Messenger does: a
+                          // reader who saw the first version is owed the fact
+                          // that these are not the words that were sent.
+                          message.wasEdited
+                              ? '${message.timeLabel} · ${AppStrings.messageEdited.tr}'
+                              : message.timeLabel,
                           style: AppTextStyles.bodyMedium.rc(
                             isMine
                                 ? AppColors.primary100
@@ -146,6 +159,31 @@ class ChatBubble extends StatelessWidget {
           SeenMarker(name: peerName, photoUrl: peerPhotoUrl),
       ],
     );
+  }
+
+  bool get _hasActions => onReact != null || onEdit != null;
+
+  /// What long-press offers.
+  ///
+  /// Reacting alone still goes straight to the picker, which is the gesture
+  /// this app already had; a menu in front of it would put a tap between
+  /// every reaction and the thread. The sheet appears only once there is a
+  /// second thing to choose.
+  Future<void> _openActions(BuildContext context) async {
+    if (onEdit == null) return _pickReaction(context);
+
+    final choice = await showModalBottomSheet<_MessageAction>(
+      context: context,
+      backgroundColor: AppColors.transparent,
+      builder: (_) => const _MessageActionSheet(),
+    );
+    if (choice == null || !context.mounted) return;
+    switch (choice) {
+      case _MessageAction.react:
+        await _pickReaction(context);
+      case _MessageAction.edit:
+        onEdit?.call();
+    }
   }
 
   /// The quick row, with the full emoji keyboard one tap behind it.
@@ -194,6 +232,48 @@ class _DeliveryTicks extends StatelessWidget {
           : Icons.done_all_rounded,
       size: size,
       color: colour,
+    );
+  }
+}
+
+/// What long-press offers on a message.
+enum _MessageAction { react, edit }
+
+class _MessageActionSheet extends StatelessWidget {
+  const _MessageActionSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Container(
+        margin: EdgeInsets.all(AppSpacing.base.w),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(AppRadius.xl.r),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.add_reaction_outlined),
+              title: Text(
+                AppStrings.reactToMessage.tr,
+                style: AppTextStyles.bodyLarge.rc(AppColors.gray900),
+              ),
+              onTap: () =>
+                  Navigator.of(context).pop(_MessageAction.react),
+            ),
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: Text(
+                AppStrings.editMessage.tr,
+                style: AppTextStyles.bodyLarge.rc(AppColors.gray900),
+              ),
+              onTap: () => Navigator.of(context).pop(_MessageAction.edit),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

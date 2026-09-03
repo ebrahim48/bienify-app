@@ -168,6 +168,10 @@ class StaticDoctorPracticeRepository implements DoctorPracticeRepository {
       : List.of(DoctorOrdersData.labCatalogue);
 
   @override
+  // The sample orders carry a bundled asset, so there is nothing to sign.
+  Future<String?> resultDocumentUrl(String recordId) async => null;
+
+  @override
   Future<List<TestRequest>> labRequests({bool imaging = false}) async => imaging
       ? List.of(DoctorOrdersData.radiologyRequests)
       : List.of(DoctorOrdersData.requests);

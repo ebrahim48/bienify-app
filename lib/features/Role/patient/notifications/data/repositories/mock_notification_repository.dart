@@ -17,6 +17,10 @@ class MockNotificationRepository implements NotificationRepository {
   Future<List<AppNotification>> list() async => List.of(_feed);
 
   @override
+  Future<int> unreadCount() async =>
+      (await list()).where((notification) => !notification.isRead).length;
+
+  @override
   Future<void> markRead(String id) async {
     _rows = [
       for (final row in _feed)

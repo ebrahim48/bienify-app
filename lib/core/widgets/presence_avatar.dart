@@ -56,7 +56,11 @@ class PresenceAvatar extends StatelessWidget {
               width: _dot.w,
               height: _dot.w,
               decoration: BoxDecoration(
-                color: isOnline! ? AppColors.success400 : AppColors.gray400,
+                // `onlineDot` is the semantic colour for exactly this — the
+                // rider's own status pill already uses it. `success400` is the
+                // generic "a thing succeeded" green, and two greens for one
+                // meaning drift apart the moment either is retuned.
+                color: isOnline! ? AppColors.onlineDot : AppColors.gray400,
                 shape: BoxShape.circle,
                 // A ring in the card's colour, so the dot reads as sitting on
                 // the photo rather than being cut out of it.

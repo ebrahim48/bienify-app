@@ -123,6 +123,11 @@ class MedicalMockData {
     facility: defaultFacility,
   );
 
+  /// What the ordering doctor wrote back on the reviewed sample order.
+  static const String reviewedMessage =
+      'Everything is within range. No action needed — we can go over it at '
+      'your next visit.';
+
   static const List<TestOrder> testOrders = [
     TestOrder(
       id: 'test-1',
@@ -133,6 +138,11 @@ class MedicalMockData {
       orderedBy: orderingDoctor,
       stage: TestStage.reviewed,
       facility: defaultFacility,
+      // A reviewed order the doctor left nothing on is not a state the server
+      // produces: `reviewed` is reached only through `PATCH /review`, which
+      // requires a message. Without one here the golden documented a reviewed
+      // result with no word from the doctor on it — the very bug the screen had.
+      reviewMessage: reviewedMessage,
       document: document,
     ),
     TestOrder(

@@ -13,6 +13,7 @@ import 'package:bienify_app/features/Role/patient/profile/presentation/bindings/
 import 'package:bienify_app/features/Role/doctor_role/presentation/screens/doctor_profile_screen.dart';
 import 'package:bienify_app/features/Role/patient/profile/presentation/screens/order_history_screen.dart';
 import 'package:bienify_app/features/Role/patient/profile/presentation/screens/profile_screen.dart';
+import 'package:bienify_app/features/Role/patient/profile/presentation/screens/wallet_screen.dart';
 import 'package:bienify_app/features/Role/pharmacy_owner_role/presentation/screens/shop_profile_screen.dart';
 import 'package:bienify_app/features/Role/rider_role/presentation/screens/rider_profile_screen.dart';
 import 'package:bienify_app/features/Role/pharmacy_owner_role/presentation/bindings/shop_bindings.dart';
@@ -268,5 +269,42 @@ void main() {
         expect(find.text('Log out'), findsOneWidget);
       });
     }
+  });
+
+  group('the wallet card survives a short screen', () {
+    // The balance card pinned a height in `.h`, which scales by screen
+    // *height*, while the type inside scales by width. On a short, wide screen
+    // — the doctor's tablet-shaped emulator — the card shrank, the numbers did
+    // not, and the Add Money button was struck through with the overflow bars.
+    //
+    // The golden for this screen pumps at 390x1000, taller than any phone that
+    // breaks it, so it could never have caught this. These are the short ones.
+    for (final size in const [Size(360, 640), Size(392, 697), Size(360, 560)]) {
+      testWidgets('no overflow at ${size.width.toInt()}x${size.height.toInt()}', (
+        tester,
+      ) async {
+        await pumpAt(tester, const WalletScreen(), size, binding: AccountBinding());
+
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    testWidgets('Add Money stays on the card, not under the fold', (
+      tester,
+    ) async {
+      // The button is the point of the card. An overflow clips it rather than
+      // removing it, so its presence alone proves nothing — this checks it is
+      // actually painted inside the card it belongs to.
+      await pumpAt(
+        tester,
+        const WalletScreen(),
+        const Size(392, 697),
+        binding: AccountBinding(),
+      );
+
+      final button = find.text('Add Money');
+      expect(button, findsOneWidget);
+      expect(tester.getRect(button).bottom, lessThan(697));
+    });
   });
 }

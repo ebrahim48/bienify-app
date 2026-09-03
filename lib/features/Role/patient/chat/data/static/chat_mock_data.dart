@@ -9,7 +9,6 @@ class ChatMockData {
     id: 'doc-2',
     name: 'Dr. Emmanuel Okafor',
     specialty: 'Cardiologist',
-    isOnline: true,
   );
 
   /// "Chat With Us" on the health profile opens this same screen with Bienify
@@ -18,7 +17,6 @@ class ChatMockData {
     id: 'bienify-support',
     name: 'Bienify Support',
     specialty: 'Here to help',
-    isOnline: true,
   );
 
   static const String _reply =
@@ -34,7 +32,6 @@ class ChatMockData {
     thread: ChatThread.consultation('appt-mock-1'),
     name: 'Dr. Emmanuel Okafor',
     specialty: 'Cardiologist',
-    isOnline: true,
   );
 
   /// A doctor the patient has consulted before, so the list is not one row.

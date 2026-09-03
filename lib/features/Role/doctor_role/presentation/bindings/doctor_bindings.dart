@@ -73,6 +73,16 @@ class WritePrescriptionBinding extends Bindings {
 class DoctorVideoCallBinding extends Bindings {
   @override
   void dependencies() {
+    // An answered call arrives with the consultation it is on, built from the
+    // invite. Preferred over the selection, which is whatever booking the
+    // doctor last tapped — for a call that rang while they were looking at a
+    // different patient, that is the wrong room.
+    final incoming = Get.arguments;
+    if (incoming is Appointment) {
+      Get.put(VideoCallController(isDoctor: true, appointment: incoming));
+      return;
+    }
+
     DoctorAppointmentsBinding().dependencies();
     final selected = Get.find<DoctorAppointmentsController>().selected.value;
     Get.put(

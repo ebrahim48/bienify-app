@@ -240,6 +240,9 @@ class AppStrings {
   // ─── Chat ────────────────────────────────────────────────────────────────
   static const String online = 'online';
   static const String typingNow = 'typing_now';
+  static const String messageEdited = 'message_edited';
+  static const String editMessage = 'edit_message';
+  static const String editingMessage = 'editing_message';
   static const String attachmentsNeedConsultation =
       'attachments_need_consultation';
   static const String fileTooLarge = 'file_too_large';
@@ -252,6 +255,48 @@ class AppStrings {
   static const String lastSeenAt = 'last_seen_at';
   static const String typeYourMessage = 'type_your_message';
   static const String offline = 'offline';
+  static const String yesterday = 'yesterday';
+  static const String lastSeenToday = 'last_seen_today';
+  static const String lastSeenYesterday = 'last_seen_yesterday';
+  static const String lastSeenOn = 'last_seen_on';
+
+  static const String weekdayMonday = 'weekday_monday';
+  static const String weekdayTuesday = 'weekday_tuesday';
+  static const String weekdayWednesday = 'weekday_wednesday';
+  static const String weekdayThursday = 'weekday_thursday';
+  static const String weekdayFriday = 'weekday_friday';
+  static const String weekdaySaturday = 'weekday_saturday';
+  static const String weekdaySunday = 'weekday_sunday';
+
+  /// Monday..Sunday, indexed by `DateTime.weekday - 1`. Not a const map keyed
+  /// by the weekday number: `GetX` translation maps are `const`, and a const
+  /// map cannot be indexed at compile time, so each day needs its own field.
+  static const List<String> weekdayNames = [
+    weekdayMonday,
+    weekdayTuesday,
+    weekdayWednesday,
+    weekdayThursday,
+    weekdayFriday,
+    weekdaySaturday,
+    weekdaySunday,
+  ];
+
+  // ─── Calls ───────────────────────────────────────────────────────────────
+  static const String incomingCallTitle = 'incoming_call_title';
+  static const String outgoingCallTitle = 'outgoing_call_title';
+  // `callRinging` and `callConnecting` are the video screen's own, further
+  // down: a ring and a connecting call say the same thing whichever screen is
+  // saying it, and two keys for one sentence is how the two drift apart.
+  static const String callAccept = 'call_accept';
+  static const String callDecline = 'call_decline';
+  static const String callDeclined = 'call_declined';
+  static const String callCancelled = 'call_cancelled';
+  static const String callUnanswered = 'call_unanswered';
+  static const String callFailed = 'call_failed';
+  static const String startVideoCall = 'start_video_call';
+
+  /// What a booking is called when the doctor's specialty is not known.
+  static const String consultationLabel = 'consultation_label';
 
   // ─── Media viewer ────────────────────────────────────────────────────────
   static const String fitContain = 'fit_contain';
@@ -529,11 +574,6 @@ class AppStrings {
   static const String showAllShops = 'show_all_shops';
   static const String reorderNothingToAdd = 'reorder_nothing_to_add';
   static const String reorderPartial = 'reorder_partial';
-  static const String consultationTypeLabel = 'consultation_type_label';
-  static const String consultationVideo = 'consultation_video';
-  static const String consultationChat = 'consultation_chat';
-  static const String consultationInPerson = 'consultation_in_person';
-  static const String inPersonVisitNote = 'in_person_visit_note';
   static const String cancelOrderQuestion = 'cancel_order_question';
   static const String orderCancelled = 'order_cancelled';
   static const String topUpAmount = 'top_up_amount';
@@ -846,7 +886,7 @@ class AppStrings {
 
   static const String chooseReviewOption = 'choose_review_option';
   static const String chooseYourReviewOption = 'choose_your_review_option';
-  static const String massagePatient = 'massage_patient';
+  static const String messagePatient = 'message_patient';
   static const String requestFollowUpVisit = 'request_follow_up_visit';
   static const String orderAdditionalTest = 'order_additional_test';
   static const String referEscalateCare = 'refer_escalate_care';
@@ -980,6 +1020,7 @@ class AppStrings {
   static const String patientsSeen = 'patients_seen';
   static const String supportComingSoon = 'support_coming_soon';
   static const String noActiveDelivery = 'no_active_delivery';
+  static const String courierThread = 'courier_thread';
   static const String credentials = 'credentials';
   static const String submittedDocuments = 'submitted_documents';
   static const String noCredentialsYet = 'no_credentials_yet';

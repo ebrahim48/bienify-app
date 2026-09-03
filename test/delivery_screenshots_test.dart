@@ -210,7 +210,6 @@ void main() {
         id: 'doctor-1',
         name: 'Dr Reed',
         specialty: 'Cardiology',
-        isOnline: true,
       ),
 
       after: () async {

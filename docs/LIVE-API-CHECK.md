@@ -1,6 +1,6 @@
 # Live API check (Flutter client)
 
-Ran against `http://localhost:3500` through `ApiClient`.
+Ran against `http://localhost:5000` through `ApiClient`.
 
 | Metric | Result |
 |---|---|
@@ -54,8 +54,8 @@ Ran against `http://localhost:3500` through `ApiClient`.
 | PASS | anon | GET | `/api/v1/doctors/6a7aaebd9edac194dd587765` | ok |
 | PASS | anon | GET | `/api/v1/appointments/slots` | ok |
 | PASS | anon | GET | `/api/v1/reviews/doctors/6a7aaebd9edac194dd587765` | ok |
-| PASS | patient | GET | `/api/v1/appointments/6a8faf8586601f9f6565483e` | ok |
-| PASS | patient | GET | `/api/v1/medicine-orders/6a92cb943c11a32a7c17c554` | ok |
+| PASS | patient | GET | `/api/v1/appointments/6a98e8ac4be406cf6b4eaa94` | ok |
+| PASS | patient | GET | `/api/v1/medicine-orders/6a993ee98941b972b6fd031e` | ok |
 | PASS | patient | GET | `/api/v1/prescriptions/6a7d814bed769fc824194bc2` | ok |
 | PASS | - | WRITE | `patient updates their profile` | ok |
 | PASS | - | WRITE | `patient asks for an avatar upload URL` | ok |

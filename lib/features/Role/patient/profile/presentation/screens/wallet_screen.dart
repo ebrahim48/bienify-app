@@ -179,7 +179,13 @@ class _BalanceCard extends StatelessWidget {
     return ClipRRect(
       borderRadius: AppRadius.rXl2,
       child: Container(
-        height: _height.h,
+        // A floor, not a fixed height. `.h` scales the card by screen height
+        // while the type inside scales by width, so on a short, wide screen
+        // the card shrank and the text did not — the doctor's tablet-shaped
+        // emulator overflowed by seven pixels and struck the Add Money button
+        // through with the yellow-and-black overflow bars. The card is allowed
+        // to grow instead.
+        constraints: BoxConstraints(minHeight: _height.h),
         color: AppColors.walletSurface,
         child: Stack(
           children: [
@@ -198,6 +204,7 @@ class _BalanceCard extends StatelessWidget {
             Padding(
               padding: EdgeInsets.all(AppSpacing.md.w),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -237,7 +244,9 @@ class _BalanceCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const Spacer(),
+                  // Was a `Spacer`, which needs a bounded height and so
+                  // cannot survive a card that sizes to its content.
+                  AppSpacing.gapV(AppSpacing.md),
                   _AddMoneyButton(onTap: onAddMoney),
                 ],
               ),

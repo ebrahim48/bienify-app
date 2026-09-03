@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 
 import '../../../../../core/constants/app_strings.dart';
@@ -144,6 +146,20 @@ class ResultsToReviewController extends GetxController {
     request.value = value;
     patient.value = value.patient;
     Get.toNamed<void>(AppRoutes.doctorOrderDetail);
+    // Signed after the screen is open, not before: the detail draws the centre,
+    // the notes and the review button from what the list already carried, and
+    // waiting on a round trip would hold the whole screen for the picture.
+    unawaited(_resolveDocument(value));
+  }
+
+  /// Swaps in a signed link to the uploaded report once the server hands one
+  /// over. Ignored if the doctor has moved on to a different order.
+  Future<void> _resolveDocument(TestRequest value) async {
+    final recordId = value.resultRecordId;
+    if (recordId == null) return;
+    final url = await _repository.resultDocumentUrl(recordId);
+    if (url == null || request.value?.id != value.id) return;
+    request.value = value.withDocumentUrl(url);
   }
 
   void chooseReview() => Get.toNamed<void>(AppRoutes.doctorChooseReview);

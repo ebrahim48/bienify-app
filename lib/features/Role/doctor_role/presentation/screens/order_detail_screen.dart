@@ -86,8 +86,11 @@ class OrderDetailScreen extends GetView<ResultsToReviewController> {
       _NotesCard(notes: request.clinicalNotes!),
       AppSpacing.gapV(AppSpacing.base),
     ],
-    if (request.documentAsset != null)
-      _Documents(asset: request.documentAsset!),
+    if (request.hasResults)
+      _Documents(
+        asset: request.documentAsset,
+        url: request.documentUrl,
+      ),
   ];
 }
 
@@ -281,13 +284,47 @@ class _NotesCard extends StatelessWidget {
 }
 
 /// The report the patient uploaded: image over its caption.
+/// The uploaded report.
+///
+/// Takes either a bundled asset (the sample data) or a signed URL (a real
+/// order), and neither is required: an order can be known to have a report
+/// before its link has been signed, and a tile that names the report is
+/// honest where a broken image is not.
 class _Documents extends StatelessWidget {
-  const _Documents({required this.asset});
+  const _Documents({this.asset, this.url});
 
-  final String asset;
+  final String? asset;
+  final String? url;
 
   static const double _width = 154;
   static const double _imageHeight = 116;
+
+  /// The bundled asset, the signed link, or — when neither has arrived — a
+  /// plain document glyph rather than a broken image.
+  Widget _preview() {
+    final bundled = asset;
+    if (bundled != null) return Image.asset(bundled, fit: BoxFit.cover);
+    final link = url;
+    if (link != null) {
+      return Image.network(
+        link,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _placeholder(),
+      );
+    }
+    return _placeholder();
+  }
+
+  Widget _placeholder() => ColoredBox(
+    color: AppColors.cardFieldFill,
+    child: Center(
+      child: Icon(
+        Icons.description_outlined,
+        size: AppSizes.xl2.w,
+        color: AppColors.gray600,
+      ),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -326,7 +363,7 @@ class _Documents extends StatelessWidget {
               children: [
                 SizedBox(
                   height: _imageHeight.h,
-                  child: Image.asset(asset, fit: BoxFit.cover),
+                  child: _preview(),
                 ),
                 Padding(
                   padding: EdgeInsets.all(AppSpacing.xs.w),

@@ -25,8 +25,7 @@ class ApiClient {
     Future<void> Function()? onSessionExpired,
   }) : _dio = dio ?? Dio(baseOptions()),
        _tokens = tokens {
-    _dio.interceptors.add(
-      AuthInterceptor(
+    _auth = AuthInterceptor(
         tokens: tokens,
         refreshClient: refreshDio ?? Dio(baseOptions()),
         // Without this the interceptor clears the spent tokens and says
@@ -35,8 +34,8 @@ class ApiClient {
         // Authorization header". Nobody passed it, so that is what an expired
         // session looked like.
         onSessionExpired: onSessionExpired,
-      ),
     );
+    _dio.interceptors.add(_auth);
     // After the auth interceptor, so a 401 that the refresh recovers from is
     // not logged as a failure — only what actually reached the caller is.
     _dio.interceptors.add(RequestLogInterceptor());
@@ -44,6 +43,14 @@ class ApiClient {
 
   final Dio _dio;
   final TokenStore _tokens;
+
+  late final AuthInterceptor _auth;
+
+  /// Renews the access token for a caller that is not an HTTP request.
+  ///
+  /// The socket needs it: it authenticates once in its handshake, and nothing
+  /// else refreshes while a client is only sitting in a chat.
+  Future<void> refreshTokens() => _auth.refreshTokens();
 
   Dio get dio => _dio;
   TokenStore get tokens => _tokens;

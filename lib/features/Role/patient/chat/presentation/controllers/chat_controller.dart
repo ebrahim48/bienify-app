@@ -13,6 +13,8 @@ import '../../../../../../core/network/socket_service.dart';
 import '../../../../../../core/network/token_store.dart';
 import '../../../../../../core/routes/app_routes.dart';
 import '../../../../../../core/services/attachment_picker_service.dart';
+import '../../../../../../core/services/call_service.dart';
+import '../../../appointments/domain/entities/appointment.dart';
 import '../../../../../../core/widgets/app_snackbar.dart';
 import '../../data/static/chat_mock_data.dart';
 import '../../domain/entities/conversation.dart';
@@ -70,6 +72,11 @@ class ChatController extends GetxController {
   /// True while the other party is typing, for the indicator under the header.
   final RxBool isPeerTyping = false.obs;
 
+  /// The message being rewritten, or null when the composer is sending a new
+  /// one. Held rather than a bare flag so the composer can show what is being
+  /// changed and `send` knows which row to replace.
+  final Rxn<ChatMessage> editing = Rxn<ChatMessage>();
+
   /// The other party's presence, shown as "Online" or "last seen …".
   final Rxn<PresenceState> peerPresence = Rxn<PresenceState>();
 
@@ -104,6 +111,7 @@ class ChatController extends GetxController {
 
     _subscriptions.addAll([
       _socket.messages.listen((json) => _onMessage(json, thread)),
+      _socket.edits.listen((json) => _onEdit(json, thread)),
       _socket.receipts.listen((receipt) {
         if (receipt.thread == thread) _onReceipt(receipt);
       }),
@@ -124,6 +132,35 @@ class ChatController extends GetxController {
     ]);
 
     unawaited(_loadPresence());
+  }
+
+  /// True on a consultation thread, which is the only kind with a room to
+  /// call into. A courier and their customer message; they do not consult.
+  bool get canCall => isLive && _thread.isConsultation;
+
+  /// Rings the other party, from the thread they are already in.
+  ///
+  /// The consultation is the call *and* the conversation, so the two are
+  /// reachable from each other rather than being separate things a booking had
+  /// to choose between.
+  void startVideoCall() {
+    if (!canCall) return;
+    Get.find<CallService>().ring(
+      // The call screen reads an `Appointment`; the thread already carries
+      // everything it draws.
+      Appointment(
+        id: _thread.id,
+        doctorName: peer.name,
+        specialty: peer.specialty,
+        scheduledAt: DateTime.now(),
+        doctorPhotoUrl: peer.photoUrl,
+      ),
+      callee: CallParty(
+        id: peer.id,
+        name: peer.name,
+        avatarUrl: peer.photoUrl,
+      ),
+    );
   }
 
   Future<void> _loadPresence() async {
@@ -161,6 +198,29 @@ class ChatController extends GetxController {
     if (!incoming.isMine) _socket.markRead(thread);
   }
 
+  /// The sender rewrote a message: replace it where it stands.
+  ///
+  /// Its own handler rather than the arrival path, which appends and reports
+  /// the message read — neither of which a rewrite of words already on screen
+  /// should do.
+  void _onEdit(Map<String, dynamic> json, ChatThread thread) {
+    if (ChatThread.fromJson(json) != thread) return;
+
+    final edited = chatMessageFrom(json, _myIdFor(json));
+    final index = messages.indexWhere((m) => m.id == edited.id);
+    if (index == -1) return;
+
+    // The receipts this device already knows about are kept: the server sends
+    // the message, not the reader's state, so taking its word for those would
+    // drop a bubble from Seen back to Delivered.
+    final current = messages[index];
+    messages[index] = current.copyWith(
+      text: edited.text,
+      editedAt: edited.editedAt,
+      reactions: edited.reactions,
+    );
+  }
+
   /// Whether a payload was sent by us, decided the same way the mapper does.
   String _myIdFor(Map<String, dynamic> json) =>
       '${json['senderId'] ?? ''}' == peer.id ? '' : '${json['senderId'] ?? ''}';
@@ -178,10 +238,16 @@ class ChatController extends GetxController {
   }
 
   void _setPeerTyping(bool isTyping) {
+    final wasTyping = isPeerTyping.value;
     isPeerTyping.value = isTyping;
     _peerTypingExpiry?.cancel();
     if (isTyping) {
       _peerTypingExpiry = Timer(_typingTimeout, () => isPeerTyping.value = false);
+      // The dots are drawn past the last message, so someone sitting at the
+      // bottom of the thread would otherwise have them appear just under the
+      // fold — the one place they are no use. Anyone who has scrolled up is
+      // left where they are, as they are for an arriving message.
+      if (!wasTyping && _isNearBottom) _scrollToLatest();
     }
   }
 
@@ -283,9 +349,64 @@ class ChatController extends GetxController {
     );
   }
 
+  /// Whether [message] can still be rewritten, right now.
+  ///
+  /// Asked at the moment the menu opens rather than stored on the row, so a
+  /// bubble that has aged past the window while the thread sat open does not
+  /// still offer an edit the server would refuse.
+  bool canEdit(ChatMessage message) =>
+      isLive && message.canEditAt(DateTime.now());
+
+  /// Puts the composer into edit mode for [message].
+  void beginEdit(ChatMessage message) {
+    if (!canEdit(message)) return;
+    editing.value = message;
+    inputController.text = message.text;
+    inputController.selection = TextSelection.collapsed(
+      offset: inputController.text.length,
+    );
+  }
+
+  /// Leaves edit mode without changing anything.
+  void cancelEdit() {
+    if (editing.value == null) return;
+    editing.value = null;
+    inputController.clear();
+  }
+
+  /// Commits the rewrite the composer is holding.
+  ///
+  /// The bubble changes here rather than waiting for the echo, for the same
+  /// reason a sent message is drawn before the server has it — and it is safe
+  /// for the same reason: the echo replaces this row rather than adding one.
+  Future<void> _commitEdit(ChatMessage target, String text) async {
+    editing.value = null;
+    inputController.clear();
+
+    final index = messages.indexWhere((m) => m.id == target.id);
+    if (index != -1 && messages[index].text != text) {
+      messages[index] = messages[index].copyWith(
+        text: text,
+        editedAt: DateTime.now(),
+      );
+    }
+
+    _typingDebounce?.cancel();
+    _socket
+      ..setTyping(_thread, isTyping: false)
+      ..editMessage(thread: _thread, messageId: target.id, body: text);
+  }
+
   Future<void> send() async {
     final text = inputController.text.trim();
     if (text.isEmpty || isSending.value) return;
+
+    // In edit mode the composer rewrites a bubble instead of adding one.
+    final target = editing.value;
+    if (target != null) {
+      await _commitEdit(target, text);
+      return;
+    }
 
     if (!isLive) {
       _sendLocally(text);

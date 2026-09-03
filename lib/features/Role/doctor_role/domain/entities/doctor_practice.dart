@@ -470,6 +470,7 @@ class PatientThread {
     required this.patientName,
     required this.preview,
     required this.timeLabel,
+    required this.lastMessageAt,
     required this.unreadCount,
     this.patientUserId = '',
     this.photoAsset,
@@ -497,6 +498,13 @@ class PatientThread {
   /// `18:31`.
   final String timeLabel;
 
+  /// When the last message landed.
+  ///
+  /// The row carried only the formatted label, which cannot be ordered: the
+  /// list could not move a thread to the top when something arrived in it,
+  /// because it had no way to say which thread was newest.
+  final DateTime lastMessageAt;
+
   final int unreadCount;
 
   /// Bundled placeholder, used by the static data the goldens render.
@@ -504,6 +512,28 @@ class PatientThread {
 
   /// The patient's own photo, when the server has one.
   final String? photoUrl;
+
+  /// The same row with a newer last message.
+  ///
+  /// Every field is carried across deliberately: an omitted one silently
+  /// reverts to its default, which is how a courier's masthead once reset
+  /// itself to zero.
+  PatientThread withLastMessage({
+    required String preview,
+    required String timeLabel,
+    required DateTime at,
+    int? unreadCount,
+  }) => PatientThread(
+    id: id,
+    patientName: patientName,
+    preview: preview,
+    timeLabel: timeLabel,
+    lastMessageAt: at,
+    unreadCount: unreadCount ?? this.unreadCount,
+    patientUserId: patientUserId,
+    photoAsset: photoAsset,
+    photoUrl: photoUrl,
+  );
 }
 
 // ─── Schedule ──────────────────────────────────────────────────────────────

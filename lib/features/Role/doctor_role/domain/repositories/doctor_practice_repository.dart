@@ -117,6 +117,12 @@ abstract class DoctorPracticeRepository {
   /// requested themselves.
   Future<void> reviewLabOrder({required String labOrderId, required String message});
 
+  /// A short-lived link to the report a patient uploaded against an order.
+  ///
+  /// Null when the record cannot be signed — the detail screen then names the
+  /// report without pretending to show it, rather than drawing a broken image.
+  Future<String?> resultDocumentUrl(String recordId);
+
   /// Files one credential document — a licence or certificate.
   ///
   /// `POST /doctors/me/credentials` has always demanded a key under the

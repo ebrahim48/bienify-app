@@ -16,8 +16,10 @@ class AppointmentModel extends Appointment {
       id: json['id']?.toString() ?? '',
       doctorName: json['doctor_name'] as String? ?? '',
       specialty: json['specialty'] as String? ?? '',
+      // `.toLocal()`: a UTC instant read for its `.hour` prints someone
+      // else's clock. Same reason as `Api.date`.
       scheduledAt:
-          DateTime.tryParse(json['scheduled_at'] as String? ?? '') ??
+          DateTime.tryParse(json['scheduled_at'] as String? ?? '')?.toLocal() ??
           DateTime.now(),
       status: _statusFrom(json['status'] as String?),
       doctorPhotoUrl: json['doctor_photo_url'] as String?,

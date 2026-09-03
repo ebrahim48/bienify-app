@@ -15,7 +15,6 @@ abstract class AppointmentRepository {
   Future<Appointment> book({
     required String doctorProfileId,
     required DateTime slotStart,
-    required String type,
     String? reason,
   });
 

@@ -1,4 +1,7 @@
+import 'package:get/get.dart';
+
 import '../../../../../../core/constants/api_constants.dart';
+import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/models/chat_thread.dart';
 import '../../../../../../core/network/api_client.dart';
 import '../../../../../../core/network/mappers.dart';
@@ -52,11 +55,38 @@ class ApiConversationRepository implements ConversationRepository {
     final threads = <ConversationThread>[];
     for (final thread in results[0]) {
       final appointmentId = Api.id(thread['appointmentId']);
-      if (appointmentId.isEmpty) continue;
+      final deliveryId = Api.id(thread['deliveryId']);
+      final last = Api.map(thread['lastMessage']);
+
+      // A courier thread: no appointment to join to, so the counterpart the
+      // server names is the whole of what the row knows about them.
+      if (appointmentId.isEmpty) {
+        if (deliveryId.isEmpty) continue;
+        final rider = thread['counterpart'];
+        threads.add(
+          ConversationThread(
+            peer: ConversationPeer(
+              id: Api.id(rider).isNotEmpty
+                  ? Api.id(rider)
+                  : Api.id(thread['counterpartId']),
+              thread: ChatThread.delivery(deliveryId),
+              name: Api.nameOf(rider),
+              // What the row says under the name. A courier is here about a
+              // parcel, and saying so is what stops the row reading as a
+              // second doctor with no specialty.
+              specialty: AppStrings.courierThread.tr,
+              photoUrl: Api.avatarOf(rider),
+            ),
+            preview: Api.str(last['body']),
+            lastMessageAt: Api.date(last['createdAt']),
+            unreadCount: Api.integer(thread['unread']),
+          ),
+        );
+        continue;
+      }
 
       final booking = Api.map(byAppointment[appointmentId]);
       final doctor = booking['doctorUserId'];
-      final last = Api.map(thread['lastMessage']);
 
       threads.add(
         ConversationThread(

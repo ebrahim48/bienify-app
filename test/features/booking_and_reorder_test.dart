@@ -5,6 +5,8 @@
 // basket — none of which reads as unfinished on screen, which is why they are
 // asserted on what actually moved rather than on what was drawn.
 import 'package:bienify_app/core/routes/app_routes.dart';
+import 'package:bienify_app/core/services/call_service.dart';
+import 'package:bienify_app/core/services/ringtone_service.dart';
 import 'package:bienify_app/features/Role/doctor_role/domain/entities/doctor_practice.dart'
     show PayoutAccount;
 import 'package:bienify_app/features/Role/patient/appointments/domain/entities/appointment.dart';
@@ -21,6 +23,8 @@ import 'package:bienify_app/features/Role/patient/wallet/domain/repositories/wal
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+
+import '../support/fake_call_signalling.dart';
 
 Medicine _medicine(String id, {String pharmacyId = 'shop-1'}) => Medicine(
   id: id,
@@ -98,12 +102,11 @@ class _StubWallet implements WalletRepository {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-Appointment _appointment(ConsultationType type) => Appointment(
+Appointment _appointment() => Appointment(
   id: 'appt-1',
   doctorName: 'Dr Reed',
   specialty: 'Neurology',
   scheduledAt: DateTime(2026, 9, 1, 10),
-  type: type,
 );
 
 void main() {
@@ -137,47 +140,40 @@ void main() {
   }
 
   group('joining a consultation', () {
-    testWidgets('a video booking opens the call', (tester) async {
-      final visited = await mountApp(tester);
-      final controller = AppointmentsController(
-        repository: _StubAppointments(),
+    /// A `CallService` with a socket a test can read.
+    (FakeCallSignalling, CallService) callService() {
+      final socket = FakeCallSignalling();
+      final service = CallService(
+        socket: socket,
+        ringtone: SilentRingtoneService(),
       );
+      service.onInit();
+      Get.put<CallService>(service);
+      addTearDown(() async {
+        service.onClose();
+        await socket.close();
+      });
+      return (socket, service);
+    }
 
-      controller.join(_appointment(ConsultationType.video));
-      await tester.pumpAndSettle();
-
-      expect(visited, [AppRoutes.videoCall]);
-    });
-
-    testWidgets('a chat booking opens the thread, not a video call', (
+    testWidgets('rings the doctor rather than opening the room alone', (
       tester,
     ) async {
-      // Every appointment opened the video screen, because every booking was
-      // sent as `video` whatever the patient picked.
-      final visited = await mountApp(tester);
+      await mountApp(tester);
+      final (socket, _) = callService();
       final controller = AppointmentsController(
         repository: _StubAppointments(),
       );
 
-      controller.join(_appointment(ConsultationType.chat));
+      controller.join(_appointment());
       await tester.pumpAndSettle();
 
-      expect(visited, [AppRoutes.chat]);
+      // The patient used to be dropped straight into an empty Agora channel,
+      // and the doctor learned the consultation had started by opening the app
+      // and looking at their bookings.
+      expect(socket.sent, ['invite:appt-1']);
     });
 
-    testWidgets('an in-person visit opens nothing', (tester) async {
-      // It happens at the clinic. A "Join" that dialled a video call for it
-      // would be a control doing something other than what it says.
-      final visited = await mountApp(tester);
-      final controller = AppointmentsController(
-        repository: _StubAppointments(),
-      );
-
-      controller.join(_appointment(ConsultationType.inPerson));
-      await tester.pumpAndSettle();
-
-      expect(visited, isEmpty);
-    });
   });
 
   group('tapping a shop', () {

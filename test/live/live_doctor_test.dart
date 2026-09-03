@@ -439,7 +439,21 @@ void main() {
               'the name is joined from the appointment list',
         );
         expect(threads.first.id, isNotEmpty);
-        expect(threads.first.timeLabel, matches(RegExp(r'^\d{2}:\d{2}$')));
+        // `3:46 PM` today, `Yesterday`, a weekday within the week, then a
+        // date. It used to assert a bare `\d{2}:\d{2}`, which is the bug: a
+        // thread last answered a fortnight ago read as this morning, and the
+        // doctor's list disagreed with the patient's about the same instant.
+        expect(
+          threads.first.timeLabel,
+          matches(
+            RegExp(
+              r'^(\d{1,2}:\d{2} [AP]M'
+              r'|Today|Yesterday'
+              r'|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday'
+              r'|\d{2}/\d{2}/\d{4})$',
+            ),
+          ),
+        );
       });
     });
   });

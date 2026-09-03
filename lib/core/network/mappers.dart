@@ -58,10 +58,19 @@ class Api {
     return fallback;
   }
 
+  /// Always in the device's own zone.
+  ///
+  /// The server writes UTC (`2026-08-31T18:31:04.000Z`), which `DateTime.parse`
+  /// faithfully returns as a *UTC* `DateTime` — and every `.hour` read off it
+  /// afterwards then prints UTC. A chat bubble showed the right time while it
+  /// was optimistic, because that one was built from `DateTime.now()`, and
+  /// jumped by the whole UTC offset the moment the stored row replaced it.
+  /// Converting here rather than at each call site is the only way the two
+  /// cannot disagree.
   static DateTime date(dynamic v) {
-    if (v is DateTime) return v;
+    if (v is DateTime) return v.toLocal();
     final parsed = DateTime.tryParse(v?.toString() ?? '');
-    return parsed ?? DateTime.fromMillisecondsSinceEpoch(0);
+    return parsed?.toLocal() ?? DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   static Map<String, dynamic> map(dynamic v) =>
@@ -180,11 +189,16 @@ Appointment appointmentFrom(Map<String, dynamic> json) {
   return Appointment(
     id: Api.id(json),
     doctorName: Api.nameOf(doctorRef, 'Doctor'),
-    // The kind of visit is the fallback when the doctor profile is not
-    // populated — `Api.label` so it reads "In person" rather than "in_person".
+    // Plain "Consultation" when the doctor profile is not populated.
+    //
+    // This used to fall back to the booking's `type`, which is why a card read
+    // "Video" or "In person" under the doctor's name. A booking no longer has
+    // a kind — once it exists the two of them can message, call, and use
+    // anything else the consultation offers — so printing one named a choice
+    // that is not made any more and cannot be changed.
     specialty: specialties is List && specialties.isNotEmpty
         ? Api.label(specialties.first)
-        : Api.label(json['type'], 'Consultation'),
+        : AppStrings.consultationLabel.tr,
     scheduledAt: Api.date(json['slotStart']),
     status: appointmentStatusFrom(Api.str(json['status'])),
     doctorPhotoUrl: Api.avatarOf(doctorRef),
@@ -196,7 +210,6 @@ Appointment appointmentFrom(Map<String, dynamic> json) {
         : Api.str(json['lapseChoice']),
     isRefunded: json['refundedAt'] != null,
     isRescheduled: json['rescheduledToId'] != null,
-    type: ConsultationType.fromWire(Api.str(json['type'])),
   );
 }
 
@@ -288,6 +301,9 @@ orders.TestRequest testRequestFrom(Map<String, dynamic> json) {
   final patientRef = json['patientId'];
   final orderedOn = Api.date(json['createdAt']);
 
+  final centre = Api.map(json['testingCentreId']);
+  final resultRecordId = Api.id(json['resultRecordId']);
+
   return orders.TestRequest(
     id: Api.id(json),
     kind: orders.OrderKind.lab,
@@ -313,6 +329,19 @@ orders.TestRequest testRequestFrom(Map<String, dynamic> json) {
     ),
     orderedOn: orderedOn,
     clinicalNotes: Api.str(json['notes']),
+    // The centre the patient chose, and the record their report was filed
+    // under. Both were dropped here, which is why every real order reported
+    // "Awaiting patient upload" however much had been uploaded — and why the
+    // button that starts the review was never drawn, leaving the whole
+    // Results to Review flow reachable only from the sample data.
+    hospitalName: centre.isEmpty ? null : Api.str(centre['name']),
+    hospitalAddress: centre.isEmpty
+        ? null
+        : [
+            Api.str(centre['addressLine']),
+            Api.str(centre['city']),
+          ].where((part) => part.isNotEmpty).join(', '),
+    resultRecordId: resultRecordId.isEmpty ? null : resultRecordId,
   );
 }
 
@@ -1135,6 +1164,9 @@ ChatMessage chatMessageFrom(Map<String, dynamic> json, String myUserId) =>
           .map(messageReactionFrom)
           .whereType<MessageReaction>()
           .toList(),
+      // Absent on a message nobody has rewritten, which is what the `Edited`
+      // label under the bubble is drawn from.
+      editedAt: json['editedAt'] == null ? null : Api.date(json['editedAt']),
     );
 
 /// Reactions are emoji now, not names from a fixed list, so there is no longer

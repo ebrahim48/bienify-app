@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 
 import '../../../../../core/constants/app_strings.dart';
 import '../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../core/routes/app_routes.dart';
+import '../../../../../core/services/call_service.dart';
 import '../../../../../core/widgets/app_snackbar.dart';
+import '../../../patient/appointments/domain/entities/appointment.dart';
 import '../../../patient/medical_vault/domain/entities/medical_record.dart';
 import '../../domain/entities/doctor_practice.dart';
 import '../../domain/repositories/doctor_practice_repository.dart';
@@ -126,7 +130,25 @@ class DoctorAppointmentsController extends GetxController {
       return;
     }
     selected.value = appointment;
-    Get.toNamed<void>(AppRoutes.doctorVideoCall);
+    // Rings the patient rather than opening the room on the doctor alone. The
+    // room used to open here regardless, so a doctor could sit in an empty
+    // channel while the patient, who had no idea the consultation had started,
+    // was somewhere else entirely.
+    // Who is on the other end is the server's to decide, from the
+    // consultation itself — so no `callee` here. The booking is mapped onto an
+    // `Appointment` because that is what the call screen reads, the same way
+    // `DoctorVideoCallBinding` does it.
+    unawaited(
+      Get.find<CallService>().ring(
+        Appointment(
+          id: appointment.id,
+          doctorName: appointment.patientName,
+          specialty: appointment.complaint,
+          scheduledAt: appointment.scheduledAt,
+          doctorPhotoUrl: appointment.photoUrl,
+        ),
+      ),
+    );
   }
 
   /// Cancels a booking, then moves it under the Cancelled chip.

@@ -3,7 +3,10 @@ import 'package:bienify_app/core/network/mappers.dart';
 import 'package:bienify_app/core/network/token_store.dart';
 import 'package:bienify_app/core/theme/app_colors.dart';
 import 'package:bienify_app/core/theme/app_theme.dart';
+import 'package:bienify_app/core/utils/time_format.dart';
 import 'package:bienify_app/core/widgets/presence_avatar.dart';
+import 'package:bienify_app/features/Role/patient/chat/presentation/widgets/chat_day_separator.dart';
+import 'package:bienify_app/features/Role/patient/chat/presentation/widgets/chat_header.dart';
 import 'package:bienify_app/features/Role/patient/chat/domain/entities/conversation.dart';
 import 'package:bienify_app/features/Role/patient/chat/presentation/screens/media_viewer_screen.dart';
 import 'package:bienify_app/features/Role/patient/chat/presentation/widgets/chat_bubble.dart';
@@ -32,6 +35,17 @@ void main() {
       ),
     );
     await tester.pump();
+  }
+
+  /// The header sizes itself against the design canvas, so it needs the
+  /// canvas. On the 800x600 default surface `72.h` collapses to 49px while the
+  /// two lines of text do not scale with it, and the row overflows — a
+  /// failure of the test's viewport, not of the widget.
+  Future<void> pumpOnDesignCanvas(WidgetTester tester, Widget child) async {
+    tester.view.physicalSize = const Size(390, 876);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await pump(tester, child);
   }
 
   ChatMessage message({
@@ -241,7 +255,7 @@ void main() {
 
     testWidgets('colours the dot by connection state', (tester) async {
       for (final (isOnline, expected) in [
-        (true, AppColors.success400),
+        (true, AppColors.onlineDot),
         (false, AppColors.gray400),
       ]) {
         await pump(
@@ -254,6 +268,115 @@ void main() {
         );
         expect((dot.decoration! as BoxDecoration).color, expected);
       }
+    });
+
+    testWidgets('the thread header carries the same dot as the list', (
+      tester,
+    ) async {
+      // The header used to state presence in words only, so a row and the
+      // thread it opened disagreed about how to show one fact.
+      await pumpOnDesignCanvas(
+        tester,
+        ChatHeader(
+          peer: const ConversationPeer(
+            id: 'p1',
+            name: 'Dr Grace',
+            specialty: 'Cardiology',
+          ),
+          onBack: () {},
+          isOnline: true,
+        ),
+      );
+
+      expect(find.byKey(PresenceAvatar.dotKey), findsOneWidget);
+      expect(find.text('Online'), findsOneWidget);
+    });
+
+    testWidgets('the header prints last seen on the local clock', (
+      tester,
+    ) async {
+      final seen = DateTime.now().subtract(const Duration(hours: 2));
+      await pumpOnDesignCanvas(
+        tester,
+        ChatHeader(
+          peer: const ConversationPeer(
+            id: 'p1',
+            name: 'Dr Grace',
+            specialty: 'Cardiology',
+          ),
+          onBack: () {},
+          isOnline: false,
+          lastSeen: seen,
+        ),
+      );
+
+      // Read straight off the `DateTime` the socket parsed — which is UTC —
+      // this said an hour nobody was awake in.
+      expect(
+        find.text('last seen today at ${TimeFormat.clock(seen)}'),
+        findsOneWidget,
+      );
+    });
+  });
+
+  group('day separators', () {
+    testWidgets('names the day above the first bubble of it', (tester) async {
+      await pump(
+        tester,
+        Column(
+          children: [
+            ChatDaySeparator(
+              at: DateTime(2026, 8, 31, 15, 57),
+              now: DateTime(2026, 9, 1, 16),
+            ),
+            ChatDaySeparator(
+              at: DateTime(2026, 9, 1, 15, 46),
+              now: DateTime(2026, 9, 1, 16),
+            ),
+          ],
+        ),
+      );
+
+      // A bubble prints only a clock, so without the day a message at 3:57 PM
+      // yesterday sits above one at 3:46 PM today and the thread reads as
+      // sorted wrong. It was not; the day was missing from the picture.
+      expect(find.text('Yesterday'), findsOneWidget);
+      expect(find.text('Today'), findsOneWidget);
+    });
+  });
+
+  group('calling from a thread', () {
+    testWidgets('offers a call button only where there is a room to call into', (
+      tester,
+    ) async {
+      const peer = ConversationPeer(
+        id: 'p1',
+        name: 'Dr Grace',
+        specialty: 'Cardiology',
+      );
+
+      await pumpOnDesignCanvas(
+        tester,
+        ChatHeader(peer: peer, onBack: () {}),
+      );
+      // A courier thread, or a doctor nobody has booked: a dialler here would
+      // be a control that looks live and does nothing.
+      expect(find.byKey(ChatHeader.callButtonKey), findsNothing);
+
+      var called = false;
+      await pumpOnDesignCanvas(
+        tester,
+        ChatHeader(
+          peer: peer,
+          onBack: () {},
+          onVideoCall: () => called = true,
+        ),
+      );
+      expect(find.byKey(ChatHeader.callButtonKey), findsOneWidget);
+
+      await tester.tap(find.byKey(ChatHeader.callButtonKey));
+      await tester.pump();
+      expect(called, isTrue);
     });
   });
 

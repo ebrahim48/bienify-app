@@ -19,7 +19,7 @@ class ChooseReviewOptionScreen extends GetView<ResultsToReviewController> {
   const ChooseReviewOptionScreen({super.key});
 
   String _label(ReviewOption option) => switch (option) {
-    ReviewOption.messagePatient => AppStrings.massagePatient.tr,
+    ReviewOption.messagePatient => AppStrings.messagePatient.tr,
     ReviewOption.followUpVisit => AppStrings.requestFollowUpVisit.tr,
     ReviewOption.additionalTest => AppStrings.orderAdditionalTest.tr,
     ReviewOption.refer => AppStrings.referEscalateCare.tr,

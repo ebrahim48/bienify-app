@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import '../../features/Role/patient/appointments/presentation/bindings/appointments_bindings.dart';
 import '../../features/Role/patient/appointments/presentation/screens/consultation_history_screen.dart';
 import '../../features/Role/patient/appointments/presentation/screens/video_call_screen.dart';
+import '../../features/calls/presentation/screens/incoming_call_screen.dart';
+import '../../features/calls/presentation/screens/outgoing_call_screen.dart';
 import '../../features/Role/patient/auth/presentation/bindings/auth_bindings.dart';
 import '../../features/Role/patient/auth/presentation/controllers/auth_flow.dart';
 import '../../features/Role/patient/auth/presentation/screens/auth_status_screen.dart';
@@ -322,6 +324,27 @@ abstract class AppPages {
       page: () => const DeliveryFeedbackScreen(),
       binding: DeliveryFeedbackBinding(),
       transition: Transition.fadeIn,
+    ),
+
+    // ─── Calls ─────────────────────────────────────────────────────────────
+    // No binding: `CallService` is permanent and already holds the call these
+    // two screens draw. A screen-scoped controller could not, because a ring
+    // has to arrive on whatever screen its recipient is already looking at.
+    GetPage(
+      name: AppRoutes.incomingCall,
+      page: () => const IncomingCallScreen(),
+      // No transition and no back gesture on the route: a call that slides in
+      // can be half-dismissed by a swipe the person was already making.
+      transition: Transition.noTransition,
+      popGesture: false,
+      fullscreenDialog: true,
+    ),
+    GetPage(
+      name: AppRoutes.outgoingCall,
+      page: () => const OutgoingCallScreen(),
+      transition: Transition.noTransition,
+      popGesture: false,
+      fullscreenDialog: true,
     ),
 
     // ─── Consultation ──────────────────────────────────────────────────────

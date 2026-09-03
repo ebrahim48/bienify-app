@@ -1,3 +1,4 @@
+import '../services/incoming_call_notifier.dart';
 import '../services/avatar_service.dart';
 import '../services/device_location_service.dart';
 import '../services/push_registration_service.dart';
@@ -71,6 +72,10 @@ import '../network/socket_service.dart';
 import '../network/token_store.dart';
 import '../services/api_service.dart';
 import '../services/attachment_picker_service.dart';
+import '../services/call_service.dart';
+import '../services/message_delivery_service.dart';
+import '../services/notification_inbox_service.dart';
+import '../services/ringtone_service.dart';
 import '../services/connectivity_service.dart';
 import '../services/photo_picker_service.dart';
 import '../services/storage_service.dart';
@@ -102,6 +107,7 @@ class DependencyInjection {
   static Future<void> init({
     bool? useMocks,
     DateTime Function() clock = DateTime.now,
+    RingtoneService? ringtone,
   }) async {
     final mock = useMocks ?? _useMockBackend;
     // ─── Services ──────────────────────────────────────────────────────────
@@ -132,7 +138,18 @@ class DependencyInjection {
     // expensive part, and rooms are what scope it to a conversation. Not
     // connected here — that waits until there is a session to authenticate
     // with, since the handshake carries the access token.
-    Get.put<SocketService>(SocketService(tokens: tokens), permanent: true);
+    Get.put<SocketService>(
+      SocketService(
+        tokens: tokens,
+        // Lets the socket renew its own credential. It authenticates once in
+        // the handshake and the access token lives fifteen minutes; nothing
+        // else refreshes while a client is only sitting in a chat, so without
+        // this the first drop after expiry took messaging down for the rest of
+        // the session while the screen still looked connected.
+        refreshTokens: Get.find<ApiClient>().refreshTokens,
+      ),
+      permanent: true,
+    );
     // Registered before the auth repository below, whose session callbacks
     // reach for it.
     Get.put<PushRegistrationService>(
@@ -159,6 +176,31 @@ class DependencyInjection {
 
     // ─── Auth data sources ─────────────────────────────────────────────────
     Get.put<AuthLocalDataSource>(AuthLocalDataSource(storage), permanent: true);
+
+    // Ringing, for the whole app.
+    //
+    // Permanent and listening from start-up because a call has to arrive on
+    // whatever screen its recipient is already looking at — a screen-scoped
+    // controller cannot hear one. Registered here, after the socket it listens
+    // to and the session it reads the signed-in role from.
+    Get.put<RingtoneService>(
+      ringtone ?? AudioRingtoneService(),
+      permanent: true,
+    );
+    Get.put<CallService>(
+      CallService(
+        socket: Get.find<SocketService>(),
+        ringtone: Get.find<RingtoneService>(),
+        auth: Get.find<AuthLocalDataSource>(),
+        // Silent under mocks: a widget test has no platform channel to post a
+        // notification through, and the plugin throws rather than no-ops.
+        notifier: mock
+            ? SilentIncomingCallNotifier()
+            : SystemIncomingCallNotifier(),
+      ),
+      permanent: true,
+    );
+
     Get.put<AuthRemoteDataSource>(
       mock
           ? MockAuthRemoteDataSource()
@@ -219,6 +261,40 @@ class DependencyInjection {
       mock
           ? MockNotificationRepository()
           : ApiNotificationRepository(Get.find<ApiClient>()),
+      permanent: true,
+    );
+
+    // The middle tick. Permanent because delivery does not depend on which
+    // screen the recipient is looking at — that is the whole difference
+    // between delivered and read.
+    Get.put<MessageDeliveryService>(
+      MessageDeliveryService(
+        socket: Get.find<SocketService>(),
+        tokens: Get.find<TokenStore>(),
+      ),
+      permanent: true,
+    );
+
+    // Being told, rather than having to go and look. Permanent for the same
+    // reason the call service is: a notification has to arrive on whatever
+    // screen its recipient is already on, and the badge is on a header that
+    // outlives every screen under it.
+    //
+    // Registered here rather than beside the socket, because it seeds the
+    // badge from the repository above — which did not exist yet at that point,
+    // so `Get.find` threw on start-up.
+    Get.put<NotificationInboxService>(
+      NotificationInboxService(
+        socket: Get.find<SocketService>(),
+        repository: Get.find<NotificationRepository>(),
+        // Title and body on one line: `AppSnackbar.info` takes a single
+        // message, and the two read as one sentence anyway.
+        announce: (notification) => AppSnackbar.info(
+          notification.body.isEmpty
+              ? notification.title
+              : '${notification.title} — ${notification.body}',
+        ),
+      ),
       permanent: true,
     );
   }

@@ -55,6 +55,11 @@ abstract class AppRoutes {
 
   // ─── Consultation ────────────────────────────────────────────────────────
   static const String videoCall = '/video-call';
+
+  /// The two ringing screens, shared by every role — a call is not a patient
+  /// screen or a doctor screen, it is the same screen pointed the other way.
+  static const String incomingCall = '/call/incoming';
+  static const String outgoingCall = '/call/outgoing';
   static const String consultationHistory = '/consultation-history';
 
   // ─── Notifications ───────────────────────────────────────────────────────

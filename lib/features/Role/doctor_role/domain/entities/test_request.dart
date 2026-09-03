@@ -116,6 +116,8 @@ class TestRequest {
     this.hospitalAddress,
     this.clinicalNotes,
     this.documentAsset,
+    this.resultRecordId,
+    this.documentUrl,
   });
 
   final String id;
@@ -144,9 +146,50 @@ class TestRequest {
   final String? clinicalNotes;
 
   /// The report the patient uploaded, once there is one.
+  ///
+  /// A bundled asset, which only the sample data has. A real order names its
+  /// report by [resultRecordId] instead.
   final String? documentAsset;
 
-  bool get hasResults => documentAsset != null;
+  /// The vault record holding the uploaded report, as the server names it.
+  ///
+  /// The API returns this on every order that has one and the mapper used to
+  /// drop it, along with the testing centre — so [hasResults] was false for
+  /// every real order, the detail screen said "Awaiting patient upload"
+  /// whatever had actually been uploaded, and the button that starts the
+  /// review was never drawn. The whole flow was unreachable outside the mocks.
+  final String? resultRecordId;
+
+  /// A short-lived signed link to [resultRecordId], resolved when the order is
+  /// opened. Null until then, and if signing fails — the tile then names the
+  /// report without pretending to show it.
+  final String? documentUrl;
+
+  bool get hasResults => documentAsset != null || resultRecordId != null;
+
+  /// A copy carrying the signed link, once it has been resolved.
+  ///
+  /// Every field is carried across deliberately: an omitted one silently
+  /// reverts to its default, which is how a courier's masthead once reset
+  /// itself to zero.
+  TestRequest withDocumentUrl(String? url) => TestRequest(
+    id: id,
+    kind: kind,
+    title: title,
+    subtitle: subtitle,
+    priority: priority,
+    status: status,
+    stage: stage,
+    patient: patient,
+    orderedOn: orderedOn,
+    isCritical: isCritical,
+    hospitalName: hospitalName,
+    hospitalAddress: hospitalAddress,
+    clinicalNotes: clinicalNotes,
+    documentAsset: documentAsset,
+    resultRecordId: resultRecordId,
+    documentUrl: url,
+  );
 
   /// `Ordered 20/07/2026`, hand-formatted like every other date in the app.
   String get orderedOnLabel =>

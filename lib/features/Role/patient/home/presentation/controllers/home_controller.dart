@@ -1,3 +1,5 @@
+import 'dart:async';
+import '../../../../../../core/services/call_service.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
@@ -185,7 +187,16 @@ class HomeController extends GetxController {
       AppSnackbar.info(AppStrings.joinOpensSoon.tr);
       return;
     }
-    Get.toNamed<void>(AppRoutes.videoCall, arguments: appointment);
+    // Rings the doctor rather than opening the room directly. Every other
+    // Join in the app was changed to do this; the home card was missed, so the
+    // most-used entry point still dropped the patient into an empty channel
+    // while the doctor's phone stayed silent and they learned a consultation
+    // had started by opening the app and looking at their bookings.
+    //
+    // It also left `CallService` idle while a call was on screen, which is how
+    // one device ends up in a room with `isBusy` false — accepting a second
+    // call over the first and putting two controllers on Agora's one engine.
+    unawaited(Get.find<CallService>().ring(appointment));
   }
 
   MainNavController get _nav => Get.find<MainNavController>();

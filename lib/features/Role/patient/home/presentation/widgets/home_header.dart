@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 
 import '../../../../../../core/constants/app_icons.dart';
 import '../../../../../../core/theme/app_colors.dart';
+import '../../../../../../core/services/notification_inbox_service.dart';
+import '../../../../../../core/widgets/unread_badge.dart';
 import '../../../../../../core/theme/app_sizes.dart';
 import '../../../../../../core/theme/app_spacing.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
@@ -66,11 +69,19 @@ class HomeHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.titleLarge.rc(AppColors.authInk),
+              // The name opens the profile too, not only the picture beside
+              // it: the two read as one control, and half of it answering a
+              // tap while the other half does nothing is the sort of thing
+              // people blame on the tap rather than the app.
+              GestureDetector(
+                onTap: onProfileTap,
+                behavior: HitTestBehavior.opaque,
+                child: Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.titleLarge.rc(AppColors.authInk),
+                ),
               ),
               AppSpacing.gapV(AppSpacing.xxs),
               _LocationRow(label: location, onTap: onLocationTap),
@@ -80,7 +91,20 @@ class HomeHeader extends StatelessWidget {
         AppSpacing.gapH(AppSpacing.xs),
         _HeaderAction(icon: AppIcons.shoppingBag, onTap: onCartTap),
         _HeaderAction(icon: AppIcons.message, onTap: onMessagesTap),
-        _HeaderAction(icon: AppIcons.notification, onTap: onNotificationsTap),
+        // Read inside an `Obx` so the count changes without the header being
+        // rebuilt from above — a notification arriving on the socket has to
+        // move this badge while the patient is looking at it.
+        Obx(
+          () => UnreadBadge(
+            count: Get.isRegistered<NotificationInboxService>()
+                ? Get.find<NotificationInboxService>().unread.value
+                : 0,
+            child: _HeaderAction(
+              icon: AppIcons.notification,
+              onTap: onNotificationsTap,
+            ),
+          ),
+        ),
       ],
     );
   }

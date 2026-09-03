@@ -12,6 +12,7 @@ import '../../../../../core/utils/responsive.dart';
 import '../../../../../core/widgets/app_scaffold.dart';
 import '../../../../../core/widgets/app_avatar.dart';
 import '../../domain/entities/pharmacy_shop.dart';
+import '../controllers/shop_shell_controller.dart';
 import '../controllers/shop_home_controller.dart';
 import '../controllers/shop_orders_controller.dart';
 import '../widgets/shop_widgets.dart';
@@ -57,39 +58,51 @@ class _Masthead extends GetView<ShopHomeController> {
 
   static const double _avatar = 40;
 
+  /// The Profile tab, rather than a route pushed over the shell.
+  static void _openProfile() =>
+      Get.find<ShopShellController>().selectIndex(_profileTab);
+
+  /// Its index in `ShopShellScreen`: Home, Orders, Medicines, Profile.
+  static const int _profileTab = 3;
+
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // The owner's own picture when the server has one; the design's
-        // figure on its navy disc when it does not.
-        if (shop.photoUrl != null)
-          AppAvatar(
+        // Their own picture and their own name both open their profile, from
+        // here as from anywhere else.
+        GestureDetector(
+          onTap: _openProfile,
+          child: shop.photoUrl != null
+              ? AppAvatar(
             imageUrl: shop.photoUrl,
             name: shop.ownerName,
             size: _avatar,
             fallbackAsset: null,
-            backgroundColor: AppColors.authInk,
-            foregroundColor: AppColors.white,
-          )
-        else
-          Container(
-            width: _avatar.w,
-            height: _avatar.w,
-            decoration: const BoxDecoration(
-              color: AppColors.authInk,
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              Icons.person_rounded,
-              size: AppSizes.xl2.w,
-              color: AppColors.white,
-            ),
-          ),
+                  backgroundColor: AppColors.authInk,
+                  foregroundColor: AppColors.white,
+                )
+              : Container(
+                  width: _avatar.w,
+                  height: _avatar.w,
+                  decoration: const BoxDecoration(
+                    color: AppColors.authInk,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.person_rounded,
+                    size: AppSizes.xl2.w,
+                    color: AppColors.white,
+                  ),
+                ),
+        ),
         AppSpacing.gapH(AppSpacing.xs),
         Expanded(
-          child: Column(
+          child: GestureDetector(
+            onTap: _openProfile,
+            behavior: HitTestBehavior.opaque,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -122,6 +135,7 @@ class _Masthead extends GetView<ShopHomeController> {
                 ],
               ),
             ],
+            ),
           ),
         ),
         InkResponse(

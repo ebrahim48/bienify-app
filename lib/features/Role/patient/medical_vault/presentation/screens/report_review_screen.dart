@@ -64,20 +64,25 @@ class ReportReviewScreen extends GetView<TestResultsController> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _FollowUpPanel(
-                  doctor: controller.doctorName,
-                  // Only the offer state carries the call button; the others
-                  // show the panel as a heading over their own section.
-                  onAccept:
-                      controller.outcome.value == ReviewOutcome.followUpOffered
-                      ? controller.acceptFollowUp
-                      : null,
-                ),
+                // "Talk to you" belongs to the one outcome that is an offer to
+                // talk. It used to be drawn for every reviewed order, so a
+                // doctor who had written a note appeared to be asking for a
+                // call they had not asked for.
+                if (controller.outcome.value == ReviewOutcome.followUpOffered)
+                  _FollowUpPanel(
+                    doctor: controller.doctorName,
+                    onAccept: controller.acceptFollowUp,
+                  ),
                 if (noteLabel != null) ...[
                   AppSpacing.gapV(AppSpacing.base),
-                  _NoteSection(
+                  // What the doctor actually wrote. The server sends it, the
+                  // app parsed it into `reviewMessage`, and no screen read it
+                  // — so every reviewed result reached the patient as an empty
+                  // box to type into, with the doctor's words nowhere on the
+                  // screen at all.
+                  _DoctorNote(
                     label: noteLabel,
-                    onChanged: (value) => controller.replyNote.value = value,
+                    message: controller.reviewMessage,
                   ),
                 ],
               ],
@@ -198,7 +203,7 @@ class _FollowUpPanel extends StatelessWidget {
             // The doctor's honorific is already in the copy, so the raw name
             // is passed through without it.
             AppStrings.doctorWantsToTalk.trParams({
-              'doctor': doctor.replaceFirst('Dr. ', ''),
+              'doctor': withoutHonorific(doctor),
             }),
             textAlign: TextAlign.center,
             style: AppTextStyles.titleMedium.rw(
@@ -225,16 +230,38 @@ class _FollowUpPanel extends StatelessWidget {
   }
 }
 
-/// A labelled free-text box the patient writes back into — the design's
-/// "Message" and "Refer & Escalation" sections, which differ only in heading.
-class _NoteSection extends StatelessWidget {
-  const _NoteSection({required this.label, required this.onChanged});
+/// A doctor's name with any honorific taken off it.
+///
+/// The copy around it already says "Doctor", so the name must not repeat it.
+/// The old strip matched `Dr. ` only — with the dot — and every name the
+/// server actually sends is `Dr Dana Okafor`, so the panel read
+/// "Doctor Dr Dana Okafor".
+String withoutHonorific(String name) {
+  final trimmed = name.trim();
+  for (final prefix in const ['Dr. ', 'Dr ', 'Doctor ']) {
+    if (trimmed.startsWith(prefix)) return trimmed.substring(prefix.length);
+  }
+  return trimmed;
+}
+
+/// The doctor's own words, under the heading their outcome names.
+///
+/// This was a free-text box the patient typed into. Nothing read what they
+/// typed — `replyNote` was written by the field and referenced nowhere else,
+/// there is no patient-reply endpoint on a lab order, and the order carries no
+/// consultation to send into either. So the box collected a reply to a doctor
+/// who could never receive it, while the message that doctor had actually sent
+/// was not shown anywhere on the screen.
+class _DoctorNote extends StatelessWidget {
+  const _DoctorNote({required this.label, required this.message});
 
   final String label;
-  final ValueChanged<String> onChanged;
+  final String message;
 
   @override
   Widget build(BuildContext context) {
+    if (message.trim().isEmpty) return const SizedBox.shrink();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -248,10 +275,8 @@ class _NoteSection extends StatelessWidget {
         ),
         AppSpacing.gapV(AppSpacing.xs),
         Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm.w,
-            vertical: AppSpacing.xs.h,
-          ),
+          width: double.infinity,
+          padding: EdgeInsets.all(AppSpacing.sm.w),
           decoration: BoxDecoration(
             color: AppColors.fieldFill,
             borderRadius: AppRadius.rLg,
@@ -260,20 +285,9 @@ class _NoteSection extends StatelessWidget {
               width: AppSizes.borderWidth,
             ),
           ),
-          // No controller passed: the field owns its own, so nothing is
-          // disposed out from under it when the route pops.
-          child: TextField(
-            onChanged: onChanged,
-            maxLines: 3,
-            minLines: 3,
-            cursorColor: AppColors.primary800,
+          child: Text(
+            message,
             style: AppTextStyles.bodyLarge.rc(AppColors.authInk),
-            decoration: InputDecoration(
-              isDense: true,
-              border: InputBorder.none,
-              hintText: AppStrings.reasonForTestHint.tr,
-              hintStyle: AppTextStyles.bodyLarge.rc(AppColors.fieldHint),
-            ),
           ),
         ),
       ],

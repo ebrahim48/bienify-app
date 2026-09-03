@@ -11,6 +11,10 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        // Required by `flutter_local_notifications`, which is what raises an
+        // incoming consultation over the lock screen. Without it the build
+        // fails outright rather than degrading, so it is not optional.
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -147,3 +151,7 @@ val openBienifyApiTunnel = tasks.register("openBienifyApiTunnel") {
 
 tasks.matching { it.name == "preDebugBuild" || it.name == "preProfileBuild" }
     .configureEach { dependsOn(openBienifyApiTunnel) }
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+}

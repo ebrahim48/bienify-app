@@ -85,11 +85,85 @@ void main() {
     });
   });
 
+  group('lab order for the doctor', () {
+    Map<String, dynamic> order({
+      String status = 'completed',
+      bool withCentre = true,
+      bool withResult = true,
+    }) => {
+      '_id': 'order-1',
+      'status': status,
+      'kind': 'lab',
+      'tests': ['Complete Blood Count'],
+      'notes': 'Routine',
+      'createdAt': '2026-08-31T09:57:17.108Z',
+      'patientId': {
+        '_id': 'p1',
+        'profile': {'name': 'Ebrahim'},
+      },
+      if (withCentre)
+        'testingCentreId': {
+          '_id': 'c1',
+          'name': 'Springfield Diagnostics',
+          'addressLine': '9 Lab Road',
+          'city': 'Springfield',
+        },
+      if (withResult) 'resultRecordId': 'rec-1',
+    };
+
+    test('carries the centre and the uploaded report', () {
+      // Both were dropped, so `hasResults` was false for every real order:
+      // the detail screen said "Awaiting patient upload" however much had been
+      // uploaded, and the button that starts the review was never drawn. The
+      // whole Results to Review flow was reachable only from the sample data.
+      final request = testRequestFrom(order());
+
+      expect(request.resultRecordId, 'rec-1');
+      expect(request.hasResults, isTrue);
+      expect(request.hospitalName, 'Springfield Diagnostics');
+      expect(request.hospitalAddress, '9 Lab Road, Springfield');
+    });
+
+    test('has no results before the patient has uploaded one', () {
+      final request = testRequestFrom(
+        order(status: 'requested', withCentre: false, withResult: false),
+      );
+
+      expect(request.hasResults, isFalse);
+      expect(request.hospitalName, isNull);
+    });
+
+    test('keeps every field when the signed link arrives', () {
+      // An omitted field silently reverts to its default; that is how a
+      // courier's masthead once reset itself to zero.
+      final request = testRequestFrom(order());
+      final signed = request.withDocumentUrl('https://example.test/report.jpg');
+
+      expect(signed.documentUrl, 'https://example.test/report.jpg');
+      expect(signed.resultRecordId, request.resultRecordId);
+      expect(signed.hospitalName, request.hospitalName);
+      expect(signed.hospitalAddress, request.hospitalAddress);
+      expect(signed.title, request.title);
+      expect(signed.status, request.status);
+      expect(signed.stage, request.stage);
+      expect(signed.patient.name, request.patient.name);
+      expect(signed.clinicalNotes, request.clinicalNotes);
+    });
+  });
+
   group('appointment', () {
     test('reads the doctor name and slot time', () {
       final a = appointmentFrom(json_(appointmentJson));
       expect(a.doctorName, 'Dr Dana Okafor');
-      expect(a.scheduledAt, DateTime.parse('2026-08-13T09:00:00.000Z'));
+      // The same instant, in the device's own zone. `Api.date` converts on
+      // the way in, because every `.hour` read off a UTC `DateTime` afterwards
+      // prints somebody else's clock — which is what made a chat bubble jump
+      // by the whole offset the moment the stored row replaced it.
+      expect(a.scheduledAt.isUtc, isFalse);
+      expect(
+        a.scheduledAt,
+        DateTime.parse('2026-08-13T09:00:00.000Z').toLocal(),
+      );
     });
 
     // The server has more states than the three tabs the UI offers, so each

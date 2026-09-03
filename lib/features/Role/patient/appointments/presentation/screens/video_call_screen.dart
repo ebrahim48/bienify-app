@@ -33,13 +33,25 @@ class VideoCallScreen extends GetView<VideoCallController> {
         systemNavigationBarColor: AppColors.surface,
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
-      child: Scaffold(
-        backgroundColor: AppColors.gray900,
-        body: Column(
-          children: [
-            Expanded(child: _Stage(controller: controller)),
-            _CallFooter(controller: controller),
-          ],
+      child: PopScope(
+        // Back is a hang-up, not a way out of the screen. Both ringing screens
+        // already knew this; the call screen did not, so backing out of a live
+        // consultation left the service still thinking a call was in progress.
+        // Every later call was then auto-declined as "busy" for the rest of the
+        // session, and the server held the consultation for four hours — while
+        // the other party found out only when Agora eventually noticed.
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) controller.endCall();
+        },
+        child: Scaffold(
+          backgroundColor: AppColors.gray900,
+          body: Column(
+            children: [
+              Expanded(child: _Stage(controller: controller)),
+              _CallFooter(controller: controller),
+            ],
+          ),
         ),
       ),
     );
