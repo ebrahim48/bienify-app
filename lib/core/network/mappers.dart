@@ -58,10 +58,17 @@ class Api {
     return fallback;
   }
 
+  /// Always in the reader's own zone.
+  ///
+  /// The server sends ISO-8601 with a `Z`, which `DateTime.parse` returns as a
+  /// UTC value — and every label in the app reads `.hour` and `.day` off it
+  /// directly, so a message sent at 14:45 in Dhaka printed as 8:45 AM. The
+  /// asymmetry was one-sided: outgoing slot times already go out as
+  /// `.toUtc()`. On a string that carries no zone, `toLocal` is a no-op.
   static DateTime date(dynamic v) {
-    if (v is DateTime) return v;
+    if (v is DateTime) return v.toLocal();
     final parsed = DateTime.tryParse(v?.toString() ?? '');
-    return parsed ?? DateTime.fromMillisecondsSinceEpoch(0);
+    return parsed?.toLocal() ?? DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   static Map<String, dynamic> map(dynamic v) =>

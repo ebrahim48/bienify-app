@@ -4,7 +4,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
+import '../../../../../../core/theme/app_radius.dart';
 import '../../../../../../core/theme/app_spacing.dart';
+import '../../../../../../core/theme/app_text_styles.dart';
+import '../../../../../../core/utils/responsive.dart';
 import '../controllers/chat_controller.dart';
 import '../widgets/attachment_sheet.dart';
 import '../widgets/chat_bubble.dart';
@@ -58,7 +61,21 @@ class ChatScreen extends GetView<ChatController> {
                     ),
                     itemCount: controller.messages.length,
                     separatorBuilder: (_, _) => AppSpacing.gapV(AppSpacing.sm),
-                    itemBuilder: (context, index) =>
+                    itemBuilder: (context, index) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // A bubble carries only a clock time, so without this
+                        // a message from April and one from today read the
+                        // same. Drawn on the first message of each day.
+                        if (index == 0 ||
+                            !controller.messages[index].isSameDayAs(
+                              controller.messages[index - 1],
+                            )) ...[
+                          _DaySeparator(
+                            label: controller.messages[index].dayLabel,
+                          ),
+                          AppSpacing.gapV(AppSpacing.sm),
+                        ],
                         ChatBubble(
                           message: controller.messages[index],
                           // Messenger draws the reader's face against one
@@ -76,6 +93,8 @@ class ChatScreen extends GetView<ChatController> {
                           onOpenMedia: () =>
                               controller.openMedia(controller.messages[index]),
                         ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -94,6 +113,36 @@ class ChatScreen extends GetView<ChatController> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The date a run of messages was sent on.
+///
+/// Centred pill rather than a full-width rule: the thread is a column of
+/// bubbles, and a line across it reads as a divider between conversations.
+class _DaySeparator extends StatelessWidget {
+  const _DaySeparator({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm.w,
+          vertical: AppSpacing.xs2.h,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.accentSurface,
+          borderRadius: AppRadius.rLg,
+        ),
+        child: Text(
+          label,
+          style: AppTextStyles.bodySmall.rc(AppColors.textSecondary),
         ),
       ),
     );

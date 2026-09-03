@@ -46,27 +46,20 @@ class BestMatchesScreen extends GetView<PrescriptionController> {
             AppSpacing.gapV(AppSpacing.base),
             _SearchArea(area: controller.searchArea.value),
             AppSpacing.gapV(AppSpacing.base),
-            if (controller.isLoading.value)
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: AppSpacing.xl4.h),
-                child: const Center(child: CircularProgressIndicator()),
-              )
-            else ...[
-              Text(
-                AppStrings.pharmaciesFound.trParams({
-                  'count': '${controller.matches.length}',
-                }),
-                style: AppTextStyles.bodyLarge.rc(AppColors.gray500),
+            Text(
+              AppStrings.pharmaciesFound.trParams({
+                'count': '${controller.matches.length}',
+              }),
+              style: AppTextStyles.bodyLarge.rc(AppColors.gray500),
+            ),
+            AppSpacing.gapV(AppSpacing.xs),
+            for (final store in controller.matches) ...[
+              PharmacyMatchCard(
+                store: store,
+                isSelected: store.id == controller.selectedStoreId.value,
+                onTap: () => controller.selectStore(store),
               ),
-              AppSpacing.gapV(AppSpacing.xs),
-              for (final store in controller.matches) ...[
-                PharmacyMatchCard(
-                  store: store,
-                  isSelected: store.id == controller.selectedStoreId.value,
-                  onTap: () => controller.selectStore(store),
-                ),
-                AppSpacing.gapV(AppSpacing.sm),
-              ],
+              AppSpacing.gapV(AppSpacing.sm),
             ],
             AppSpacing.gapV(AppSpacing.xs),
             AppButton(
@@ -76,9 +69,6 @@ class BestMatchesScreen extends GetView<PrescriptionController> {
                 size: AppSizes.xl2.w,
                 color: AppColors.actionLabel,
               ),
-              isEnabled:
-                  !controller.isLoading.value &&
-                  controller.selectedStoreId.value != null,
               onPressed: controller.customizeOrder,
             ),
             AppSpacing.gapV(AppSpacing.md),

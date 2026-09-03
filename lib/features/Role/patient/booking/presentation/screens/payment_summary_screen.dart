@@ -40,10 +40,10 @@ class PaymentSummaryScreen extends GetView<PaymentController> {
             AppSpacing.gapV(AppSpacing.xs),
             MedicalDocumentPicker(
               onAttach: controller.addAttachment,
-              onCamera: controller.captureFromCamera,
+              onCamera: () => controller.captureFromCamera(context),
               attachments: controller.attachments.toList(),
               onRemove: controller.removeAttachment,
-              isBusy: controller.isUploadingAttachment.value,
+              isBusy: controller.isAttaching.value,
             ),
             AppSpacing.gapV(AppSpacing.sm),
             AppointmentCard(

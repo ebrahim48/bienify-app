@@ -29,48 +29,66 @@ class DoctorProfileScreen extends GetView<DoctorProfileController> {
   Widget build(BuildContext context) {
     return AppScaffold(
       // Not scrollable, so the log-out card pins to the foot of the page as
-      // the design places it. The content is a fixed card and four rows.
+      // the design places it.
+      //
+      // The card and rows sit in their own scroll view rather than behind a
+      // `Spacer`. A `Spacer` assumes the content always fits, and on a short
+      // viewport it cannot shrink — the page overflowed by 34px on a landscape
+      // phone. Scrolling the content while the bar stays a sibling of the
+      // scroll view keeps the design's pinned foot without that assumption.
       scrollable: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const ScreenTopGap(),
-          Text(
-            AppStrings.profileTitle.tr,
-            style: AppTextStyles.headlineLarge.rc(AppColors.authInk),
-          ),
-          AppSpacing.gapV(AppSpacing.base),
-          Obx(
-            () => ProfileCard(
-              patient: controller.profile.value,
-              onEdit: controller.edit,
-              // Not wired to a real upload for this role yet — same as
-              // before, tapping the badge just opens the edit form.
-              onPhotoPicked: (_) => controller.changePhoto(),
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const ScreenTopGap(),
+                  Text(
+                    AppStrings.profileTitle.tr,
+                    style: AppTextStyles.headlineLarge.rc(AppColors.authInk),
+                  ),
+                  AppSpacing.gapV(AppSpacing.base),
+                  Obx(
+                    () => ProfileCard(
+                      patient: controller.profile.value,
+                      onEdit: controller.edit,
+                      onChangePhoto: () => controller.changePhoto(context),
+                    ),
+                  ),
+                  AppSpacing.gapV(AppSpacing.md),
+                  AppMenuRow(
+                    label: AppStrings.myWallet.tr,
+                    labelColor: AppColors.authInk,
+                    onTap: controller.openWallet,
+                  ),
+                  AppMenuRow(
+                    label: AppStrings.credentials.tr,
+                    labelColor: AppColors.authInk,
+                    onTap: controller.openCredentials,
+                  ),
+                  AppMenuRow(
+                    label: AppStrings.resultsToReview.tr,
+                    labelColor: AppColors.authInk,
+                    onTap: controller.openResultsToReview,
+                  ),
+                  AppMenuRow(
+                    label: AppStrings.settings.tr,
+                    labelColor: AppColors.authInk,
+                    onTap: controller.openSettings,
+                  ),
+                  AppMenuRow(
+                    label: AppStrings.partnerWithBienify.tr,
+                    labelColor: AppColors.authInk,
+                    onTap: controller.openPartner,
+                  ),
+                ],
+              ),
             ),
           ),
-          AppSpacing.gapV(AppSpacing.md),
-          AppMenuRow(
-            label: AppStrings.myWallet.tr,
-            labelColor: AppColors.authInk,
-            onTap: controller.openWallet,
-          ),
-          AppMenuRow(
-            label: AppStrings.resultsToReview.tr,
-            labelColor: AppColors.authInk,
-            onTap: controller.openResultsToReview,
-          ),
-          AppMenuRow(
-            label: AppStrings.settings.tr,
-            labelColor: AppColors.authInk,
-            onTap: controller.openSettings,
-          ),
-          AppMenuRow(
-            label: AppStrings.partnerWithBienify.tr,
-            labelColor: AppColors.authInk,
-            onTap: controller.openPartner,
-          ),
-          const Spacer(),
           _LogOutBar(onTap: () => _confirmLogOut(context)),
           AppSpacing.gapV(AppSpacing.md),
         ],

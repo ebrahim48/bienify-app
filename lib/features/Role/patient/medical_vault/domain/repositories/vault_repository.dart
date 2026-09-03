@@ -8,17 +8,6 @@ abstract class VaultRepository {
   /// Documents the patient has stored.
   Future<List<UploadedDocument>> documents();
 
-  /// Stores a file the patient just picked or captured: a presigned S3
-  /// upload, then a record pointing at it. [title] is what shows in the
-  /// vault list; [fileName] only picks the storage key's extension.
-  Future<UploadedDocument> uploadDocument({
-    required List<int> bytes,
-    required String fileName,
-    required String contentType,
-    required String title,
-    required VaultRecordType type,
-  });
-
   /// Diagnostic tests ordered for the patient.
   Future<List<TestOrder>> testOrders();
 

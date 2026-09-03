@@ -56,6 +56,44 @@ class FileDownloadService {
     }
   }
 
+  /// Writes [bytes] into the cache under [fileName] and opens it.
+  ///
+  /// The counterpart to [openRemote] for a document the app renders itself —
+  /// a digital prescription has no file on the server to fetch.
+  ///
+  /// Returns whether the file reached the device.
+  Future<bool> openBytes({
+    required List<int> bytes,
+    required String fileName,
+  }) async {
+    if (_busy) return false;
+    _busy = true;
+    try {
+      AppSnackbar.info(AppStrings.openingFile.tr);
+      final directory = await getTemporaryDirectory();
+      final path =
+          '${directory.path}${Platform.pathSeparator}${safeName(fileName)}';
+      await File(path).writeAsBytes(bytes, flush: true);
+
+      final result = await OpenFilex.open(path);
+      if (result.type == ResultType.noAppToOpen) {
+        AppSnackbar.info(AppStrings.noAppForFile.tr);
+        // The bytes are on the device either way; only the hand-off failed.
+        return true;
+      }
+      if (result.type != ResultType.done) {
+        AppSnackbar.error(AppStrings.cannotOpenFile.tr);
+        return true;
+      }
+      return true;
+    } catch (_) {
+      AppSnackbar.error(AppStrings.cannotOpenFile.tr);
+      return false;
+    } finally {
+      _busy = false;
+    }
+  }
+
   /// Strips anything that would make the name a path rather than a filename.
   /// A server-supplied name reaching `..\..\` would otherwise write outside
   /// the cache directory.

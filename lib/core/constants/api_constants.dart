@@ -10,11 +10,17 @@
 class ApiConstants {
   ApiConstants._();
 
-  /// Override at build time:
+  /// The deployed backend, so a device build reaches a server without being
+  /// told where one is. `localhost` cannot be the default: on a phone or an
+  /// emulator it resolves to the handset itself, so every call failed as a
+  /// connection error and the app reported "No internet connection" on a
+  /// perfectly good network.
+  ///
+  /// Override at build time to point at a local server:
   ///   flutter run --dart-define=BIENIFY_API_BASE_URL=http://10.0.2.2:3500
   static const String baseUrl = String.fromEnvironment(
     'BIENIFY_API_BASE_URL',
-    defaultValue: 'https://jakuan3500.syedbipul.me',
+    defaultValue: 'https://jakuan5000.syedbipul.me',
   );
 
   static const Duration connectTimeout = Duration(seconds: 30);

@@ -43,13 +43,12 @@ abstract class AuthRepository {
     required AgeRange ageRange,
   });
 
-  /// Profile-setup step 2 — creates the account.
+  /// Profile-setup step 2 — attaches email and password to the account the
+  /// phone step created.
   ///
-  /// The backend has no endpoint that attaches email/password to a
-  /// phone-verified session; `POST /auth/register` is a standalone, anonymous
-  /// signup that answers with its own session. [name] is required by the
-  /// server even though step 1 already collected it — nothing carries it
-  /// forward on its own.
+  /// `POST /auth/credentials` files them against the phone-verified session
+  /// already in hand; the session itself does not change. [name] is sent
+  /// again because nothing carries step 1's value forward on its own.
   Future<AuthSession> saveCredentials({
     required String name,
     required String email,
