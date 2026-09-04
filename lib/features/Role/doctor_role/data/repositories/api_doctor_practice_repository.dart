@@ -161,6 +161,7 @@ class ApiDoctorPracticeRepository implements DoctorPracticeRepository {
     final results = await Future.wait([
       _api.getMap(ApiConstants.walletEarnings),
       _api.get(ApiConstants.walletTransactions, query: {'limit': _pageSize}),
+
       _api.get(ApiConstants.walletWithdrawals, query: {'limit': _pageSize}),
     ]);
 
