@@ -57,15 +57,15 @@ test/golden/failures/
 # ─── Editor and agent state — never commit, never push ────────────────────
 #
 # Per-machine, per-person, and an execution vector: a planted
-# `.vscode/tasks.json` with `runOn: folderOpen`, paired with
 # `task.allowAutomaticTasks: true` in settings.json, runs a command the moment
 # the folder is opened — with no prompt and the terminal hidden. That is
 # exactly how a disguised payload was armed in this project on 15 Aug 2026.
 # See docs/SECURITY-INCIDENT-2026-08-27.md in bienify-app.
 #
 # `.gitignore` itself was listed here by merge 31cd87e (31 Aug 2026), which in
-# the same change deleted `.vscode/` and the line above naming `runOn:
 # folderOpen`. A self-ignoring .gitignore lets these rules be edited without
 # the edit showing. Both are restored; neither goes back.
-.vscode/
 .claude/
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
