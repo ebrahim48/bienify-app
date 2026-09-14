@@ -10,7 +10,7 @@ class AppAssets {
 
   // ─── Brand ───────────────────────────────────────────────────────────────
   /// Full lock-up used on the splash screen.
-  static const String logo = '$_images/splash.png';
+  static const String logo = '$_icons/logo.png';
 
   // ─── Onboarding illustrations ────────────────────────────────────────────
   static const String onboardingFindDoctor = '$_images/rightdoctor.png';

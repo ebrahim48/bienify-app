@@ -20,7 +20,7 @@ class ApiConstants {
   ///   flutter run --dart-define=BIENIFY_API_BASE_URL=http://10.0.2.2:3500
   static const String baseUrl = String.fromEnvironment(
     'BIENIFY_API_BASE_URL',
-    defaultValue: 'https://jakuan5000.syedbipul.me',
+    defaultValue: 'https://benify.ssh.bd',
   );
 
   static const Duration connectTimeout = Duration(seconds: 30);
