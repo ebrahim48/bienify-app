@@ -25,21 +25,35 @@ abstract class PharmacyShopRepository {
   /// Everything on the shelf, listed or not.
   Future<List<ShopMedicine>> medicines();
 
-  /// Adds a medicine and returns it with the id the server gave it.
+  /// Adds a medicine and returns it as the server stored it.
+  ///
+  /// [imageKey] is what [uploadMedicineImage] returned.
   Future<ShopMedicine> addMedicine({
     required String name,
     required double price,
     required int stock,
     required bool isListed,
     String category,
+    DateTime? expiresOn,
+    String? imageKey,
   });
 
-  /// Writes [medicine] back whole.
+  /// Writes [medicine] back whole, and returns it as the server stored it —
+  /// not as sent, so a field the server ignores does not show as saved.
   ///
   /// Not a patch, despite the verb: the server validates the update against
   /// the same schema it validates a creation with, so a body carrying only the
   /// changed field is rejected for the fields it left out.
-  Future<void> updateMedicine(ShopMedicine medicine);
+  Future<ShopMedicine> updateMedicine(
+    ShopMedicine medicine, {
+    String? imageKey,
+  });
+
+  /// Uploads a product photo and returns the key to save it under.
+  Future<String> uploadMedicineImage({
+    required String path,
+    required String mimeType,
+  });
 
   /// The server has no delete for a medicine — a product with orders against
   /// it cannot vanish — so removing one delists it.

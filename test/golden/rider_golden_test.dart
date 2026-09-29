@@ -80,11 +80,7 @@ void main() {
   testWidgets('How It Works', (tester) async {
     // The masthead names the signed-in account now — not the fixture courier
     // it drew before, and not a courier profile the reader has yet to have.
-    await pump(
-      tester,
-      const RiderGuideScreen(),
-      binding: RiderGuideBinding(),
-    );
+    await pump(tester, const RiderGuideScreen(), binding: RiderGuideBinding());
     await tester.pumpAndSettle();
 
     expect(find.text('Mohammod Jakuan'), findsOneWidget);
@@ -244,6 +240,9 @@ void main() {
 
     expect(find.text(r'$21.75'), findsOneWidget);
     expect(find.text('Online — accepting orders'), findsOneWidget);
+    // The Earnings quick action carries the week's takings, as View Orders
+    // carries its count.
+    expect(find.text(r'$87.50 this week'), findsOneWidget);
 
     await settleImages(tester);
     await expectLater(
@@ -287,6 +286,33 @@ void main() {
     controller.accept(controller.visible.first);
     await tester.pumpAndSettle(const Duration(seconds: 5));
     expect(controller.visible.length, before - 1);
+  });
+
+  testWidgets('The request chips share one line, even at 320pt', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      const RiderShellScreen(),
+      binding: RiderShellBinding(),
+      size: const Size(320, 876),
+    );
+    Get.find<RiderShellController>().select(RiderTab.orders);
+    await tester.pumpAndSettle();
+
+    final chips = [
+      for (final label in [
+        'New Request',
+        'Accepted Request',
+        'Cancelled Request',
+      ])
+        tester.getRect(find.text(label)),
+    ];
+    for (final chip in chips) {
+      expect(chip.center.dy, moreOrLessEquals(chips.first.center.dy));
+      expect(chip.left, greaterThanOrEqualTo(0));
+      expect(chip.right, lessThanOrEqualTo(320));
+    }
   });
 
   testWidgets('Earnings', (tester) async {

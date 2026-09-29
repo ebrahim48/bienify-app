@@ -33,6 +33,45 @@ all of them.
 **Fix:** `.populate('patientId', 'profile.name phone')` on that query, as
 `listAppointments` already does.
 
+## A medicine has no image and no expiry date
+
+Checked against the running server on 2026-09-29. `POST` and `PATCH
+/api/v1/pharmacies/me/medicines` validate with a schema that strips unknown
+keys, so `expiryDate` and `imageKey` are accepted and silently dropped. A
+medicine document comes back with neither, and there is no upload route:
+`POST /api/v1/pharmacies/me/medicines/image/upload-url` answers
+`404 Route not found`.
+
+**Where it shows:** Add / Edit Medicine. The form already sends both in the
+shape below. Until the server takes them:
+
+- picking a photo shows the server's "Route not found" error and the photo is
+  not kept on the form, because it never reached storage;
+- an expiry is sent and dropped. The shelf only shows what the server sends
+  back, so an unsaved expiry never appears as saved.
+
+**Fix:** the app needs three things. The photo follows the same
+presign-then-PUT flow as the door image (`/users/me/address/door-image/upload-url`):
+
+1. `POST /api/v1/pharmacies/me/medicines/image/upload-url`
+   - body: `{ "contentType": "image/jpeg" }` (`image/png`, `image/heic` and
+     `image/webp` too)
+   - returns: `{ "url": "<presigned PUT>", "key": "<storage key>" }`
+2. On `POST` and `PATCH /pharmacies/me/medicines[/:id]`, accept:
+   - `expiryDate`: `"2028-03-31"`. A calendar date with no time or zone.
+     `null` on a `PATCH` clears it.
+   - `imageKey`: the `key` from step 1. Store it, and check that it belongs
+     to this pharmacy.
+3. On every medicine document the server returns (`GET /medicines`, and
+   the `POST` and `PATCH` responses):
+   - `expiryDate`: the same `YYYY-MM-DD`. A full ISO string also works; the app
+     reads only its date part.
+   - `imageUrl`: a readable URL, or a path such as `/static/...`, which the app
+     resolves against its base URL the way it does avatars.
+
+The `PATCH` should return the stored document. The app shows that response
+rather than what it sent, so a dropped field cannot look saved.
+
 ## A shop cannot see its own delisted stock
 
 `GET /api/v1/medicines` hard-filters `isActive: true`. That is right for the

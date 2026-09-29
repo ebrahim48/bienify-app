@@ -959,6 +959,9 @@ class AppStrings {
   static const String priceUsdLabel = 'price_usd_label';
   static const String stockQuantityLabel = 'stock_quantity_label';
   static const String expiryDateLabel = 'expiry_date_label';
+  static const String selectExpiryDate = 'select_expiry_date';
+  static const String medicineImageStillUploading =
+      'medicine_image_still_uploading';
   static const String medicineSaved = 'medicine_saved';
   static const String medicineRemoved = 'medicine_removed';
   static const String medicineNeedsFields = 'medicine_needs_fields';
@@ -1099,6 +1102,7 @@ class AppStrings {
   static const String viewOrders = 'view_orders';
   static const String ordersAvailable = 'orders_available';
   static const String earnings = 'earnings';
+  static const String earnedThisWeek = 'earned_this_week';
   static const String recentDeliveries = 'recent_deliveries';
 
   static const String orderRequests = 'order_requests';

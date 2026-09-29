@@ -74,6 +74,7 @@ class ApiConstants {
   static const String appointments = '$_v1/appointments';
   static const String postAppointments = '$_v1/appointments';
   static String appointments2(String id) => '$_v1/appointments/$id';
+
   /// The doctor's refund for a lapsed consultation. Distinct from
   /// `postPaymentsAppointmentsRefund`, which is the operator's settlement of
   /// a cancellation.
@@ -127,6 +128,7 @@ class ApiConstants {
   /// a consultation outliving the TTL drops both parties without this.
   static String postConsultationsToken(String id) =>
       '$_v1/consultations/$id/token';
+
   /// A presigned PUT for a chat attachment. The device uploads straight to
   /// storage with it; the bytes never pass through this API.
   static String postConsultationsAttachmentUploadUrl(String id) =>
@@ -151,6 +153,7 @@ class ApiConstants {
   static String updateDeliveriesStatus(String id) =>
       '$_v1/deliveries/$id/status';
   static const String deliveriesAvailable = '$_v1/deliveries/available';
+
   /// The courier ↔ customer thread. Same shape as a consultation's messages,
   /// because it is the same conversation with a different pair of people.
   static String deliveriesMessages(String id) => '$_v1/deliveries/$id/messages';
@@ -238,6 +241,12 @@ class ApiConstants {
       '$_v1/pharmacies/me/medicines';
   static String updatePharmaciesMeMedicines(String id) =>
       '$_v1/pharmacies/me/medicines/$id';
+
+  /// A presigned PUT for a medicine's photo; the key it returns is sent as
+  /// `imageKey` with the create or update. **Not on the server yet** — see
+  /// "A medicine has no image and no expiry date" in `docs/API-GAPS.md`.
+  static const String postPharmaciesMeMedicinesImageUploadUrl =
+      '$_v1/pharmacies/me/medicines/image/upload-url';
   static const String pharmaciesMeStats = '$_v1/pharmacies/me/stats';
   static const String pharmaciesMeOrders = '$_v1/pharmacies/me/orders';
   static const String pharmaciesStockAlerts = '$_v1/pharmacies/stock-alerts';

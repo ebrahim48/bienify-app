@@ -18,8 +18,8 @@ import '../../domain/entities/pharmacy_shop.dart';
 import '../controllers/shop_orders_controller.dart';
 import '../widgets/shop_widgets.dart';
 
-/// One order: who it is for, what they sent, what it contains, and the two
-/// answers the shop can give.
+/// One order: who it is for, what they sent, what it contains, and — while it
+/// is still new — the two answers the shop can give.
 class ShopOrderDetailsScreen extends GetView<ShopOrdersController> {
   const ShopOrderDetailsScreen({super.key});
 
@@ -49,14 +49,18 @@ class ShopOrderDetailsScreen extends GetView<ShopOrdersController> {
               AppSpacing.gapV(AppSpacing.sm),
             ],
             _MedicineList(order: order),
-            AppSpacing.gapV(AppSpacing.base),
-            AppButton(
-              label: AppStrings.acceptOrder.tr,
-              radius: AppRadius.xl,
-              onPressed: controller.accept,
-            ),
-            AppSpacing.gapV(AppSpacing.xs),
-            _DeclineButton(onTap: controller.decline),
+            // Only a new order can be answered; past that the banner's status
+            // pill is the whole story.
+            if (order.awaitsAnswer) ...[
+              AppSpacing.gapV(AppSpacing.base),
+              AppButton(
+                label: AppStrings.acceptOrder.tr,
+                radius: AppRadius.xl,
+                onPressed: controller.accept,
+              ),
+              AppSpacing.gapV(AppSpacing.xs),
+              _DeclineButton(onTap: controller.decline),
+            ],
             AppSpacing.gapV(AppSpacing.md),
           ],
         );
@@ -91,8 +95,13 @@ class _CodeBanner extends StatelessWidget {
                   order.code,
                   style: AppTextStyles.titleLarge.rc(AppColors.white),
                 ),
+                // The day comes off the order: this printed "Today" under
+                // every order, whenever it had been placed.
                 Text(
-                  '${order.placedAtLabel} • ${AppStrings.today.tr}',
+                  [
+                    order.placedAtLabel,
+                    order.placedOnLabel,
+                  ].where((part) => part.isNotEmpty).join(' • '),
                   style: AppTextStyles.bodyMedium.rc(AppColors.primary200),
                 ),
               ],

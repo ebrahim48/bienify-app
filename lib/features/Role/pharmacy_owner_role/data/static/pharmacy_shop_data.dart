@@ -109,6 +109,7 @@ class PharmacyShopData {
             phone: who.phone,
             address: _addresses[n % _addresses.length],
             placedAtLabel: who.at,
+            placedOnLabel: 'Today',
             status: status,
             lines: _baskets[n % _baskets.length],
             prescriptionFile: 'Prescription.jpg',
@@ -122,12 +123,12 @@ class PharmacyShopData {
 
   // ─── Medicines ───────────────────────────────────────────────────────────
 
-  static const List<ShopMedicine> medicines = [
+  static final List<ShopMedicine> medicines = [
     ShopMedicine(
       id: 'm-1',
       name: 'Paracetamol 500mg',
       category: 'Pain Relief',
-      expiryLabel: '2028-03',
+      expiresOn: DateTime(2028, 3, 31),
       stock: 128,
       price: 2.5,
       isListed: true,
@@ -137,7 +138,7 @@ class PharmacyShopData {
       id: 'm-2',
       name: 'Ibuprofen 400mg',
       category: 'Anti-inflammatory',
-      expiryLabel: '2029-06',
+      expiresOn: DateTime(2029, 6, 30),
       stock: 75,
       price: 3,
       isListed: true,
@@ -147,7 +148,7 @@ class PharmacyShopData {
       id: 'm-3',
       name: 'Aspirin 100mg',
       category: 'Blood Thinner',
-      expiryLabel: '2027-12',
+      expiresOn: DateTime(2027, 12, 31),
       stock: 200,
       price: 1.8,
       isListed: true,
@@ -157,7 +158,7 @@ class PharmacyShopData {
       id: 'm-4',
       name: 'Amoxicillin 500mg',
       category: 'Antibiotic',
-      expiryLabel: '2025-09',
+      expiresOn: DateTime(2025, 9, 30),
       stock: 50,
       price: 4.2,
       isListed: true,
@@ -167,7 +168,7 @@ class PharmacyShopData {
       id: 'm-5',
       name: 'Lisinopril 10mg',
       category: 'Blood Pressure',
-      expiryLabel: '2026-11',
+      expiresOn: DateTime(2026, 11, 30),
       stock: 90,
       price: 5,
       isListed: true,
@@ -177,7 +178,7 @@ class PharmacyShopData {
       id: 'm-6',
       name: 'Cetirizine 10mg',
       category: 'Allergy Relief',
-      expiryLabel: '2028-01',
+      expiresOn: DateTime(2028, 1, 31),
       stock: 120,
       price: 3.5,
       isListed: true,

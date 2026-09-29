@@ -269,4 +269,56 @@ void main() {
       expect(Api.label('  ', 'Consultation'), 'Consultation');
     });
   });
+
+  group('shop order', () {
+    test('carries the day it was placed, not always "Today"', () {
+      final order = shopOrderFrom({
+        '_id': '6a994d738941b972b6fd1039',
+        'status': 'delivered',
+        'createdAt': '2026-03-02T09:00:00.000Z',
+        'items': <Object>[],
+      });
+      expect(
+        order.placedOnLabel,
+        formatDate(DateTime.utc(2026, 3, 2, 9).toLocal()),
+      );
+      expect(order.placedOnLabel, isNot('Today'));
+    });
+  });
+
+  group('medicine', () {
+    test('reads expiry as the calendar day written, whatever the zone', () {
+      expect(
+        medicineExpiryFrom('2028-03-31T00:00:00.000Z'),
+        DateTime(2028, 3, 31),
+      );
+      // Late in the UTC day: converting to local would roll this into
+      // 1 April anywhere east of Greenwich, as the midnight case above would
+      // roll back into 30 March anywhere west. Between them one of the two
+      // fails in every zone but UTC itself.
+      expect(
+        medicineExpiryFrom('2028-03-31T23:00:00.000Z'),
+        DateTime(2028, 3, 31),
+      );
+      expect(medicineExpiryFrom('2028-03-31'), DateTime(2028, 3, 31));
+      expect(medicineExpiryFrom(null), isNull);
+    });
+
+    test('writes expiry as a bare date', () {
+      expect(medicineExpiryTo(DateTime(2028, 3, 1, 23, 59)), '2028-03-01');
+    });
+
+    test('has no expiry or photo when the server sends none', () {
+      final medicine = shopMedicineFrom({
+        '_id': '6a7aaebd9edac194dd587767',
+        'name': 'Paracetamol 500mg',
+        'priceMinor': 500,
+        'stock': 200,
+        'isActive': true,
+      });
+      expect(medicine.expiresOn, isNull);
+      expect(medicine.imageUrl, isNull);
+      expect(medicine.subtitle, isEmpty);
+    });
+  });
 }

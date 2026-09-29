@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../constants/app_strings.dart';
 import '../constants/api_constants.dart';
+import '../utils/time_format.dart';
 import '../../features/Role/doctor_role/domain/entities/doctor_practice.dart';
 // Prefixed: `OrderStage` names both a pharmacy delivery step and a lab-order
 // step, and this file maps both.
@@ -820,10 +821,19 @@ ShopOrder shopOrderFrom(Map<String, dynamic> json) {
     phone: Api.str(Api.map(json['patientId'])['phone']),
     address: Api.str(json['deliveryAddress']),
     placedAtLabel: clockLabel(placedAt),
+    placedOnLabel: _dayLabel(placedAt),
     status: shopOrderStatusFrom(Api.str(json['status'])),
     lines: Api.rows(json['items']).map(shopOrderLineFrom).toList(),
     customerPhotoUrl: Api.avatarOf(json['patientId']),
   );
+}
+
+/// `Today` for today, the full date otherwise.
+String _dayLabel(DateTime at) {
+  final now = DateTime.now();
+  final isToday =
+      at.year == now.year && at.month == now.month && at.day == now.day;
+  return isToday ? AppStrings.today.tr : formatDate(at);
 }
 
 OrderLine shopOrderLineFrom(Map<String, dynamic> json) => OrderLine(
@@ -832,15 +842,8 @@ OrderLine shopOrderLineFrom(Map<String, dynamic> json) => OrderLine(
   unitPrice: Api.majorUnits(json['unitPriceMinor']),
 );
 
-/// `15 Mar 1978` — an unambiguous date, which matters on a medical document
-/// where 03/04 could be March or April depending on the reader.
-String formatDate(DateTime at) {
-  const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-  ];
-  return '${at.day} ${months[at.month - 1]} ${at.year}';
-}
+/// `15 Mar 1978`. See [TimeFormat.date].
+String formatDate(DateTime at) => TimeFormat.date(at);
 
 /// `15 Mar 1978, 09:15 AM`.
 String formatDateTime(DateTime at) => '${formatDate(at)}, ${clockLabel(at)}';
@@ -855,17 +858,39 @@ String clockLabel(DateTime at) {
 
 /// `GET /medicines` — a product on the owner's shelf.
 ///
-/// The server keeps no expiry date and no category; `brand` is the nearest
-/// thing to the latter, and the row drops whichever it does not have.
+/// The server keeps no category; `brand` is the nearest thing to it. Expiry
+/// and the photo are read from the fields proposed in `docs/API-GAPS.md` and
+/// are absent until the server stores them — the row drops what it lacks.
 ShopMedicine shopMedicineFrom(Map<String, dynamic> json) => ShopMedicine(
   id: Api.id(json),
   name: Api.str(json['name'], 'Medicine'),
   category: Api.str(json['brand']),
-  expiryLabel: '',
+  expiresOn: medicineExpiryFrom(json['expiryDate']),
+  // Resolved the way an avatar is: the server may store a path.
+  imageUrl: Api.avatarOf({
+    'profile': {'avatarUrl': json['imageUrl']},
+  }),
   stock: Api.integer(json['stock']),
   price: Api.majorUnits(json['priceMinor']),
   isListed: json['isActive'] != false,
 );
+
+/// A medicine's expiry off the wire, as a calendar day.
+///
+/// Read off the string's own date rather than through [Api.date]: that
+/// converts to local time, and `2028-03-31T00:00:00Z` is 30 March for anyone
+/// west of Greenwich.
+DateTime? medicineExpiryFrom(dynamic raw) {
+  final parsed = DateTime.tryParse(Api.str(raw));
+  if (parsed == null) return null;
+  return DateTime(parsed.year, parsed.month, parsed.day);
+}
+
+/// `2028-03-31` — a date with no clock and no zone to shift it.
+String medicineExpiryTo(DateTime day) =>
+    '${day.year.toString().padLeft(4, '0')}-'
+    '${day.month.toString().padLeft(2, '0')}-'
+    '${day.day.toString().padLeft(2, '0')}';
 
 /// `GET /notifications` — a row of the shop's feed.
 ShopNotification shopNotificationFrom(Map<String, dynamic> json) {
