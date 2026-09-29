@@ -11,6 +11,7 @@ import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/utils/responsive.dart';
 import '../../../../../core/widgets/app_card.dart';
 import '../../../../../core/widgets/app_scaffold.dart';
+import '../../../../../core/widgets/app_top_bar.dart';
 import '../../../../../core/widgets/app_empty_state.dart';
 import '../../domain/entities/pharmacy_shop.dart';
 import '../controllers/shop_notifications_controller.dart';
@@ -22,18 +23,10 @@ class ShopNotificationsScreen extends GetView<ShopNotificationsController> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
+      topBar: AppTopBar(title: AppStrings.notifications.tr),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const ScreenTopGap(),
-          Text(
-            AppStrings.notifications.tr,
-            style: AppTextStyles.titleLarge.rw(
-              AppColors.gray900,
-              FontWeight.w400,
-            ),
-          ),
-          AppSpacing.gapV(AppSpacing.xs),
           // Read here so the list repaints; the cards get plain values.
           Obx(() {
             final items = controller.notifications.toList();

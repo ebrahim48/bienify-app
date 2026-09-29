@@ -56,8 +56,8 @@ class RiderOrdersScreen extends GetView<RiderOrdersController> {
               selectedIndex: RequestTab.values.indexOf(controller.tab.value),
               onSelected: (index) =>
                   controller.selectTab(RequestTab.values[index]),
-              isLarge: true,
-              horizontalPadding: AppSpacing.sm,
+              fillsWidth: true,
+              horizontalPadding: AppSpacing.xs,
             ),
           ),
           AppSpacing.gapV(AppSpacing.sm),

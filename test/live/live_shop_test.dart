@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:bienify_app/core/constants/api_constants.dart';
 import 'package:bienify_app/core/exceptions/app_exceptions.dart';
 import 'package:bienify_app/core/network/api_client.dart';
+import 'package:bienify_app/core/network/attachment_uploader.dart';
 import 'package:bienify_app/core/network/token_store.dart';
 import 'package:bienify_app/features/Role/pharmacy_owner_role/data/repositories/api_pharmacy_shop_repository.dart';
 import 'package:bienify_app/features/Role/pharmacy_owner_role/domain/entities/pharmacy_shop.dart';
@@ -54,7 +55,7 @@ void main() {
       print('Auth rate limit reached — live checks skipped. Retry in 15 min.');
       return;
     }
-    repository = ApiPharmacyShopRepository(client);
+    repository = ApiPharmacyShopRepository(client, AttachmentUploader(client));
   });
 
   Future<void> live(Future<void> Function() body) async {
@@ -162,7 +163,6 @@ void main() {
             id: added.id,
             name: added.name,
             category: added.category,
-            expiryLabel: '',
             stock: 3,
             price: 9.99,
             isListed: true,

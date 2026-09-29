@@ -1,14 +1,19 @@
+import 'dart:io';
+
 import '../../../../../core/constants/api_constants.dart';
+import '../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../core/network/api_client.dart';
+import '../../../../../core/network/attachment_uploader.dart';
 import '../../../../../core/network/mappers.dart';
 import '../../domain/entities/pharmacy_shop.dart';
 import '../../domain/repositories/pharmacy_shop_repository.dart';
 
 /// The shop, served by the API.
 class ApiPharmacyShopRepository implements PharmacyShopRepository {
-  const ApiPharmacyShopRepository(this._api);
+  const ApiPharmacyShopRepository(this._api, this._uploader);
 
   final ApiClient _api;
+  final AttachmentUploader _uploader;
 
   /// The server caps a page at 100, and none of these lists page in the
   /// design.
@@ -137,6 +142,8 @@ class ApiPharmacyShopRepository implements PharmacyShopRepository {
     required int stock,
     required bool isListed,
     String category = '',
+    DateTime? expiresOn,
+    String? imageKey,
   }) async {
     final data = await _api.postMap(
       ApiConstants.postPharmaciesMeMedicines,
@@ -146,14 +153,19 @@ class ApiPharmacyShopRepository implements PharmacyShopRepository {
         'stock': stock,
         'isActive': isListed,
         if (category.isNotEmpty) 'brand': category,
+        if (expiresOn != null) 'expiryDate': medicineExpiryTo(expiresOn),
+        'imageKey': ?imageKey,
       },
     );
     return shopMedicineFrom(data);
   }
 
   @override
-  Future<void> updateMedicine(ShopMedicine medicine) async {
-    await _api.patch(
+  Future<ShopMedicine> updateMedicine(
+    ShopMedicine medicine, {
+    String? imageKey,
+  }) async {
+    final data = await _api.patch(
       ApiConstants.updatePharmaciesMeMedicines(medicine.id),
       body: {
         'name': medicine.name,
@@ -161,8 +173,43 @@ class ApiPharmacyShopRepository implements PharmacyShopRepository {
         'stock': medicine.stock,
         'isActive': medicine.isListed,
         if (medicine.category.isNotEmpty) 'brand': medicine.category,
+        // Sent whole like the rest: a null clears a recorded expiry.
+        'expiryDate': medicine.expiresOn == null
+            ? null
+            : medicineExpiryTo(medicine.expiresOn!),
+        'imageKey': ?imageKey,
       },
     );
+    // The stored row when the response carries it, so an expiry or photo the
+    // server did not keep does not show as saved. What was sent otherwise.
+    final stored = Api.map(data);
+    return Api.id(stored).isEmpty ? medicine : shopMedicineFrom(stored);
+  }
+
+  @override
+  Future<String> uploadMedicineImage({
+    required String path,
+    required String mimeType,
+  }) async {
+    final file = File(path);
+    final issued = await _api.postMap(
+      ApiConstants.postPharmaciesMeMedicinesImageUploadUrl,
+      body: {'contentType': mimeType},
+    );
+    final url = '${issued['url'] ?? ''}';
+    final key = '${issued['key'] ?? ''}';
+    if (url.isEmpty || key.isEmpty) {
+      throw UnknownException('The server did not issue an upload location');
+    }
+
+    await _uploader.putBytes(
+      url: url,
+      file: file,
+      mime: mimeType,
+      size: await file.length(),
+    );
+    // No confirm call: the key is filed by the save that stores the medicine.
+    return key;
   }
 
   @override

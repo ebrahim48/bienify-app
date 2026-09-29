@@ -24,6 +24,10 @@ import '../utils/responsive.dart';
 /// one wrapping avoids — an option past the right edge with nothing to say it
 /// is there — so this is opt-in rather than the default.
 ///
+/// Pass [fillsWidth] for a short fixed set that must stay on one line with
+/// every option visible: when the row would overrun, every label is scaled
+/// down by the same factor, rather than one being clipped or scrolled away.
+///
 /// ```dart
 /// Obx(() => AppPillSelector(
 ///   labels: [for (final t in Tab.values) t.label],
@@ -40,6 +44,8 @@ class AppPillSelector extends StatelessWidget {
     required this.onSelected,
     this.isLarge = false,
     this.isScrollable = false,
+    this.isCompact = false,
+    this.fillsWidth = false,
     this.horizontalPadding = AppSpacing.base,
     this.unselectedFill = AppColors.surface,
     this.unselectedInk = AppColors.gray900,
@@ -56,6 +62,14 @@ class AppPillSelector extends StatelessWidget {
   /// Keeps every pill on one line, scrolling sideways instead of wrapping.
   final bool isScrollable;
 
+  /// 14pt labels instead of 16 — the Orders tab's six states, which the
+  /// design draws a size down so more of the row shows before it scrolls.
+  final bool isCompact;
+
+  /// One line, every option on screen, at the smaller filter size. Takes
+  /// precedence over [isScrollable].
+  final bool fillsWidth;
+
   /// Inset each side of a label. Results to Review's three segments only fit
   /// a 390pt frame at the design's tighter 12pt; everywhere else keeps 16.
   final double horizontalPadding;
@@ -69,12 +83,15 @@ class AppPillSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (fillsWidth) return _fittedRow(context);
+
     final pills = [
       for (var index = 0; index < labels.length; index++)
         _Pill(
           label: labels[index],
           isSelected: index == selectedIndex,
           isLarge: isLarge,
+          isCompact: isCompact,
           horizontalPadding: horizontalPadding,
           fill: unselectedFill,
           ink: unselectedInk,
@@ -106,26 +123,98 @@ class AppPillSelector extends StatelessWidget {
   }
 }
 
+extension on AppPillSelector {
+  /// Measures every label, then shrinks them all by one factor if the row
+  /// would overrun — so "New Request" is not left full size beside two
+  /// squeezed neighbours.
+  Widget _fittedRow(BuildContext context) {
+    final textScaler = MediaQuery.textScalerOf(context);
+    final direction = Directionality.of(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Resolved as the pill resolves it, `.sp` included; colour does not
+        // change the width.
+        final style = _Pill.styleFor(
+          isLarge: isLarge,
+          isCompact: true,
+        ).rc(unselectedInk);
+        final widths = [
+          for (final label in labels)
+            (TextPainter(
+              text: TextSpan(text: label, style: style),
+              textScaler: textScaler,
+              textDirection: direction,
+              maxLines: 1,
+            )..layout()).width,
+        ];
+        final textWidth = widths.fold<double>(0, (sum, w) => sum + w);
+        final chrome =
+            labels.length * (horizontalPadding.w + AppSizes.borderWidth) * 2 +
+            (labels.length - 1) * AppSpacing.xs.w;
+        final room = constraints.maxWidth - chrome;
+        // Floored so sub-pixel rounding cannot tip the row over.
+        final scale = textWidth <= room ? 1.0 : (room - 1) / textWidth;
+
+        return Row(
+          children: [
+            for (var index = 0; index < labels.length; index++) ...[
+              if (index > 0) AppSpacing.gapH(AppSpacing.xs),
+              _Pill(
+                label: labels[index],
+                isSelected: index == selectedIndex,
+                isLarge: isLarge,
+                isCompact: true,
+                horizontalPadding: horizontalPadding,
+                fill: unselectedFill,
+                ink: unselectedInk,
+                border: unselectedBorder,
+                fittedWidth: widths[index] * scale,
+                onTap: () => onSelected(index),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _Pill extends StatelessWidget {
   const _Pill({
     required this.label,
     required this.isSelected,
     required this.isLarge,
+    required this.isCompact,
     required this.horizontalPadding,
     required this.fill,
     required this.ink,
     required this.border,
     required this.onTap,
+    this.fittedWidth,
   });
 
   final String label;
   final bool isSelected;
   final bool isLarge;
+  final bool isCompact;
   final double horizontalPadding;
   final Color fill;
   final Color ink;
   final Color border;
   final VoidCallback onTap;
+
+  /// Set in a [AppPillSelector.fillsWidth] row: the label is fitted into this
+  /// width. Scaling the painted label rather than its font size keeps
+  /// the shrink exactly proportional — glyph advances do not shrink linearly
+  /// with the size, which let the row overrun.
+  final double? fittedWidth;
+
+  static TextStyle styleFor({required bool isLarge, required bool isCompact}) =>
+      isLarge
+      ? AppTextStyles.titleSmall
+      : isCompact
+      ? AppTextStyles.bodyMedium
+      : AppTextStyles.bodyLarge;
 
   @override
   Widget build(BuildContext context) {
@@ -149,14 +238,26 @@ class _Pill extends StatelessWidget {
           ),
           // Both sizes set 16pt type in the designs; the segmented control is
           // taller and bolder, not wider-set.
-          child: Text(
-            label,
-            style:
-                (isLarge ? AppTextStyles.titleSmall : AppTextStyles.bodyLarge)
-                    .rc(isSelected ? AppColors.white : ink),
-          ),
+          child: _label(),
         ),
       ),
+    );
+  }
+
+  Widget _label() {
+    final text = Text(
+      label,
+      maxLines: 1,
+      softWrap: false,
+      style: styleFor(
+        isLarge: isLarge,
+        isCompact: isCompact,
+      ).rc(isSelected ? AppColors.white : ink),
+    );
+    if (fittedWidth == null) return text;
+    return SizedBox(
+      width: fittedWidth,
+      child: FittedBox(fit: BoxFit.scaleDown, child: text),
     );
   }
 }

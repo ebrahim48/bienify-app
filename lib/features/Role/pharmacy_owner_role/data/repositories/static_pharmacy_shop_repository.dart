@@ -38,18 +38,32 @@ class StaticPharmacyShopRepository implements PharmacyShopRepository {
     required int stock,
     required bool isListed,
     String category = '',
+    DateTime? expiresOn,
+    String? imageKey,
   }) async => ShopMedicine(
     id: 'medicine-${DateTime.now().microsecondsSinceEpoch}',
     name: name,
     category: category,
-    expiryLabel: '',
+    expiresOn: expiresOn,
     stock: stock,
     price: price,
     isListed: isListed,
   );
 
+  /// Echoes the row back, as the server's update will once it stores expiry.
   @override
-  Future<void> updateMedicine(ShopMedicine medicine) async {}
+  Future<ShopMedicine> updateMedicine(
+    ShopMedicine medicine, {
+    String? imageKey,
+  }) async => medicine;
+
+  /// There is no bucket behind the sample data, so there is no key to issue
+  /// that would resolve to a picture; the form keeps its local preview.
+  @override
+  Future<String> uploadMedicineImage({
+    required String path,
+    required String mimeType,
+  }) async => 'sample/medicine-image';
 
   @override
   Future<void> delistMedicine(ShopMedicine medicine) async {}

@@ -34,6 +34,7 @@ class AppScaffold extends StatelessWidget {
     this.backgroundColor = AppColors.authBackground,
     this.padded = true,
     this.scrollable = true,
+    this.refreshable = false,
     this.resizeToAvoidBottomInset = true,
     this.maxContentWidth = 520,
   });
@@ -52,6 +53,10 @@ class AppScaffold extends StatelessWidget {
   final bool padded;
 
   final bool scrollable;
+
+  /// Lets the page be dragged even when it fits, which a surrounding
+  /// `RefreshIndicator` needs: a short list otherwise cannot be pulled at all.
+  final bool refreshable;
   final bool resizeToAvoidBottomInset;
 
   /// On tablets the content column stops growing and centres instead of
@@ -116,7 +121,11 @@ class AppScaffold extends StatelessWidget {
     // cannot report an intrinsic height for those.
     return LayoutBuilder(
       builder: (context, constraints) => SingleChildScrollView(
-        physics: const ClampingScrollPhysics(),
+        physics: refreshable
+            ? const AlwaysScrollableScrollPhysics(
+                parent: ClampingScrollPhysics(),
+              )
+            : const ClampingScrollPhysics(),
         child: ConstrainedBox(
           constraints: BoxConstraints(minHeight: constraints.maxHeight),
           child: content,

@@ -136,13 +136,15 @@ class _MedicineRow extends StatelessWidget {
               color: AppColors.shopOrdersSurface,
               borderRadius: AppRadius.rLg,
             ),
-            child: medicine.imageAsset == null
-                ? Icon(
-                    Icons.medication_outlined,
-                    size: AppSizes.xl.w,
-                    color: AppColors.shopOrdersInk,
+            child: medicine.imageUrl != null
+                ? Image.network(
+                    medicine.imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => const _NoPhoto(),
                   )
-                : Image.asset(medicine.imageAsset!, fit: BoxFit.cover),
+                : medicine.imageAsset != null
+                ? Image.asset(medicine.imageAsset!, fit: BoxFit.cover)
+                : const _NoPhoto(),
           ),
           AppSpacing.gapH(AppSpacing.xs),
           Expanded(child: _Details(medicine: medicine)),
@@ -184,6 +186,18 @@ class _MedicineRow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The thumbnail when there is no photo, or it failed to load.
+class _NoPhoto extends StatelessWidget {
+  const _NoPhoto();
+
+  @override
+  Widget build(BuildContext context) => Icon(
+    Icons.medication_outlined,
+    size: AppSizes.xl.w,
+    color: AppColors.shopOrdersInk,
+  );
 }
 
 class _Details extends StatelessWidget {

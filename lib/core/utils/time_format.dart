@@ -22,6 +22,20 @@ class TimeFormat {
     return '$hour12:$minute ${at.hour < 12 ? 'AM' : 'PM'}';
   }
 
+  /// `15 Mar 2028` — an unambiguous date, which matters on anything medical
+  /// where 03/04 could be March or April depending on the reader.
+  static String date(DateTime at) =>
+      '${at.day} ${_months[at.month - 1]} ${at.year}';
+
+  /// `Mar 2028` — how a pack prints its expiry, and short enough for a row.
+  static String monthYear(DateTime at) =>
+      '${_months[at.month - 1]} ${at.year}';
+
+  static const List<String> _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
   /// `31/08/2026`.
   static String numericDate(DateTime at) =>
       '${at.day.toString().padLeft(2, '0')}/'

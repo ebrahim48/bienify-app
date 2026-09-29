@@ -22,7 +22,7 @@ class SplashScreen extends GetView<SplashController> {
     controller;
 
     return AppScaffold(
-      backgroundColor: AppColors.authBackground,
+      backgroundColor: Colors.white,
       padded: false,
       scrollable: false,
       child: Center(

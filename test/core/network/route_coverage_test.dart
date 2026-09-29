@@ -97,13 +97,26 @@ void main() {
     final served = routes.map((r) => r[1]).toSet();
     final stray = <String>[];
 
+    // Called by the app ahead of the server, each against a contract written
+    // up in `docs/API-GAPS.md`. Deliberate, so listed by name rather than
+    // loosening the check for everything else.
+    const proposed = {
+      // "A medicine has no image and no expiry date".
+      '/api/v1/pharmacies/me/medicines/image/upload-url',
+    };
+    expect(
+      proposed.where(served.contains),
+      isEmpty,
+      reason: 'the server serves these now — take them off the proposed list',
+    );
+
     for (final m in RegExp(r"'\$_v1(/[^']*)'").allMatches(constants)) {
       final dartPath = '/api/v1${m.group(1)}';
       final real = dartPath.replaceAllMapped(
         RegExp(r'\$(\w+)'),
         (x) => ':${x[1]}',
       );
-      if (!served.contains(real)) stray.add(real);
+      if (!served.contains(real) && !proposed.contains(real)) stray.add(real);
     }
 
     expect(
