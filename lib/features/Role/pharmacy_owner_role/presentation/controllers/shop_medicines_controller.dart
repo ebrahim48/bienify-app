@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:get/get.dart';
 
 import '../../../../../core/constants/app_strings.dart';
 import '../../../../../core/exceptions/app_exceptions.dart';
 import '../../../../../core/routes/app_routes.dart';
+import '../../../../../core/utils/mime_type.dart';
 import '../../../../../core/widgets/app_snackbar.dart';
 import '../../data/static/pharmacy_shop_data.dart';
 import '../../domain/entities/pharmacy_shop.dart';
@@ -10,10 +13,16 @@ import '../../domain/repositories/pharmacy_shop_repository.dart';
 
 /// Backs the Medicines tab and the Add / Edit form behind it.
 class ShopMedicinesController extends GetxController {
-  ShopMedicinesController({PharmacyShopRepository? repository})
-    : _repository = repository ?? Get.find<PharmacyShopRepository>();
+  ShopMedicinesController({
+    PharmacyShopRepository? repository,
+    DateTime Function()? now,
+  }) : _repository = repository ?? Get.find<PharmacyShopRepository>(),
+       _now = now ?? DateTime.now;
 
   final PharmacyShopRepository _repository;
+
+  /// Injected so the calendar's range can be pinned in a test.
+  final DateTime Function() _now;
 
   final RxList<ShopMedicine> medicines = <ShopMedicine>[].obs;
 
@@ -65,9 +74,11 @@ class ShopMedicinesController extends GetxController {
   /// switching a row off takes it out of the list rather than greying it. The
   /// owner is told so, because a row that silently disappears reads as a bug.
   Future<void> toggleListed(ShopMedicine medicine, bool value) async {
-    final updated = medicine.copyWith(isListed: value);
+    final ShopMedicine updated;
     try {
-      await _repository.updateMedicine(updated);
+      updated = await _repository.updateMedicine(
+        medicine.copyWith(isListed: value),
+      );
     } on AppException catch (e) {
       AppSnackbar.error(e.message);
       return;
@@ -102,10 +113,20 @@ class ShopMedicinesController extends GetxController {
 
   final RxString name = ''.obs;
   final RxString category = PharmacyShopData.categories.first.obs;
-  final RxString imageName = ''.obs;
   final RxString price = ''.obs;
   final RxString stock = ''.obs;
-  final RxString expiry = ''.obs;
+
+  /// The day it expires, chosen on the calendar. Null until one is picked.
+  final Rxn<DateTime> expiresOn = Rxn<DateTime>();
+
+  /// The photo just picked, shown in the tile while and after it uploads.
+  final Rxn<File> pickedImage = Rxn<File>();
+
+  /// What the upload returned, sent with the save. Null until a picked photo
+  /// has actually reached storage — a preview alone saves nothing.
+  final RxnString imageKey = RxnString();
+
+  final RxBool isUploadingImage = false.obs;
 
   /// Bumped when the form is seeded, so its prefilled fields are rebuilt.
   /// They own their text controllers and seed them once.
@@ -128,14 +149,60 @@ class ShopMedicinesController extends GetxController {
     category.value = medicine == null || medicine.category.isEmpty
         ? PharmacyShopData.categories.first
         : medicine.category;
-    imageName.value = '';
     price.value = medicine == null ? '' : medicine.price.toStringAsFixed(2);
     stock.value = medicine?.stock.toString() ?? '';
-    expiry.value = medicine?.expiryLabel ?? '';
+    expiresOn.value = medicine?.expiresOn;
+    pickedImage.value = null;
+    imageKey.value = null;
     formGeneration.value++;
   }
 
   void selectCategory(String value) => category.value = value;
+
+  void selectExpiry(DateTime day) =>
+      expiresOn.value = DateTime(day.year, day.month, day.day);
+
+  /// Today, as the calendar's starting point.
+  DateTime get today {
+    final now = _now();
+    return DateTime(now.year, now.month, now.day);
+  }
+
+  /// Where the calendar opens: the recorded day, or today.
+  DateTime get calendarInitial => expiresOn.value ?? today;
+
+  /// The earliest day the calendar offers. Today — new stock is not already
+  /// expired — unless the row being edited already carries an earlier date,
+  /// which the calendar must still be able to show.
+  DateTime get calendarFirst {
+    final recorded = expiresOn.value;
+    return recorded != null && recorded.isBefore(today) ? recorded : today;
+  }
+
+  /// Twenty years out: well past any shelf life, short of a typo's reach.
+  DateTime get calendarLast => DateTime(today.year + 20, 12, 31);
+
+  /// Uploads a picked photo straight away, so saving is not held up by it.
+  ///
+  /// The preview is dropped if the upload fails: a picture on the form that
+  /// never reached storage would read as attached and save nothing.
+  Future<void> attachImage(File file) async {
+    if (isUploadingImage.value) return;
+    pickedImage.value = file;
+    imageKey.value = null;
+    isUploadingImage.value = true;
+    try {
+      imageKey.value = await _repository.uploadMedicineImage(
+        path: file.path,
+        mimeType: contentTypeForPath(file.path),
+      );
+    } on AppException catch (e) {
+      pickedImage.value = null;
+      AppSnackbar.error(e.message);
+    } finally {
+      isUploadingImage.value = false;
+    }
+  }
 
   /// Saves the form, adding or editing depending on how it was opened.
   ///
@@ -144,6 +211,10 @@ class ShopMedicinesController extends GetxController {
   /// which of the two fields to fix.
   Future<void> submit() async {
     if (isSubmitting.value) return;
+    if (isUploadingImage.value) {
+      AppSnackbar.info(AppStrings.medicineImageStillUploading.tr);
+      return;
+    }
 
     final trimmed = name.value.trim();
     final priceValue = double.tryParse(price.value.trim());
@@ -164,22 +235,28 @@ class ShopMedicinesController extends GetxController {
           stock: stockValue,
           isListed: true,
           category: category.value,
+          expiresOn: expiresOn.value,
+          imageKey: imageKey.value,
         );
         medicines.insert(0, added);
       } else {
-        final updated = ShopMedicine(
-          id: existing.id,
-          name: trimmed,
-          category: category.value,
-          expiryLabel: expiry.value.trim(),
-          stock: stockValue,
-          price: priceValue,
-          isListed: existing.isListed,
-          imageAsset: existing.imageAsset,
+        // The list takes what the server kept, not what was sent.
+        final saved = await _repository.updateMedicine(
+          ShopMedicine(
+            id: existing.id,
+            name: trimmed,
+            category: category.value,
+            expiresOn: expiresOn.value,
+            stock: stockValue,
+            price: priceValue,
+            isListed: existing.isListed,
+            imageUrl: existing.imageUrl,
+            imageAsset: existing.imageAsset,
+          ),
+          imageKey: imageKey.value,
         );
-        await _repository.updateMedicine(updated);
         final index = medicines.indexWhere((m) => m.id == existing.id);
-        if (index != -1) medicines[index] = updated;
+        if (index != -1) medicines[index] = saved;
       }
     } on AppException catch (e) {
       AppSnackbar.error(e.message);

@@ -1,8 +1,8 @@
-/// Shapes behind the pharmacy owner's section.
-///
-/// **Names only, by design.** Like the doctor role this is UI-first: no
-/// repository, use case or data source sits under it and nothing calls an API.
+/// Shapes behind the pharmacy owner's section, served by
+/// `PharmacyShopRepository` — the API in the app, sample data in tests.
 library;
+
+import '../../../../../core/utils/time_format.dart';
 
 /// Which tab of the pharmacy shell is showing.
 enum ShopTab { home, orders, medicines, profile }
@@ -95,6 +95,7 @@ class ShopOrder {
     required this.placedAtLabel,
     required this.status,
     required this.lines,
+    this.placedOnLabel = '',
     this.prescriptionFile,
     this.customerPhotoUrl,
   });
@@ -118,6 +119,10 @@ class ShopOrder {
   /// `10:32 AM`.
   final String placedAtLabel;
 
+  /// `Today`, or `12 Aug 2026` — the day it was placed. Empty when unknown,
+  /// and the detail banner then prints the time alone rather than a guess.
+  final String placedOnLabel;
+
   final ShopOrderStatus status;
   final List<OrderLine> lines;
 
@@ -131,6 +136,11 @@ class ShopOrder {
 
   String get totalLabel => '\$${total.toStringAsFixed(2)}';
 
+  /// Whether the shop can still accept or decline it. Only a new order can:
+  /// the server's transition table refuses both once an order has moved on,
+  /// and offering them on a delivered order produced a 400.
+  bool get awaitsAnswer => status == ShopOrderStatus.fresh;
+
   /// `ORD-2841 • 10:32 AM`, the dashboard row's second line.
   String get summaryLine => '$code • $placedAtLabel';
 
@@ -142,6 +152,7 @@ class ShopOrder {
     phone: phone,
     address: address,
     placedAtLabel: placedAtLabel,
+    placedOnLabel: placedOnLabel,
     status: status ?? this.status,
     lines: lines,
     prescriptionFile: prescriptionFile,
@@ -155,10 +166,11 @@ class ShopMedicine {
     required this.id,
     required this.name,
     required this.category,
-    required this.expiryLabel,
     required this.stock,
     required this.price,
     required this.isListed,
+    this.expiresOn,
+    this.imageUrl,
     this.imageAsset,
   });
 
@@ -168,8 +180,9 @@ class ShopMedicine {
   /// `Pain Relief`.
   final String category;
 
-  /// `2028-03`, printed after `Exp`.
-  final String expiryLabel;
+  /// The calendar day it expires. A date, not an instant: no clock and no
+  /// zone, so it cannot slip a day for an owner east or west of the server.
+  final DateTime? expiresOn;
 
   final int stock;
   final double price;
@@ -177,11 +190,20 @@ class ShopMedicine {
   /// Whether the toggle on the row is on — the medicine is offered for sale.
   final bool isListed;
 
+  /// The product photo the server stores, once it stores one.
+  final String? imageUrl;
+
+  /// The sample shelf's bundled picture, for the mock repository only.
   final String? imageAsset;
 
-  /// `Pain Relief • Exp 2028-03`, dropping whichever half is missing.
+  /// `Mar 2028`, as the pack prints it, or empty when none is recorded. The
+  /// form shows the full day.
+  String get expiryLabel =>
+      expiresOn == null ? '' : TimeFormat.monthYear(expiresOn!);
+
+  /// `Pain Relief • Exp Mar 2028`, dropping whichever half is missing.
   ///
-  /// A medicine on the server carries a brand but no expiry date, so a row
+  /// A medicine on the server may carry a brand but no expiry date, so a row
   /// that always printed both would read "Pain Relief • Exp " on real stock.
   String get subtitle => [
     if (category.isNotEmpty) category,
@@ -196,10 +218,11 @@ class ShopMedicine {
     id: id,
     name: name,
     category: category,
-    expiryLabel: expiryLabel,
+    expiresOn: expiresOn,
     stock: stock,
     price: price,
     isListed: isListed ?? this.isListed,
+    imageUrl: imageUrl,
     imageAsset: imageAsset,
   );
 }

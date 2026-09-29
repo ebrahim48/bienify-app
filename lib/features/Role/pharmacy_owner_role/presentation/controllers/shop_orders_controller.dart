@@ -35,7 +35,15 @@ class ShopOrdersController extends GetxController {
     load();
   }
 
-  Future<void> load() async {
+  /// The read under way, if any.
+  Future<void>? _inFlight;
+
+  /// Fetches the book, once at a time: a pull to refresh while the first read
+  /// is still out joins it rather than sending a second request.
+  Future<void> load() =>
+      _inFlight ??= _load().whenComplete(() => _inFlight = null);
+
+  Future<void> _load() async {
     isLoading.value = true;
     error.value = null;
     try {

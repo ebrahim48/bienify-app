@@ -32,6 +32,10 @@ class RiderHomeController extends GetxController {
 
   final RxList<DeliveryRecord> recent = <DeliveryRecord>[].obs;
 
+  /// The week's takings for the Earnings quick action, `null` until the
+  /// earnings load lands so the tile shows no figure rather than `$0.00`.
+  final RxnString weekLabel = RxnString();
+
   final RxBool isLoading = true.obs;
   final RxnString error = RxnString();
 
@@ -49,9 +53,9 @@ class RiderHomeController extends GetxController {
     error.value = null;
     try {
       rider.value = await _repository.rider();
-      recent.value = (await _repository.earnings()).history
-          .take(_recentCount)
-          .toList();
+      final earnings = await _repository.earnings();
+      recent.value = earnings.history.take(_recentCount).toList();
+      weekLabel.value = earnings.weekLabel;
     } on AppException catch (e) {
       error.value = e.message;
     } finally {

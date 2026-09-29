@@ -65,10 +65,17 @@ class RiderHomeScreen extends GetView<RiderHomeController> {
               ),
               AppSpacing.gapH(AppSpacing.sm),
               Expanded(
-                child: _QuickAction(
-                  emoji: '💰',
-                  label: AppStrings.earnings.tr,
-                  onTap: controller.openEarnings,
+                child: Obx(
+                  () => _QuickAction(
+                    emoji: '💰',
+                    label: AppStrings.earnings.tr,
+                    note: controller.weekLabel.value == null
+                        ? null
+                        : AppStrings.earnedThisWeek.trParams({
+                            'amount': controller.weekLabel.value!,
+                          }),
+                    onTap: controller.openEarnings,
+                  ),
                 ),
               ),
             ],

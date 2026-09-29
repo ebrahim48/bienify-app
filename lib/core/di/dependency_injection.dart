@@ -374,7 +374,10 @@ class DependencyInjection {
     Get.put<PharmacyShopRepository>(
       mock
           ? const StaticPharmacyShopRepository()
-          : ApiPharmacyShopRepository(Get.find<ApiClient>()),
+          : ApiPharmacyShopRepository(
+              Get.find<ApiClient>(),
+              Get.find<AttachmentUploader>(),
+            ),
       permanent: true,
     );
   }
