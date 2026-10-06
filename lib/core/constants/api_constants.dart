@@ -43,6 +43,7 @@ class ApiConstants {
   static const String adminDashboardRidersPending =
       '$_v1/admin/dashboard/riders/pending';
   static const String adminDashboardStats = '$_v1/admin/dashboard/stats';
+
   static String updateAdminDoctorsVerification(String id) =>
       '$_v1/admin/doctors/$id/verification';
   static const String adminDoctorsPending = '$_v1/admin/doctors/pending';
