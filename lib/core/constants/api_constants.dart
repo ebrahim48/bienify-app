@@ -65,6 +65,7 @@ class ApiConstants {
   static String updateAdminTests(String id) => '$_v1/admin/tests/$id';
   static const String adminTransactions = '$_v1/admin/transactions';
   static const String adminUsers = '$_v1/admin/users';
+
   static String updateAdminUsersStatus(String id) =>
       '$_v1/admin/users/$id/status';
   static const String adminWithdrawals = '$_v1/admin/withdrawals';
