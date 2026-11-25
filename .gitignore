@@ -65,6 +65,7 @@ test/golden/failures/
 # folderOpen`. A self-ignoring .gitignore lets these rules be edited without
 # the edit showing. Both are restored; neither goes back.
 .claude/
+.vscode/
 branch_structure.json
 temp_auto_push.bat
 temp_interactive_push.bat

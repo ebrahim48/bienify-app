@@ -32,6 +32,7 @@ class ApiConstants {
   static const String health = '/health';
   static const String ready = '/ready';
 
+
   // ─── admin ───────────────────────────────────────────────────────
   static const String adminAppointments = '$_v1/admin/appointments';
   static const String adminDashboardApprovalQueues =
