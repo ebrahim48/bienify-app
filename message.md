@@ -70,7 +70,7 @@ This one is manual rather than automated. I need:
 Already built and working. Patients get a code and take it to a payment point. I
 just need to know: who confirms that the cash was collected, and should that be
 done from an admin screen? (There's currently no admin app, so this step has no
-home yet — worth discussing.)
+home yet — worth discussing.)   
 
 ## How to send these safely
 
@@ -103,4 +103,4 @@ merchant account application early even before we wire anything up.
 
 Just reply with question 1 to start, and I'll take it from there.
 
-Thanks,
+Thanks all,
